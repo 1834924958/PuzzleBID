@@ -22,9 +22,9 @@ library PZB_Databases {
         uint256 beginTime; //开售时间
         uint256 endTime; //中止出售时间
         bool isPublish; //是否上架
-        string tokenID; //对应ERC721
+        address tokenID; //对应ERC721
         string tokenURI; //资源json {'serial_no':'作品编号', 'profile':'作品简介', 'thumb':'缩略图', 'picture':'作品大图', 'copyright':'数字版权', 'source_file':'作品源文件', 'block_no':'区块高度'}       
-        
+        Debris debris; //碎片
     }
 
     //碎片表结构
@@ -102,7 +102,7 @@ contract PZB_Events {
         uint256 initPrice, 
         uint256 beginTime, 
         bool isPublish, 
-        string tokenID, 
+        address tokenID, 
         string tokenURI
     ); //当发布作品时
 
@@ -220,7 +220,7 @@ contract PuzzleBID is PZB_Events,Pausable {
         uint256 _initPrice, 
         uint256 _beginTime, 
         bool _isPublish, 
-        string _tokenID, 
+        address _tokenID, 
         string _tokenURI) external {
 
         require(works[_worksID] == 0);
@@ -229,6 +229,9 @@ contract PuzzleBID is PZB_Events,Pausable {
         
         works[_worksID] = PZB_Databases.Works(_worksID, _name, _artistID, _debrisNum, _initPrice, _beginTime, _isPublish, _tokenID, _tokenURI);
         emit OnAddWorks(_worksID, _name, _artistID, _debrisNum, _initPrice, _beginTime, _isPublish, _tokenID, _tokenURI);
+        pots[_worksID] = 0; //初始化该作品奖池总计
+        //初始化作品碎片
+
     }
 
     //添加游戏碎片
