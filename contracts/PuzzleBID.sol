@@ -148,7 +148,7 @@ contract PuzzleBID is PZB_Events,Pausable {
     mapping(uint256 => PZB_Databases.Works) public works; //作品列表
     mapping(uint256 => PZB_Databases.Debris) public debris; //作品碎片列表
     mapping(uint256 => PZB_Databases.Artist) public artists; //艺术家列表
-    mapping(bytes32 => totalAmount) public pots; //各作品奖池 (worksID => totalAmount)
+    mapping(bytes32 => uint256) public pots; //各作品奖池 (worksID => totalAmount)
     mapping(uint256 => PZB_Databases.Transaction) public transactions; //交易记录列表
     mapping(uint256 => PZB_Databases.MyWorks) public myworks; //我的藏品列表
     uint256 turnover; //游戏总交易额
