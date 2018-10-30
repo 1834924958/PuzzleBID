@@ -1,15 +1,21 @@
 pragma solidity ^0.4.24;
+
 /**
  * @title PuzzleBID v1.0
- *
+ * @website http://www.puzzlebid.com/
+ * @author PuzzleBID Team 
+ *         Simon<vsiryxm@163.com>
  */
 
-library PZBdatasets {
+/**
+ * @dev PuzzleBID data structure
+ */
+library PZB_Databases {
 
+    //作品表结构
     struct Works {
-        byte32 symbol; //作品编号
+        bytes32 worksID; //作品ID
         string name; //作品名称
-        string artistName; //归属艺术家名字
         string artistID; //归属艺术家ID
         uint8 debrisNum; //分割成游戏碎片总数
         uint8 initPrice; //初始总价格
@@ -17,53 +23,108 @@ library PZBdatasets {
         uint256 endTime; //中止出售时间
         bool isPublish; //是否上架
         string tokenID; //对应ERC721
-        string tokenURI; //资源json {'profile':'作品简介', 'thumb':'缩略图', 'picture':'作品大图', 'copyright':'版权', 'source_file':'作品源文件', 'block_no':'区块高度'}       
+        string tokenURI; //资源json {'serial_no':'作品编号', 'profile':'作品简介', 'thumb':'缩略图', 'picture':'作品大图', 'copyright':'数字版权', 'source_file':'作品源文件', 'block_no':'区块高度'}       
+        
     }
 
+    //碎片表结构
     struct Debris {
-        byte32 symbol; //碎片编号
-        string imageUrl; //碎片地址
+        bytes32 debrisID; //碎片ID
+        uint8 serialNo; //碎片编号
+        bytes32 worksID; //作品ID
         uint256 initPrice; //初始价格
-        uint256 lastPrice; //最新价格     
+        uint256 lastPrice; //最新价格
+        uint256 buyNum; //被交易总次数
+        address firstBuyer; //首发购买者，冗余
+        address lastBuyer; //最后一次购买者，冗余
     }
 
-    struct Rules {
-           
-    }
-
+    //艺术家表结构
     struct Artist {
-        string artistID; //艺术家ID
+        bytes32 artistID; //艺术家ID
         string artistName; //归属艺术家名字
         address ethAddress; //钱包地址
     }
 
+    //玩家表结构
     struct Player {
-        address ethAddress;   // player address
-        bytes32 name;   // player name
-        uint256 win;    // winnings vault
-        uint256 gen;    // general vault
-        uint256 aff;    // affiliate vault
-        uint256 lrnd;   // last round played
-        uint256 laff;   // last affiliate id used
+        address ethAddress; //玩家钱包地址
+        bytes32 unionID; //唯一父级ID    
+        uint256 referrer; //推荐人
+        uint256 time; //创建时间
     }
 
+    //作品与奖池关系表结构
+    struct Pot {
+        bytes32 worksID; //作品ID
+        uint256 totalAmount; //总金额
+    }
+
+    //碎片交易记录表结构    
     struct Transaction {        
-        bytes32 worksSymbol;
-        bytes32 debrisSymbol;
-        uint256 artistID;
-        uint256 dealPrice;
-        address fromAddress;
-        address toAddress; 
+        bytes32 worksID; //作品ID
+        bytes32 debrisID; //碎片ID
+        uint256 artistID; //艺术家ID
+        uint256 dealPrice; //成交价格，ETH
+        address fromAddress; //从地址
+        address toAddress; //到地址
+        uint256 time; //创建时间
     }
 
+    //玩家与藏品关系表结构
+    struct MyWorks { 
+        address playerAddress; //玩家ID
+        bytes32 worksID; //碎片ID
+        uint256 totalInput; //累计投入
+        uint256 totalOutput; //累计回报
+        uint256 time; //创建时间
+    }
 
 }
 
-contract PuzzleBIDevents {
+/**
+ * @dev PuzzleBID events
+ */
+contract PZB_Events {
 
+    event OnRegisterPlayer(
+        address indexed ethAddress,
+        bytes32 unionID, 
+        uint256 referrer,
+        uint256 time
+    ); //当注册玩家时
+
+    event OnAddWorks(
+        bytes32 worksID, 
+        string name, 
+        string artistID, 
+        uint8 debrisNum, 
+        uint256 initPrice, 
+        uint256 beginTime, 
+        bool isPublish, 
+        string tokenID, 
+        string tokenURI
+    ); //当发布作品时
+
+    event OnAddDebris(
+        bytes32 debrisID, 
+        uint8 serialNo, 
+        bytes32 worksID, 
+        uint256 initPrice
+    ); //当分割作品碎片时
+
+    event OnAddArtist(); //当添加艺术家时
+    event OnTransaction(); //当玩家交易时
+    event OnWithdraw(); //当提现时
+    event OnUpdatePot(); //当更新总奖池时
+    event OnUpdateWorksPot(); //当更新作品奖池时
+    event OnUpdateMyWorks(); //当更新作品奖池时
 }
 
-contract PuzzleBID is PuzzleBIDevents {
+/**
+ * @dev PuzzleBID data structure
+ */
+contract PuzzleBID is PZB_Events,Pausable {
     using SafeMath for *;
 
     //============================================
@@ -80,12 +141,19 @@ contract PuzzleBID is PuzzleBIDevents {
     uint256 constant private discountRatio = 0.95; //碎片价格调整为首发价格的95%
 
     //============================================
-    //| PLAYER DATA 
+    //| Player data 
     //============================================
-    mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
-    mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
-    mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
-    
+    mapping(address => PZB_Databases.Player) public players; //游戏玩家列表
+    mapping(bytes32 => mapping(uint256 => PZB_Databases.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
+    mapping(uint256 => PZB_Databases.Works) public works; //作品列表
+    mapping(uint256 => PZB_Databases.Debris) public debris; //作品碎片列表
+    mapping(uint256 => PZB_Databases.Artist) public artists; //艺术家列表
+    mapping(bytes32 => totalAmount) public pots; //各作品奖池 (worksID => totalAmount)
+    mapping(uint256 => PZB_Databases.Transaction) public transactions; //交易记录列表
+    mapping(uint256 => PZB_Databases.MyWorks) public myworks; //我的藏品列表
+    uint256 turnover; //游戏总交易额
+
+
     /**
      * @dev prevents contracts from interacting with PuzzleBID 
      */
@@ -120,6 +188,62 @@ contract PuzzleBID is PuzzleBIDevents {
     {
 
     }
+
+    //============================================
+    //| Player business 
+    //============================================
+    modifier isRegisteredGame()
+    {
+        require(players[msg.sender] != 0);
+        _;
+    }
+
+    //注册游戏玩家
+    function registerPlayer(address _ethAddress, bytes32 _unionID, uint256 _referrer) external {
+        require(players[msg.sender] == 0);
+        uint256 _now = now;
+        players[msg.sender] = PZB_Databases.Player(_ethAddress, _unionID, _referrer, _now);
+        union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
+        emit OnRegisterPlayer(_ethAddress, _unionID, _referrer, _now);
+    }
+
+
+    //============================================
+    //| Works business 
+    //============================================
+    //添加游戏作品
+    function addWorks(
+        bytes32 _worksID, 
+        string _name, 
+        string _artistID, 
+        uint8 _debrisNum, 
+        uint256 _initPrice, 
+        uint256 _beginTime, 
+        bool _isPublish, 
+        string _tokenID, 
+        string _tokenURI) external {
+
+        require(works[_worksID] == 0);
+        require(_debrisNum <= maxDebris);
+        require(_initPrice > 0);        
+        
+        works[_worksID] = PZB_Databases.Works(_worksID, _name, _artistID, _debrisNum, _initPrice, _beginTime, _isPublish, _tokenID, _tokenURI);
+        emit OnAddWorks(_worksID, _name, _artistID, _debrisNum, _initPrice, _beginTime, _isPublish, _tokenID, _tokenURI);
+    }
+
+    //添加游戏碎片
+    function addDebris(
+        bytes32 _debrisID,
+        uint8 _serialNo,
+        bytes32 _worksID,
+        uint256 _initPrice) external {
+
+        require(debris[_debrisID] == 0);
+        debris[_debrisID] = PZB_Databases.Debris(_debrisID, _serialNo, _worksID, _initPrice);
+        emit OnAddDebris(_debrisID, _serialNo, _worksID, _initPrice);
+    }
+
+    
 
     /**
      * @dev returns time left.  dont spam this, you'll ddos yourself from your node 
@@ -235,8 +359,8 @@ contract PuzzleBID is PuzzleBIDevents {
 
  }
 
- /**
- * @title SafeMath v0.1.9
+/**
+ * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
  * - added sqrt
@@ -339,78 +463,99 @@ library SafeMath {
 
 }
 
-library NameFilter {
-    /**
-     * @dev filters name strings
-     * -converts uppercase to lower case.  
-     * -makes sure it does not start/end with a space
-     * -makes sure it does not contain multiple spaces in a row
-     * -cannot be only numbers
-     * -cannot start with 0x 
-     * -restricts characters to A-Z, a-z, 0-9, and space.
-     * @return reprocessed string in bytes32 format
-     */
-    function nameFilter(string _input)
-        internal
-        pure
-        returns(bytes32)
-    {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-        
-        //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
-        if (_temp[0] == 0x30)
-        {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-        
-        // create a bool to track if we have a non number character
-        bool _hasNonNumber;
-        
-        // convert & check
-        for (uint256 i = 0; i < _length; i++)
-        {
-            // if its uppercase A-Z
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
-            {
-                // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
-                
-                // we have a non number
-                if (_hasNonNumber == false)
-                    _hasNonNumber = true;
-            } else {
-                require
-                (
-                    // require character is a space
-                    _temp[i] == 0x20 || 
-                    // OR lowercase a-z
-                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
-                // make sure theres not 2x spaces in a row
-                if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-                
-                // see if we have a character other than a number
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
-                    _hasNonNumber = true;    
-            }
-        }
-        
-        require(_hasNonNumber == true, "string cannot be only numbers");
-        
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-        return (_ret);
-    }
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable 
+{
+  address public owner;
+
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+  
 }
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable 
+{
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpauseunpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+
+}
+
