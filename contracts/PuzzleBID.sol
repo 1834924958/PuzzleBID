@@ -75,15 +75,6 @@ library PZB_Datasets {
         uint256 time; //创建时间
     }
 
-    //分配规则
-    struct Divies { 
-        address playerAddress; //玩家ID
-        bytes32 worksID; //碎片ID
-        uint256 totalInput; //累计投入
-        uint256 totalOutput; //累计回报
-        uint256 time; //创建时间
-    }
-
 }
 
 /**
@@ -134,13 +125,13 @@ contract PuzzleBID is PZB_Events,Pausable {
     //=========================================================================
     string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZD";
-    uint8 constant private maxDebris = 9; //作品被分割成最大碎片数
-    uint8 constant private firstBuyNum = maxDebris.mul(1/3); //首发最多能购买一个作品的碎片数
+    uint8 constant private maxDebris = 6; //作品被分割成最大碎片数
+    uint8 constant private firstBuyNum = 2; //首发最多能购买一个作品的碎片数
     uint256 constant private freezeTime = 300 seconds; //玩家购买一个作品中的一个碎片后冻结5分钟
     uint256 constant private protectTime = 1800 seconds; //碎片保护时间30分钟
     uint256 constant private increaseRatio = 110; //% 碎片价格调整为上一次价格的110%
     uint256 constant private discountTime = 3600 seconds; //碎片开始打折时间，被购买1小时后    
-    uint256 constant private discountRatio = 95; //% 碎片价格调整为首发价格的95%
+    uint8 constant private discountRatio = 95; //% 碎片价格调整为首发价格的95%
 
     //=========================================================================
     //| Dividend rule
