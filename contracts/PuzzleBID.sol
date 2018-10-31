@@ -152,6 +152,7 @@ contract PuzzleBID is PZB_Events,Pausable {
     //============================================
     //| Game data 
     //============================================
+<<<<<<< HEAD
     mapping(address => PZB_Datasets.Player) public players; //游戏玩家列表
     mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
     mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表
@@ -161,6 +162,16 @@ contract PuzzleBID is PZB_Events,Pausable {
     mapping(bytes32 => totalAmount) public pots; //各作品奖池 (worksID => totalAmount)
     mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
     mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
+=======
+    mapping(address => PZB_Databases.Player) public players; //游戏玩家列表
+    mapping(bytes32 => mapping(uint256 => PZB_Databases.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
+    mapping(uint256 => PZB_Databases.Works) public works; //作品列表
+    mapping(uint256 => PZB_Databases.Debris) public debris; //作品碎片列表
+    mapping(uint256 => PZB_Databases.Artist) public artists; //艺术家列表
+    mapping(bytes32 => uint256) public pots; //各作品奖池 (worksID => totalAmount)
+    mapping(uint256 => PZB_Databases.Transaction) public transactions; //交易记录列表
+    mapping(uint256 => PZB_Databases.MyWorks) public myworks; //我的藏品列表
+>>>>>>> 1146eb57135654e3f3903546e40254b91bb1c385
     uint256 turnover; //游戏总交易额
 
     //============================================
