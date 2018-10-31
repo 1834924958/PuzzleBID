@@ -1,10 +1,9 @@
 pragma solidity ^0.4.24;
 
 /**
- * @title PuzzleBID v1.0
+ * @title PuzzleBID
  * @website http://www.puzzlebid.com/
- * @author PuzzleBID Team 
- *         Simon<vsiryxm@163.com>
+ * @author PuzzleBID Game Team 
  */
 
 /**
@@ -124,7 +123,8 @@ contract PZB_Events {
 }
 
 /**
- * @dev PuzzleBID data structure
+ * @dev PuzzleBID Game Contract
+ * @author Simon<vsiryxm@163.com>
  */
 contract PuzzleBID is PZB_Events,Pausable {
     using SafeMath for *;
@@ -134,20 +134,20 @@ contract PuzzleBID is PZB_Events,Pausable {
     //=========================================================================
     string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZD";
-    uint256 constant private maxDebris = 255; //作品被分割成最大碎片数
-    uint256 constant private firstBuyNum = maxDebris.mul(1/3); //首发最多能购买一个作品的碎片数
+    uint8 constant private maxDebris = 9; //作品被分割成最大碎片数
+    uint8 constant private firstBuyNum = maxDebris.mul(1/3); //首发最多能购买一个作品的碎片数
     uint256 constant private freezeTime = 300 seconds; //玩家购买一个作品中的一个碎片后冻结5分钟
     uint256 constant private protectTime = 1800 seconds; //碎片保护时间30分钟
-    uint256 constant private increaseRatio = 1.1; //碎片价格调整为上一次价格的110%
+    uint256 constant private increaseRatio = 110; //% 碎片价格调整为上一次价格的110%
     uint256 constant private discountTime = 3600 seconds; //碎片开始打折时间，被购买1小时后    
-    uint256 constant private discountRatio = 0.95; //碎片价格调整为首发价格的95%
+    uint256 constant private discountRatio = 95; //% 碎片价格调整为首发价格的95%
 
     //=========================================================================
     //| Dividend rule
     //=========================================================================
-    uint8 firstAllot[] = [80, 2, 18]; //% 首发购买分配百分比 顺序对应艺术家、平台、奖池
-    uint8 againAllot[] = [10, 2, 65]; //% 再次购买分配百分比 后续购买者、平台、奖池
-    uint8 lastAllot[] = [80, 10, 10]; //% 完成购买分配百分比 游戏完成者、首发购买者、后续其他购买者
+    uint8[3] firstAllot = [80, 2, 18]; //% 首发购买分配百分比 顺序对应艺术家、平台、奖池
+    uint8[3] againAllot = [10, 2, 65]; //% 再次购买分配百分比 后续购买者、平台、奖池
+    uint8[3] lastAllot = [80, 10, 10]; //% 完成购买分配百分比 游戏完成者、首发购买者、后续其他购买者
 
     //=========================================================================
     //| Game data 
@@ -271,7 +271,7 @@ contract PuzzleBID is PZB_Events,Pausable {
 
     /**
      * @dev sets boundaries for incoming tx
-     * 最小0.000000001ETH，最大100000ETH
+     * 支付最小0.000000001ETH，最大100000ETH
      */
     modifier isWithinLimits(uint256 _eth) {
         require(_eth >= 1000000000, "pocket lint: not a valid currency");
@@ -303,15 +303,19 @@ contract PuzzleBID is PZB_Events,Pausable {
         require(works[_workID] != 0); //检查该作品游戏是否存在
         require(debris[_workID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
         require(works[_workID].isPublish && works[_workID].beginTime <= _now); //检查该作品游戏是否发布并开始
+        require(debris[_workID][_debrisID].lastTime + protectTime < _now); //检查作品是否在30分钟保护期内
+
         //检查玩家是否第一次购买该作品碎片
 
         require(); //检查玩家购买该作品碎片是否超过1/3限制
         //检查玩家是否在5分钟内再次购买该作品
         
-        require(debris[_workID][_debrisID].lastTime + protectTime < _now); //检查作品是否在30分钟保护期内
+        
 
         
         //检查当前账号有没有购买行为，如果有，有没有过5分钟
+
+        //涨价 or 降价  支付的够不够？
         
         if(true) { //如果是首发购买，按首发规则
 
