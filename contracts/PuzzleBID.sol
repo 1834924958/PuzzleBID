@@ -152,16 +152,16 @@ contract PuzzleBID is PZB_Events,Pausable {
     //=========================================================================
     //| Game data 
     //=========================================================================
-    mapping(address => PZB_Datasets.Player) public players; //游戏玩家列
-    mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
-    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列
-    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列 (worksID => (1 => PZB_Datasets.Debris))
-    mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品
+    mapping(address => PZB_Datasets.Player) public players; //游戏玩家
+    mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
+    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
+    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
+    mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
 
-    mapping(bytes32 => totalAmount) public pots; //各作品奖池 (worksID => totalAmount)
-    mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列
-    mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列
-    uint256 turnover; //游戏总交易额  
+    mapping(bytes32 => totalAmount) public pots; //各作品奖池 如(worksID => totalAmount)
+    mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
+    mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
+    uint256 public turnover; //游戏总交易额  
 
     //=========================================================================
     //| Player initialization 
@@ -305,7 +305,7 @@ contract PuzzleBID is PZB_Events,Pausable {
         require(works[_workID].isPublish && works[_workID].beginTime <= _now); //检查该作品游戏是否发布并开始
         require(debris[_workID][_debrisID].lastTime + protectTime < _now); //检查作品是否在30分钟保护期内
 
-        //检查玩家是否第一次购买该作品碎片
+        require(); //检查玩家是否第一次购买该作品碎片
 
         require(); //检查玩家购买该作品碎片是否超过1/3限制
         //检查玩家是否在5分钟内再次购买该作品
@@ -323,7 +323,10 @@ contract PuzzleBID is PZB_Events,Pausable {
 
         } else {
             //如果是完成了作品，按最后规则
+            //处理成我的藏品
         }
+        //累计当前作品的奖池
+        //累加交易额turnover
 
     }
 
