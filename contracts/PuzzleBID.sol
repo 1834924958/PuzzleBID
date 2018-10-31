@@ -12,7 +12,7 @@ pragma solidity ^0.4.24;
  */
 library PZB_Datasets {
 
-    //作品表结构
+    //作品结构
     struct Works {
         bytes32 worksID; //作品ID
         bytes32 artistID; //归属艺术家ID
@@ -24,7 +24,7 @@ library PZB_Datasets {
         address tokenID; //对应ERC721
     }
 
-    //碎片表结构
+    //碎片结构
     struct Debris {
         uint8 debrisID; //碎片ID
         bytes32 worksID; //作品ID
@@ -36,13 +36,13 @@ library PZB_Datasets {
         uint256 lastTime; //最后一次被购买时间
     }
 
-    //艺术家表结构
+    //艺术家结构
     struct Artist {
         bytes32 artistID; //艺术家ID
         address ethAddress; //钱包地址
     }
 
-    //玩家表结构
+    //玩家结构
     struct Player {
         address ethAddress; //玩家钱包地址
         bytes32 unionID; //唯一父级ID 可以是md5(手机+名字)  
@@ -50,13 +50,13 @@ library PZB_Datasets {
         uint256 time; //创建时间
     }
 
-    //作品与奖池关系表结构
+    //作品与奖池关系结构
     struct Pot {
         bytes32 worksID; //作品ID
         uint256 totalAmount; //总金额
     }
 
-    //碎片交易记录表结构    
+    //碎片交易记录结构    
     struct Transaction {        
         bytes32 worksID; //作品ID
         bytes32 debrisID; //碎片ID
@@ -67,7 +67,7 @@ library PZB_Datasets {
         uint256 time; //创建时间
     }
 
-    //玩家与藏品关系表结构
+    //玩家与藏品关系结构
     struct MyWorks { 
         address playerAddress; //玩家ID
         bytes32 worksID; //碎片ID
@@ -152,15 +152,15 @@ contract PuzzleBID is PZB_Events,Pausable {
     //=========================================================================
     //| Game data 
     //=========================================================================
-    mapping(address => PZB_Datasets.Player) public players; //游戏玩家列表
+    mapping(address => PZB_Datasets.Player) public players; //游戏玩家列
     mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
-    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表
-    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 (worksID => (1 => PZB_Datasets.Debris))
+    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列
+    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列 (worksID => (1 => PZB_Datasets.Debris))
     mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品
 
     mapping(bytes32 => totalAmount) public pots; //各作品奖池 (worksID => totalAmount)
-    mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
-    mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
+    mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列
+    mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列
     uint256 turnover; //游戏总交易额  
 
     //=========================================================================
@@ -321,16 +321,6 @@ contract PuzzleBID is PZB_Events,Pausable {
             //如果是完成了作品，按最后规则
         }
 
-    }
-
-    /**
-     * @dev logic runs whenever a buy order is executed.  determines how to handle 
-     * incoming eth depending on if we are in an active round or not
-     */
-    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
-        private
-    {
-        
     }
 
     /**
