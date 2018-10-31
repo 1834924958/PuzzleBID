@@ -10,47 +10,43 @@ pragma solidity ^0.4.24;
 /**
  * @dev PuzzleBID data structure
  */
-library PZB_Databases {
+library PZB_Datasets {
 
     //作品表结构
     struct Works {
         bytes32 worksID; //作品ID
-        string name; //作品名称
-        string artistID; //归属艺术家ID
+        bytes32 artistID; //归属艺术家ID
         uint8 debrisNum; //分割成游戏碎片总数
-        uint8 initPrice; //初始总价格
+        uint8 price; //价格
         uint256 beginTime; //开售时间
         uint256 endTime; //中止出售时间
         bool isPublish; //是否上架
         address tokenID; //对应ERC721
-        string tokenURI; //资源json {'serial_no':'作品编号', 'profile':'作品简介', 'thumb':'缩略图', 'picture':'作品大图', 'copyright':'数字版权', 'source_file':'作品源文件', 'block_no':'区块高度'}       
-        Debris debris; //碎片
     }
 
     //碎片表结构
     struct Debris {
-        bytes32 debrisID; //碎片ID
-        uint8 serialNo; //碎片编号
+        uint8 debrisID; //碎片ID
         bytes32 worksID; //作品ID
         uint256 initPrice; //初始价格
         uint256 lastPrice; //最新价格
         uint256 buyNum; //被交易总次数
         address firstBuyer; //首发购买者，冗余
         address lastBuyer; //最后一次购买者，冗余
+        uint256 lastTime; //最后一次被购买时间
     }
 
     //艺术家表结构
     struct Artist {
         bytes32 artistID; //艺术家ID
-        string artistName; //归属艺术家名字
         address ethAddress; //钱包地址
     }
 
     //玩家表结构
     struct Player {
         address ethAddress; //玩家钱包地址
-        bytes32 unionID; //唯一父级ID    
-        uint256 referrer; //推荐人
+        bytes32 unionID; //唯一父级ID 可以是md5(手机+名字)  
+        address referrer; //推荐人钱包地址
         uint256 time; //创建时间
     }
 
@@ -80,6 +76,15 @@ library PZB_Databases {
         uint256 time; //创建时间
     }
 
+    //分配规则
+    struct Divies { 
+        address playerAddress; //玩家ID
+        bytes32 worksID; //碎片ID
+        uint256 totalInput; //累计投入
+        uint256 totalOutput; //累计回报
+        uint256 time; //创建时间
+    }
+
 }
 
 /**
@@ -90,30 +95,27 @@ contract PZB_Events {
     event OnRegisterPlayer(
         address indexed ethAddress,
         bytes32 unionID, 
-        uint256 referrer,
-        uint256 time
-    ); //当注册玩家时
+        address indexed referrer,
+        uint256 time); //当注册玩家时
 
     event OnAddWorks(
         bytes32 worksID, 
-        string name, 
         string artistID, 
         uint8 debrisNum, 
-        uint256 initPrice, 
+        uint256 price, 
         uint256 beginTime, 
         bool isPublish, 
-        address tokenID, 
-        string tokenURI
-    ); //当发布作品时
+        address tokenID); //当发布作品时
 
     event OnAddDebris(
-        bytes32 debrisID, 
-        uint8 serialNo, 
-        bytes32 worksID, 
-        uint256 initPrice
-    ); //当分割作品碎片时
+        bytes32 worksID,
+        uint8 debrisNum,
+        uint256 initPrice); //当发布作品并添加碎片时
 
-    event OnAddArtist(); //当添加艺术家时
+    event OnAddArtist(
+        bytes32 _artistID,
+        address _artistAddress); //当添加艺术家时
+        
     event OnTransaction(); //当玩家交易时
     event OnWithdraw(); //当提现时
     event OnUpdatePot(); //当更新总奖池时
@@ -130,29 +132,130 @@ contract PuzzleBID is PZB_Events,Pausable {
     //============================================
     //| Game config
     //============================================
-    string constant public name = "PuzzleBID Official";
+    string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZD";
-    uint256 constant private maxDebris = 6; //作品被分割成最大碎片数
-    uint256 constant private firstRoundBuyNum = maxDebris.mul(1/3); //首发最多能购买的碎片数
-    uint256 constant private freezeTime = 300 seconds; //购买一个作品中的一个碎片后冻结5分钟
+    uint256 constant private maxDebris = 255; //作品被分割成最大碎片数
+    uint256 constant private firstBuyNum = maxDebris.mul(1/3); //首发最多能购买一个作品的碎片数
+    uint256 constant private freezeTime = 300 seconds; //玩家购买一个作品中的一个碎片后冻结5分钟
     uint256 constant private protectTime = 1800 seconds; //碎片保护时间30分钟
     uint256 constant private increaseRatio = 1.1; //碎片价格调整为上一次价格的110%
-    uint256 constant private discountTime = 1 hours; //碎片开始打折时间，被购买1小时后    
+    uint256 constant private discountTime = 3600 seconds; //碎片开始打折时间，被购买1小时后    
     uint256 constant private discountRatio = 0.95; //碎片价格调整为首发价格的95%
 
     //============================================
-    //| Player data 
+    //| Dividend rule
     //============================================
-    mapping(address => PZB_Databases.Player) public players; //游戏玩家列表
-    mapping(bytes32 => mapping(uint256 => PZB_Databases.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
-    mapping(uint256 => PZB_Databases.Works) public works; //作品列表
-    mapping(uint256 => PZB_Databases.Debris) public debris; //作品碎片列表
-    mapping(uint256 => PZB_Databases.Artist) public artists; //艺术家列表
+    uint8 firstAllot[] = [80, 2, 18]; //% 首发购买分配百分比 顺序对应艺术家、平台、奖池
+    uint8 againAllot[] = [10, 2, 65]; //% 再次购买分配百分比 后续购买者、平台、奖池
+    uint8 lastAllot[] = [80, 10, 10]; //% 完成购买分配百分比 游戏完成者、首发购买者、后续其他购买者
+
+    //============================================
+    //| Game data 
+    //============================================
+    mapping(address => PZB_Datasets.Player) public players; //游戏玩家列表
+    mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
+    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表
+    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 (worksID => (1 => PZB_Datasets.Debris))
+    mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品
+
     mapping(bytes32 => totalAmount) public pots; //各作品奖池 (worksID => totalAmount)
-    mapping(uint256 => PZB_Databases.Transaction) public transactions; //交易记录列表
-    mapping(uint256 => PZB_Databases.MyWorks) public myworks; //我的藏品列表
+    mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
+    mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
     uint256 turnover; //游戏总交易额
 
+    //============================================
+    //| Player initialization 
+    //============================================
+    modifier isRegisteredGame()
+    {
+        require(players[msg.sender] != 0);
+        _;
+    }
+
+    //注册游戏玩家
+    function registerPlayer(bytes32 _unionID, address _referrer) external {
+        require(players[msg.sender] == 0);
+        require(_referrer != address(0));
+        uint256 _now = now;
+        players[msg.sender] = PZB_Datasets.Player(_ethAddress, _unionID, _referrer, _now);
+        union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
+        emit OnRegisterPlayer(_ethAddress, _unionID, _referrer, _now);
+    }
+
+    //============================================
+    //| Game initialization
+    //============================================
+    //添加一局游戏 管理员操作
+    function addGame(
+        bytes32 _worksID,
+        bytes32 _artistID, 
+        uint8 _debrisNum, 
+        uint256 _price, 
+        uint256 _beginTime, 
+        address _tokenID,
+        bytes32 _artistID,
+        address _artistAddress
+        ) external {
+
+        require(works[_worksID] == 0, "Existing works~");
+        require(artists[_artistID] == 0, "Existing artist~");
+        require(_debrisNum >= 2 && _debrisNum <= maxDebris, "Out of range~");
+        require(_price > 0, "Must be greater than 0~");   
+        require(_beginTime > 0 && _beginTime > now, "Start time format is incorrect~");     
+                
+        works[_worksID] = PZB_Datasets.Works(
+            _worksID, 
+            _artistID, 
+            _debrisNum, 
+            _price, 
+            _beginTime, 
+            0,
+            false, 
+            _tokenID);  //添加作品  
+
+        emit OnAddWorks(
+            _worksID,
+            _artistID, 
+            _debrisNum, 
+            _price, 
+            _beginTime,
+            0, 
+            false, 
+            _tokenID);  //添加作品事件  
+
+        //初始化作品碎片
+        uint256 initPrice = _price / _debrisNum;
+        for(uint256 i=1; i<=maxDebris; i++) {
+            debris[_worksID][i] = PZB_Datasets.Debris(_worksID, initPrice);
+        } 
+
+        emit OnAddDebris(
+            _worksID,
+            _debrisNum,
+            initPrice
+        ); //添加作品碎片事件
+
+        //初始化艺术家
+        artists[_artistID] = PZB_Datasets.Artist(_artistID, _artistAddress);
+
+        emit OnAddArtist(_artistID, _artistAddress); //添加艺术家事件
+
+        pots[_worksID] = 0; //初始化该作品奖池       
+
+    }
+
+    //发布游戏 管理员操作
+    function publishGame(bytes32 _worksID, uint256 _beginTime) external {
+        require(works[_worksID] != 0 && !works[_worksID].isPublish);
+        if(_beginTime > 0) {
+            works[_worksID].beginTime = _beginTime;
+        }
+        works[_worksID].isPublish = true; //开启这个游戏
+    }
+
+    //============================================
+    //| Game business
+    //============================================
 
     /**
      * @dev prevents contracts from interacting with PuzzleBID 
@@ -179,74 +282,56 @@ contract PuzzleBID is PZB_Events,Pausable {
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
      */
-    function()
-        isActivated()
+    function(bytes32 _workID, uint8 _debrisID)
         isHuman()
         isWithinLimits(msg.value)
+        isRegisteredGame()
         public
         payable
     {
-
+        buyCore(bytes32 _workID, uint8 _debrisID);
     }
 
-    //============================================
-    //| Player business 
-    //============================================
-    modifier isRegisteredGame()
+    function buyCore(bytes32 _workID, uint8 _debrisID) 
+        isHuman()
+        isWithinLimits(msg.value)
+        isRegisteredGame()
+        public
+        payable
     {
-        require(players[msg.sender] != 0);
-        _;
-    }
+        uint256 _now = now; //记录当前时间
+        require(works[_workID] != 0); //检查该作品游戏是否存在
+        require(debris[_workID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
+        require(works[_workID].isPublish && works[_workID].beginTime <= _now); //检查该作品游戏是否发布并开始
+        //检查玩家是否第一次购买该作品碎片
 
-    //注册游戏玩家
-    function registerPlayer(address _ethAddress, bytes32 _unionID, uint256 _referrer) external {
-        require(players[msg.sender] == 0);
-        uint256 _now = now;
-        players[msg.sender] = PZB_Databases.Player(_ethAddress, _unionID, _referrer, _now);
-        union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
-        emit OnRegisterPlayer(_ethAddress, _unionID, _referrer, _now);
-    }
-
-
-    //============================================
-    //| Works business 
-    //============================================
-    //添加游戏作品
-    function addWorks(
-        bytes32 _worksID, 
-        string _name, 
-        string _artistID, 
-        uint8 _debrisNum, 
-        uint256 _initPrice, 
-        uint256 _beginTime, 
-        bool _isPublish, 
-        address _tokenID, 
-        string _tokenURI) external {
-
-        require(works[_worksID] == 0);
-        require(_debrisNum <= maxDebris);
-        require(_initPrice > 0);        
+        require(); //检查玩家购买该作品碎片是否超过1/3限制
+        //检查玩家是否在5分钟内再次购买该作品
         
-        works[_worksID] = PZB_Databases.Works(_worksID, _name, _artistID, _debrisNum, _initPrice, _beginTime, _isPublish, _tokenID, _tokenURI);
-        emit OnAddWorks(_worksID, _name, _artistID, _debrisNum, _initPrice, _beginTime, _isPublish, _tokenID, _tokenURI);
-        pots[_worksID] = 0; //初始化该作品奖池总计
-        //初始化作品碎片
+        require(debris[_workID][_debrisID].lastTime + protectTime < _now); //检查作品是否在30分钟保护期内
 
+        
+        //检查当前账号有没有购买行为，如果有，有没有过5分钟
+        
+        if(true) { //如果是首发购买，按首发规则
+
+        } else if () { //如果是再次购买，按再次规则
+
+        } else {
+            //如果是完成了作品，按最后规则
+        }
+        
     }
 
-    //添加游戏碎片
-    function addDebris(
-        bytes32 _debrisID,
-        uint8 _serialNo,
-        bytes32 _worksID,
-        uint256 _initPrice) external {
-
-        require(debris[_debrisID] == 0);
-        debris[_debrisID] = PZB_Databases.Debris(_debrisID, _serialNo, _worksID, _initPrice);
-        emit OnAddDebris(_debrisID, _serialNo, _worksID, _initPrice);
+    /**
+     * @dev logic runs whenever a buy order is executed.  determines how to handle 
+     * incoming eth depending on if we are in an active round or not
+     */
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
+        private
+    {
+        
     }
-
-    
 
     /**
      * @dev returns time left.  dont spam this, you'll ddos yourself from your node 
