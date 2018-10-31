@@ -129,9 +129,9 @@ contract PZB_Events {
 contract PuzzleBID is PZB_Events,Pausable {
     using SafeMath for *;
 
-    //============================================
+    //=========================================================================
     //| Game config
-    //============================================
+    //=========================================================================
     string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZD";
     uint256 constant private maxDebris = 255; //作品被分割成最大碎片数
@@ -142,16 +142,16 @@ contract PuzzleBID is PZB_Events,Pausable {
     uint256 constant private discountTime = 3600 seconds; //碎片开始打折时间，被购买1小时后    
     uint256 constant private discountRatio = 0.95; //碎片价格调整为首发价格的95%
 
-    //============================================
+    //=========================================================================
     //| Dividend rule
-    //============================================
+    //=========================================================================
     uint8 firstAllot[] = [80, 2, 18]; //% 首发购买分配百分比 顺序对应艺术家、平台、奖池
     uint8 againAllot[] = [10, 2, 65]; //% 再次购买分配百分比 后续购买者、平台、奖池
     uint8 lastAllot[] = [80, 10, 10]; //% 完成购买分配百分比 游戏完成者、首发购买者、后续其他购买者
 
-    //============================================
+    //=========================================================================
     //| Game data 
-    //============================================
+    //=========================================================================
     mapping(address => PZB_Datasets.Player) public players; //游戏玩家列表
     mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 比如 md5(手机号码) => Player 
     mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表
@@ -163,9 +163,9 @@ contract PuzzleBID is PZB_Events,Pausable {
     mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
     uint256 turnover; //游戏总交易额  
 
-    //============================================
+    //=========================================================================
     //| Player initialization 
-    //============================================
+    //=========================================================================
     modifier isRegisteredGame()
     {
         require(players[msg.sender] != 0);
@@ -182,9 +182,9 @@ contract PuzzleBID is PZB_Events,Pausable {
         emit OnRegisterPlayer(_ethAddress, _unionID, _referrer, _now);
     }
 
-    //============================================
+    //=========================================================================
     //| Game initialization
-    //============================================
+    //=========================================================================
     //添加一局游戏 管理员操作
     function addGame(
         bytes32 _worksID,
@@ -253,9 +253,9 @@ contract PuzzleBID is PZB_Events,Pausable {
         works[_worksID].isPublish = true; //开启这个游戏
     }
 
-    //============================================
+    //=========================================================================
     //| Game business
-    //============================================
+    //=========================================================================
 
     /**
      * @dev prevents contracts from interacting with PuzzleBID 
