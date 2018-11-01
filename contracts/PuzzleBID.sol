@@ -16,11 +16,12 @@ library PZB_Datasets {
         bytes32 worksID; //作品ID
         bytes32 artistID; //归属艺术家ID
         uint8 debrisNum; //分割成游戏碎片总数
-        uint8 price; //价格
+        uint256 price; //价格
         uint256 beginTime; //开售时间
         uint256 endTime; //中止出售时间
         bool isPublish; //是否上架
         address tokenID; //对应ERC721
+        uint8 firstBuyLimit; //首发最多能购买碎片数
     }
 
     //碎片结构
@@ -75,6 +76,13 @@ library PZB_Datasets {
         uint256 time; //创建时间
     }
 
+    //玩家对作品购买行为的单元统计
+    struct unitCount {
+        uint256 lastTime; //同一作品同一玩家，最后一次购买时间
+        uint8 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
+        uint8 totalDebris; //同一作品同一玩家，购买的碎片小计，用于判断是否完成了游戏
+    }
+
 }
 
 /**
@@ -95,7 +103,8 @@ contract PZB_Events {
         uint256 price, 
         uint256 beginTime, 
         bool isPublish, 
-        address tokenID); //当发布作品时
+        address tokenID,
+        uint8 firstBuyLimit); //当发布作品时
 
     event OnAddDebris(
         bytes32 worksID,
@@ -125,13 +134,11 @@ contract PuzzleBID is PZB_Events,Pausable {
     //=========================================================================
     string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZD";
-    uint8 constant private maxDebris = 6; //作品被分割成最大碎片数
-    uint8 constant private firstBuyNum = 2; //首发最多能购买一个作品的碎片数
     uint256 constant private freezeTime = 300 seconds; //玩家购买一个作品中的一个碎片后冻结5分钟
     uint256 constant private protectTime = 1800 seconds; //碎片保护时间30分钟
     uint256 constant private increaseRatio = 110; //% 碎片价格调整为上一次价格的110%
     uint256 constant private discountTime = 3600 seconds; //碎片开始打折时间，被购买1小时后    
-    uint8 constant private discountRatio = 95; //% 碎片价格调整为首发价格的95%
+    uint256 constant private discountRatio = 95; //% 碎片价格调整为首发价格的95%
 
     //=========================================================================
     //| Dividend rule
@@ -149,10 +156,15 @@ contract PuzzleBID is PZB_Events,Pausable {
     mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
     mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
 
-    mapping(bytes32 => totalAmount) public pots; //各作品奖池 如(worksID => totalAmount)
+    mapping(bytes32 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
     mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
     mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
-    uint256 public turnover; //游戏总交易额  
+    uint256 public turnover; //游戏总交易额
+
+    //玩家购买记录检索表
+    mapping(address => (bytes32 => PZB_Datasets.unitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.unitCount))
+    
+
 
     //=========================================================================
     //| Player initialization 
@@ -185,8 +197,8 @@ contract PuzzleBID is PZB_Events,Pausable {
         uint256 _beginTime, 
         address _tokenID,
         bytes32 _artistID,
-        address _artistAddress
-        ) external {
+        address _artistAddress,
+        uint8 _firstBuyLimit) external {
 
         require(works[_worksID] == 0, "Existing works~");
         require(artists[_artistID] == 0, "Existing artist~");
@@ -202,7 +214,8 @@ contract PuzzleBID is PZB_Events,Pausable {
             _beginTime, 
             0,
             false, 
-            _tokenID);  //添加作品  
+            _tokenID,
+            _firstBuyLimit);  //添加作品  
 
         emit OnAddWorks(
             _worksID,
@@ -212,11 +225,12 @@ contract PuzzleBID is PZB_Events,Pausable {
             _beginTime,
             0, 
             false, 
-            _tokenID);  //添加作品事件  
+            _tokenID,
+            _firstBuyLimit);  //添加作品事件  
 
         //初始化作品碎片
         uint256 initPrice = _price / _debrisNum;
-        for(uint256 i=1; i<=maxDebris; i++) {
+        for(uint256 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i] = PZB_Datasets.Debris(_worksID, initPrice);
         } 
 
@@ -273,17 +287,17 @@ contract PuzzleBID is PZB_Events,Pausable {
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
      */
-    function(bytes32 _workID, uint8 _debrisID)
+    function(bytes32 _worksID, uint8 _debrisID)
         isHuman()
         isWithinLimits(msg.value)
         isRegisteredGame()
         public
         payable
     {
-        buyCore(bytes32 _workID, uint8 _debrisID);
+        buyCore(bytes32 _worksID, uint8 _debrisID);
     }
 
-    function buyCore(bytes32 _workID, uint8 _debrisID) 
+    function buyCore(bytes32 _worksID, uint8 _debrisID) 
         isHuman()
         isWithinLimits(msg.value)
         isRegisteredGame()
@@ -291,20 +305,30 @@ contract PuzzleBID is PZB_Events,Pausable {
         payable
     {
         uint256 _now = now; //记录当前时间
-        require(works[_workID] != 0); //检查该作品游戏是否存在
-        require(debris[_workID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
-        require(works[_workID].isPublish && works[_workID].beginTime <= _now); //检查该作品游戏是否发布并开始
-        require(debris[_workID][_debrisID].lastTime + protectTime < _now); //检查作品是否在30分钟保护期内
+        //检查该作品碎片能不能被买
+        require(works[_worksID] != 0); //检查该作品游戏是否存在
+        require(debris[_worksID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
+        require(works[_worksID].isPublish && works[_worksID].beginTime <= _now); //检查该作品游戏是否发布并开始
+        require(debris[_worksID][_debrisID].lastTime + protectTime < _now); //检查该作品碎片是否在30分钟保护期内
+        //检查玩家能不能买该作品碎片
+        require(playerBuy[msg.value][_worksID] != 0 && playerBuy[msg.value][_worksID].lastTime + freezeTime < _now); //检查同一作品同一玩家是否过冻结期
 
-        require(); //检查玩家是否第一次购买该作品碎片
+        bool isFirstLimit = false; //检查是否达到首发购买限制 true为已经达到
+        if(playerBuy[msg.value][_worksID] != 0 && playerBuy[msg.value][_worksID].firstBuyNum + 1 > works[_worksID].firstBuyLimit) {
+            isFirstLimit = true;
+        }
+        bool isSecondhand = false; //检查该作品碎片是否为二手交易
+        if(debris[_worksID][_debrisID].buyNum > 0) {
+            isSecondhand = true;
+        }
 
-        require(); //检查玩家购买该作品碎片是否超过1/3限制
-        //检查玩家是否在5分钟内再次购买该作品
-        
+        require(isFirstLimit && isSecondhand); //阻止超出首发购买限制
         
 
+        require(); //检查玩家是否第一次购买该作品碎片 ***
+
         
-        //检查当前账号有没有购买行为，如果有，有没有过5分钟
+        //检查当前账号有没有购买行为，如果有，有没有过5分钟  ***
 
         //涨价 or 降价  支付的够不够？
         
