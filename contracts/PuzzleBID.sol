@@ -367,9 +367,13 @@ contract PuzzleBID is PZB_Events,Pausable {
 
             } else { //无溢价，把此次打折后的ETH全额给上一买家
                 debris[_worksID][_debrisID].lastBuyer.transfer(debris[_worksID][_debrisID].lastPrice);
-            }          
+            }    
 
             //如果收集碎片完成，按最后规则
+            //首发分玩家统计
+            for(uint8 i=1; i<0; i++) {
+                
+            }
 
 
             //处理成我的藏品
