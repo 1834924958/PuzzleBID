@@ -305,16 +305,19 @@ contract PuzzleBID is PZB_Events,Pausable {
         payable
     {
         uint256 _now = now; //记录当前时间
+
         //检查该作品碎片能不能被买
         require(works[_worksID] != 0); //检查该作品游戏是否存在
         require(debris[_worksID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
         require(works[_worksID].isPublish && works[_worksID].beginTime <= _now); //检查该作品游戏是否发布并开始
-        require(debris[_worksID][_debrisID].lastTime + protectTime < _now); //检查该作品碎片是否在30分钟保护期内
+        require(works[_worksID].endTime == 0)//检查该作品游戏是否已结束
+        require(debris[_worksID][_debrisID].lastTime.add(protectTime) < _now); //检查该作品碎片是否在30分钟保护期内
+        
         //检查玩家能不能买该作品碎片
-        require(playerBuy[msg.value][_worksID] != 0 && playerBuy[msg.value][_worksID].lastTime + freezeTime < _now); //检查同一作品同一玩家是否过冻结期
+        require(playerBuy[msg.sender][_worksID] != 0 && playerBuy[msg.sender][_worksID].lastTime.add(freezeTime)  < _now); //检查同一作品同一玩家是否超过5分钟冻结期
 
         bool isFirstLimit = false; //检查是否达到首发购买限制 true为已经达到
-        if(playerBuy[msg.value][_worksID] != 0 && playerBuy[msg.value][_worksID].firstBuyNum + 1 > works[_worksID].firstBuyLimit) {
+        if(playerBuy[msg.sender][_worksID] != 0 && playerBuy[msg.sender][_worksID].firstBuyNum.add(1) > works[_worksID].firstBuyLimit) {
             isFirstLimit = true;
         }
         bool isSecondhand = false; //检查该作品碎片是否为二手交易
@@ -322,26 +325,53 @@ contract PuzzleBID is PZB_Events,Pausable {
             isSecondhand = true;
         }
 
-        require(isFirstLimit && isSecondhand); //阻止超出首发购买限制
+        require(isFirstLimit && isSecondhand); //限制首发购买超出情况
         
+        //涨价 or 降价 首发忽略
+        if(isSecondhand && debris[_worksID][_debrisID].lastTime.add(discountTime) < _now) { //降价
+            debris[_worksID][_debrisID].lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
+        } else if (isSecondhand) { //涨价
+            debris[_worksID][_debrisID].lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
+        }
 
-        require(); //检查玩家是否第一次购买该作品碎片 ***
+        require(msg.value >= debris[_worksID][_debrisID].lastPrice); //支付的ETH够不够？
 
-        
-        //检查当前账号有没有购买行为，如果有，有没有过5分钟  ***
+        //分脏
+        uint256 yang = 1;
+        if(!isSecondhand) { //如果是首发购买，按首发规则
 
-        //涨价 or 降价  支付的够不够？
-        
-        if(true) { //如果是首发购买，按首发规则
+        } else { 
+            //如果是再次购买，按再次规则
 
-        } else if () { //如果是再次购买，按再次规则
 
-        } else {
             //如果是完成了作品，按最后规则
             //处理成我的藏品
         }
+
         //累计当前作品的奖池
-        //累加交易额turnover
+        pots[_worksID] = pots[_worksID].add(msg.value); //待修改计算出来的值 
+
+        //累计交易额
+        turnover = turnover.add(msg.value);
+
+        //交易完成后需要更新的数据
+        if(!isSecondhand) { //碎片首发
+            debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1);
+            debris[_worksID][_debrisID].lastTime = _now;
+            debris[_worksID][_debrisID].firstBuyer = msg.sender;
+            debris[_worksID][_debrisID].lastBuyer = msg.sender;
+            //lastPrice 已更新
+        }
+
+        //playerBuy[msg.value][_worksID].lastTime
+        //playerBuy[msg.value][_worksID].firstBuyNum
+        //debris[_worksID][_debrisID].buyNum
+        //debris[_worksID][_debrisID].lastTime
+        //debris[_worksID][_debrisID].lastPrice
+        //debris[_worksID][_debrisID].firstBuyer
+        //debris[_worksID][_debrisID].lastBuyer
+
+        // works[_worksID].endTime = _now;
 
     }
 
