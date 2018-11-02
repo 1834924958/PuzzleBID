@@ -80,7 +80,7 @@ library PZB_Datasets {
     struct unitCount {
         uint256 lastTime; //同一作品同一玩家，最后一次购买时间
         uint8 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
-        uint8 totalDebris; //同一作品同一玩家，购买的碎片小计，用于判断是否完成了游戏
+        mapping(uint256 => uint256) debrisID; //同一作品同一玩家，购买的碎片号，用于判断是否完成了游戏
     }
 
 }
@@ -152,14 +152,14 @@ contract PuzzleBID is PZB_Events,Pausable {
     //| Game data 
     //=========================================================================
     mapping(address => PZB_Datasets.Player) public players; //游戏玩家
-    mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
+    //mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
     mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
     mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
     mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
 
     mapping(bytes32 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
     mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
-    mapping(uint256 => PZB_Datasets.MyWorks) public myworks; //我的藏品列表
+    mapping(address => mapping(bytes32 => PZB_Datasets.MyWorks)) public myworks; //我的藏品列表 (playerAddress => (worksID => PZB_Datasets.MyWorks))
     uint256 public turnover; //游戏总交易额
 
     //玩家购买记录检索表
@@ -308,6 +308,7 @@ contract PuzzleBID is PZB_Events,Pausable {
         payable
     {
         uint256 _now = now; //记录当前时间
+        uint256 i; //循环变量
 
         //检查该作品碎片能不能被买
         require(works[_worksID] != 0); //检查该作品游戏是否存在
@@ -318,6 +319,7 @@ contract PuzzleBID is PZB_Events,Pausable {
         
         //检查玩家能不能买该作品碎片
         require(playerBuy[msg.sender][_worksID] != 0 && playerBuy[msg.sender][_worksID].lastTime.add(freezeTime)  < _now); //检查同一作品同一玩家是否超过5分钟冻结期
+        playerBuy[msg.value][_worksID].lastTime = _now;
 
         bool isFirstLimit = false; //检查是否达到首发购买限制 true为已经达到
         if(playerBuy[msg.sender][_worksID] != 0 && playerBuy[msg.sender][_worksID].firstBuyNum.add(1) > works[_worksID].firstBuyLimit) {
@@ -330,7 +332,7 @@ contract PuzzleBID is PZB_Events,Pausable {
 
         require(isFirstLimit && isSecondhand); //限制首发购买超出情况
         
-        //涨价 or 降价 首发忽略
+        //更新碎片价格 涨价 or 降价 首发忽略
         uint256 oldPrice = debris[_worksID][_debrisID].lastPrice;
         if(isSecondhand && oldPrice.add(discountTime) < _now) { //降价
             debris[_worksID][_debrisID].lastPrice = oldPrice.mul(discountRatio / 100);
@@ -340,15 +342,24 @@ contract PuzzleBID is PZB_Events,Pausable {
 
         require(msg.value >= debris[_worksID][_debrisID].lastPrice); //支付的ETH够不够？
 
-        
-        bool isFinish = false; //游戏完成标志
+        //更新统计
+        debris[_worksID][_debrisID].lastBuyer = msg.sender; //更新归属
+        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1);
+        debris[_worksID][_debrisID].lastTime = _now;
+
+        //累计交易额
+        turnover = turnover.add(msg.value);
+
         //分分分
         if(!isSecondhand) { //如果是首发购买，按首发规则
+            debris[_worksID][_debrisID].firstBuyer = msg.sender;
             artists[works[_worksID].artistID].ethAddress.transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 艺术家
             puzzlebidAddress.transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 平台
             pots[_worksID] = pots[_worksID].add(msg.value.mul(firstAllot[2]) / 100); //销售价的18% 奖池 即当前合约地址
+            playerBuy[msg.value][_worksID].firstBuyNum = playerBuy[msg.value][_worksID].firstBuyNum.add(1); //更新同一作品同一玩家首发购买数
 
         } else { 
+
             //如果是再次购买，按再次规则
             if(debris[_worksID][_debrisID].lastPrice > oldPrice) { //有溢价才分分分
                 uint265 overflow = debris[_worksID][_debrisID].lastPrice.sub(oldPrice); //计算溢价
@@ -365,34 +376,46 @@ contract PuzzleBID is PZB_Events,Pausable {
                 uint265 last = debris[_worksID][_debrisID].lastPrice.sub(income1).sub(income2).sub(income3);
                 debris[_worksID][_debrisID].lastBuyer.transfer(last); //剩余部分归上一买家
 
-            } else { //无溢价，把此次打折后的ETH全额给上一买家
+            } else { //无溢价，把此次打折后的ETH全额转给上一买家
                 debris[_worksID][_debrisID].lastBuyer.transfer(debris[_worksID][_debrisID].lastPrice);
-            }    
-
-            //如果收集碎片完成，按最后规则
-            //首发分玩家统计
-            for(uint8 i=1; i<0; i++) {
-                
             }
-
-
-            //处理成我的藏品
-        }
-
-        //累计当前作品的奖池
-        pots[_worksID] = pots[_worksID].add(msg.value); //待修改计算出来的值 
-
-        //累计交易额
-        turnover = turnover.add(msg.value);
-
-        //交易完成后需要更新的数据
-        if(!isSecondhand) { //碎片首发
-            debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1);
-            debris[_worksID][_debrisID].lastTime = _now;
-            debris[_worksID][_debrisID].firstBuyer = msg.sender;
+            
             debris[_worksID][_debrisID].lastBuyer = msg.sender;
-            //lastPrice 已更新
+
+            //检查是否收集齐了
+            bool isFinish = true; //游戏完成标志
+            i = 1;
+            while(i<=works[_worksID].debrisNum) {
+                if(debris[_worksID][_debrisID].lastBuyer != msg.sender) {
+                    isFinish = false;
+                    break;
+                }
+                i++;
+            }
+            if(isFinish) { //游戏结束
+                works[_worksID].endTime = _now;
+                //如果收集碎片完成，按最后规则
+                msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //奖池的80% 最后一次购买者
+
+                //首发玩家统计
+                mapping(address => uint256) memory tmp; 
+                for(uint8 i=1; i<works[_worksID].debrisNum; i++) {
+                    
+                }
+
+                //后续玩家统计
+                
+                //处理成我的藏品
+                myworks[msg.sender][_worksID] = PZB_Datasets.MyWorks(msg.sender, _worksID, 0, 0, _now);
+            }
+            
+
         }
+
+        
+
+        
+
 
         //playerBuy[msg.value][_worksID].lastTime
         //playerBuy[msg.value][_worksID].firstBuyNum
@@ -401,9 +424,10 @@ contract PuzzleBID is PZB_Events,Pausable {
         //debris[_worksID][_debrisID].lastPrice
         //debris[_worksID][_debrisID].firstBuyer
         //debris[_worksID][_debrisID].lastBuyer
-        if(isFinish) { //游戏结束
-            works[_worksID].endTime = _now;
-        }
+        
+        
+        //playerBuy[debris[_worksID][_debrisID].lastBuyer][_worksID].totalDebris = playerBuy[debris[_worksID][_debrisID].lastBuyer][_worksID].totalDebris.sub(1);
+
 
     }
 
