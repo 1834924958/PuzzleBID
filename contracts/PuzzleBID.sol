@@ -79,7 +79,7 @@ library PZB_Datasets {
     //玩家对作品购买行为的单元统计
     struct unitCount {
         uint256 lastTime; //同一作品同一玩家，最后一次购买时间
-        uint8 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
+        uint256 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
         mapping(uint256 => uint256) debrisID; //同一作品同一玩家，购买的碎片号，用于判断是否完成了游戏
         uint256 secondAmount; //二手购买总计
     }
@@ -99,7 +99,7 @@ contract PZB_Events {
 
     event OnAddWorks(
         bytes32 worksID, 
-        string artistID, 
+        bytes32 artistID, 
         uint8 debrisNum, 
         uint256 price, 
         uint256 beginTime, 
@@ -127,7 +127,7 @@ contract PZB_Events {
  * @dev PuzzleBID Game Contract
  * @author Simon<vsiryxm@163.com>
  */
-contract PuzzleBID is PZB_Events,Pausable {
+contract PuzzleBID is PZB_Events {
     using SafeMath for *;
 
     //=========================================================================
@@ -166,7 +166,7 @@ contract PuzzleBID is PZB_Events,Pausable {
     mapping(bytes32 => address) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
 
     //玩家购买记录检索表
-    mapping(address => (bytes32 => PZB_Datasets.unitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.unitCount))
+    mapping(address => mapping(bytes32 => PZB_Datasets.unitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.unitCount))
     
     constructor(address _platform) public {
         puzzlebidAddress = _platform; //游戏平台钱包地址
@@ -177,18 +177,18 @@ contract PuzzleBID is PZB_Events,Pausable {
     //=========================================================================
     modifier isRegisteredGame()
     {
-        require(players[msg.sender] != 0);
+        //require(players[msg.sender] != 0);
         _;
     }
 
     //注册游戏玩家
     function registerPlayer(bytes32 _unionID, address _referrer) external {
-        require(players[msg.sender] == 0);
+        //require(players[msg.sender] == 0);
         require(_referrer != address(0));
         uint256 _now = now;
-        players[msg.sender] = PZB_Datasets.Player(_ethAddress, _unionID, _referrer, _now);
-        union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
-        emit OnRegisterPlayer(_ethAddress, _unionID, _referrer, _now);
+        players[msg.sender] = PZB_Datasets.Player(msg.sender, _unionID, _referrer, _now);
+        //union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
+        emit OnRegisterPlayer(msg.sender, _unionID, _referrer, _now);
     }
 
     //=========================================================================
@@ -202,16 +202,17 @@ contract PuzzleBID is PZB_Events,Pausable {
         uint256 _price, 
         uint256 _beginTime, 
         address _tokenID,
-        bytes32 _artistID,
         address _artistAddress,
-        uint8 _firstBuyLimit) external {
+        uint8 _firstBuyLimit) public {
 
-        require(works[_worksID] == 0);
-        require(artists[_artistID] == 0);
+        //require(works[_worksID] == 0);
+        //require(artists[_artistID] == 0);
         require(_debrisNum >= 2 && _debrisNum < 256);
         require(_price > 0);   
         require(_beginTime > 0 && _beginTime > now); 
-                
+        
+        uint256 i;
+        
         works[_worksID] = PZB_Datasets.Works(
             _worksID, 
             _artistID, 
@@ -229,15 +230,16 @@ contract PuzzleBID is PZB_Events,Pausable {
             _debrisNum, 
             _price, 
             _beginTime,
-            0, 
-            false, 
+            false,
             _tokenID,
             _firstBuyLimit);  //添加作品事件  
 
         //初始化作品碎片
+        
         uint256 initPrice = _price / _debrisNum;
-        for(uint256 i=1; i<=_debrisNum; i++) {
-            debris[_worksID][i] = PZB_Datasets.Debris(_worksID, initPrice);
+        for(i=1; i<=_debrisNum; i++) {
+            debris[_worksID][uint8(i)].worksID = _worksID;
+            debris[_worksID][uint8(i)].initPrice = initPrice;
         } 
 
         emit OnAddDebris(
@@ -257,7 +259,7 @@ contract PuzzleBID is PZB_Events,Pausable {
 
     //发布游戏 管理员操作
     function publishGame(bytes32 _worksID, uint256 _beginTime) external {
-        require(works[_worksID] != 0 && !works[_worksID].isPublish);
+        //require(works[_worksID] != 0 && !works[_worksID].isPublish);
         if(_beginTime > 0) {
             works[_worksID].beginTime = _beginTime;
         }
@@ -290,17 +292,14 @@ contract PuzzleBID is PZB_Events,Pausable {
         _;    
     }
 
-    /**
-     * @dev emergency buy uses last stored affiliate ID and team snek
-     */
-    function(bytes32 _worksID, uint8 _debrisID)
+    function()
         isHuman()
         isWithinLimits(msg.value)
         isRegisteredGame()
         public
         payable
     {
-        buyCore(bytes32 _worksID, uint8 _debrisID);
+        //buyCore(bytes32 _worksID, uint8 _debrisID);
     }
 
     function buyCore(bytes32 _worksID, uint8 _debrisID) 
@@ -314,18 +313,20 @@ contract PuzzleBID is PZB_Events,Pausable {
         uint256 i; //循环变量
 
         //检查该作品碎片能不能被买
-        require(works[_worksID] != 0); //检查该作品游戏是否存在
-        require(debris[_worksID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
+        //require(works[_worksID] != 0); //检查该作品游戏是否存在
+        //require(debris[_worksID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
         require(works[_worksID].isPublish && works[_worksID].beginTime <= _now); //检查该作品游戏是否发布并开始
         require(works[_worksID].endTime == 0); //检查该作品游戏是否已结束
         require(debris[_worksID][_debrisID].lastTime.add(protectTime) < _now); //检查该作品碎片是否在30分钟保护期内
         
         //检查玩家能不能买该作品碎片
-        require(playerBuy[msg.sender][_worksID] != 0 && playerBuy[msg.sender][_worksID].lastTime.add(freezeTime)  < _now); //检查同一作品同一玩家是否超过5分钟冻结期
-        playerBuy[msg.value][_worksID].lastTime = _now;
+        //playerBuy[msg.sender][_worksID] != 0 && 
+        require(playerBuy[msg.sender][_worksID].lastTime.add(freezeTime)  < _now); //检查同一作品同一玩家是否超过5分钟冻结期
+        playerBuy[msg.sender][_worksID].lastTime = _now;
 
         bool isFirstLimit = false; //检查是否达到首发购买限制 true为已经达到
-        if(playerBuy[msg.sender][_worksID] != 0 && playerBuy[msg.sender][_worksID].firstBuyNum.add(1) > works[_worksID].firstBuyLimit) {
+        //playerBuy[msg.sender][_worksID] != 0 && 
+        if(playerBuy[msg.sender][_worksID].firstBuyNum.add(1) > works[_worksID].firstBuyLimit) {
             isFirstLimit = true;
         }
         bool isSecondhand = false; //检查该作品碎片是否为二手交易
@@ -349,6 +350,7 @@ contract PuzzleBID is PZB_Events,Pausable {
         debris[_worksID][_debrisID].lastBuyer = msg.sender; //更新归属
         debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1);
         debris[_worksID][_debrisID].lastTime = _now;
+        playerBuy[msg.value][_worksID].lastTime = _now;
 
         //更新所有作品累计交易额
         turnover = turnover.add(msg.value);
@@ -375,7 +377,7 @@ contract PuzzleBID is PZB_Events,Pausable {
             
             //如果是再次购买，按再次规则
             if(debris[_worksID][_debrisID].lastPrice > oldPrice) { //有溢价才分分分
-                uint265 overflow = debris[_worksID][_debrisID].lastPrice.sub(oldPrice); //计算溢价
+                uint256 overflow = debris[_worksID][_debrisID].lastPrice.sub(oldPrice); //计算溢价
 
                 uint256 income1 = overflow.mul(againAllot[0]) / 100;
                 artists[works[_worksID].artistID].ethAddress.transfer(income1); //溢价的10% 艺术家
@@ -386,7 +388,7 @@ contract PuzzleBID is PZB_Events,Pausable {
                 uint256 income3 = overflow.mul(againAllot[2]) / 100;
                 pots[_worksID] = pots[_worksID].add(income3); //溢价的18% 奖池
 
-                uint265 last = debris[_worksID][_debrisID].lastPrice.sub(income1).sub(income2).sub(income3);
+                uint256 last = debris[_worksID][_debrisID].lastPrice.sub(income1).sub(income2).sub(income3);
                 debris[_worksID][_debrisID].lastBuyer.transfer(last); //剩余部分归上一买家
 
             } else { //无溢价，把此次打折后的ETH全额转给上一买家
@@ -409,8 +411,8 @@ contract PuzzleBID is PZB_Events,Pausable {
                 msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //奖池的80% 最后一次购买者
 
                 //首发玩家统计发放
-                mapping(address => uint256) memory tmp;
-                address[] memory firstAddress;
+                mapping(address => uint256) tmp;
+                address[] firstAddress;
                 for(i=1; i<works[_worksID].debrisNum; i++) {
                     if(tmp[debris[_worksID][_debrisID].lastBuyer] == 0 ) {
                         firstAddress.push(debris[_worksID][_debrisID].lastBuyer);
@@ -422,146 +424,19 @@ contract PuzzleBID is PZB_Events,Pausable {
                 }
 
                 //后续玩家统计发放
-                address[] tmpAddress = secondAddress[_worksID];
+                address[] memory tmpAddress = secondAddress[_worksID];
                 for(i=0; i<=tmpAddress.length; i++) {
                     tmpAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(playerBuy[tmpAddress[i]][_worksID].secondAmount) / worksTurnover[_worksID].sub(works[_worksID].price));
                 }
                 
                 //处理成我的藏品
                 myworks[msg.sender][_worksID] = PZB_Datasets.MyWorks(msg.sender, _worksID, 0, 0, _now);
-            }
-            
+            }            
 
         }
 
-               
-
-
-        //playerBuy[msg.value][_worksID].lastTime
-        //playerBuy[msg.value][_worksID].firstBuyNum
-        //debris[_worksID][_debrisID].buyNum
-        //debris[_worksID][_debrisID].lastTime
-        //debris[_worksID][_debrisID].lastPrice
-        //debris[_worksID][_debrisID].firstBuyer
-        //debris[_worksID][_debrisID].lastBuyer
-        
-        
-        //playerBuy[debris[_worksID][_debrisID].lastBuyer][_worksID].totalDebris = playerBuy[debris[_worksID][_debrisID].lastBuyer][_worksID].totalDebris.sub(1);
-
-
     }
 
-    /**
-     * @dev returns time left.  dont spam this, you'll ddos yourself from your node 
-     * provider
-     * -functionhash- 0xc7e284b8
-     * @return time left in seconds
-     */
-    function getTimeLeft()
-        public
-        view
-        returns(uint256)
-    {
-        // setup local rID
-        uint256 _rID = rID_;
-        
-        // grab time
-        uint256 _now = now;
-        
-        if (_now < round_[_rID].end)
-            if (_now > round_[_rID].strt + rndGap_)
-                return( (round_[_rID].end).sub(_now) );
-            else
-                return( (round_[_rID].strt + rndGap_).sub(_now) );
-        else
-            return(0);
-    }
-
-
-    /**
-     * @dev return the price buyer will pay for next 1 individual key.
-     * -functionhash- 0x018a25e8
-     * @return price for next key bought (in wei format)
-     */
-    function getBuyPrice()
-        public 
-        view 
-        returns(uint256)
-    {  
-        // setup local rID
-        uint256 _rID = rID_;
-        
-        // grab time
-        uint256 _now = now;
-        
-        // are we in a round?
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
-            return ( (round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000) );
-        else // rounds over.  need price for new round
-            return ( 75000000000000 ); // init
-    }
-
-    /**
-     * @dev returns player info based on address.  if no address is given, it will 
-     * use msg.sender 
-     * -functionhash- 0xee0b5d8b
-     * @param _addr address of the player you want to lookup 
-     * @return player ID 
-     * @return player name
-     * @return keys owned (current round)
-     * @return winnings vault
-     * @return general vault 
-     * @return affiliate vault 
-	 * @return player round eth
-     */
-    function getPlayerInfoByAddress(address _addr)
-        public 
-        view 
-        returns(uint256, bytes32, uint256, uint256, uint256, uint256, uint256)
-    {
-        // setup local rID
-        uint256 _rID = rID_;
-        
-        if (_addr == address(0))
-        {
-            _addr == msg.sender;
-        }
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        return
-        (
-            _pID,                               //0
-            plyr_[_pID].name,                   //1
-            plyrRnds_[_pID][_rID].keys,         //2
-            plyr_[_pID].win,                    //3
-            (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),       //4
-            plyr_[_pID].aff,                    //5
-            plyrRnds_[_pID][_rID].eth           //6
-        );
-    }
-
-    /**
-     * @dev updates round timer based on number of whole keys bought.
-     */
-    function updateTimer(uint256 _keys, uint256 _rID)
-        private
-    {
-        // grab time
-        uint256 _now = now;
-        
-        // calculate time based on number of keys bought
-        uint256 _newTime;
-        if (_now > round_[_rID].end && round_[_rID].plyr == 0)
-            _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(_now);
-        else
-            _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(round_[_rID].end);
-        
-        // compare to max and set new end time
-        if (_newTime < (rndMax_).add(_now))
-            round_[_rID].end = _newTime;
-        else
-            round_[_rID].end = rndMax_.add(_now);
-    }
 
  }
 
@@ -764,4 +639,3 @@ contract Pausable is Ownable
   }
 
 }
-
