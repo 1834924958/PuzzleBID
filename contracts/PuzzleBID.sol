@@ -406,9 +406,9 @@ contract PuzzleBID is PZB_Events {
                 i++;
             }
             if(isFinish) { //游戏结束
-                works[_worksID].endTime = _now;
+                works[_worksID].endTime = _now; //更新作品游戏结束时间
                 //如果收集碎片完成，按最后规则
-                msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //奖池的80% 最后一次购买者
+                msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //当前作品奖池的80% 最后一次购买者
 
                 //首发玩家统计发放
                 mapping(address => uint256) tmp;
