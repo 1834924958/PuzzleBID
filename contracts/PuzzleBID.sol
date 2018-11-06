@@ -355,7 +355,7 @@ contract PuzzleBID is PZB_Events {
         //更新所有作品累计交易额
         turnover = turnover.add(msg.value);
 
-        //更新每个作品的累计交易额
+        //更新当前作品的累计交易额
         worksTurnover[_worksID] = worksTurnover[_worksID].add(msg.value);
 
         //分分分
@@ -368,9 +368,9 @@ contract PuzzleBID is PZB_Events {
 
         } else { 
 
-            debris[_worksID][_debrisID].lastBuyer = msg.sender; //更新每个作品碎片的最后购买者
+            debris[_worksID][_debrisID].lastBuyer = msg.sender; //更新当前作品碎片的最后购买者
             
-            if(playerBuy[msg.sender][_worksID].secondAmount == 0) { //更新每个作品的再次购买者名单
+            if(playerBuy[msg.sender][_worksID].secondAmount == 0) { //更新当前作品的再次购买者名单
                 secondAddress[_worksID] = msg.sender;
             }
             playerBuy[msg.sender][_worksID].secondAmount = playerBuy[msg.sender][_worksID].secondAmount.add(msg.value); //统计同一作品同一玩家的再次购买投入
