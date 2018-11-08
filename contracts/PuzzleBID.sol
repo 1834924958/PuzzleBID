@@ -205,8 +205,8 @@ contract PuzzleBID is PZB_Events {
         address _artistAddress,
         uint8 _firstBuyLimit) public {
 
-        //require(works[_worksID] == 0);
-        //require(artists[_artistID] == 0);
+        require(works[_worksID].beginTime == 0);
+        require(artists[_artistID].ethAddress == address(0));
         require(_debrisNum >= 2 && _debrisNum < 256);
         require(_price > 0);   
         require(_beginTime > 0 && _beginTime > now); 
