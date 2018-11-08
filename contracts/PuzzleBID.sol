@@ -300,6 +300,7 @@ contract PuzzleBID is PZB_Events {
         //buyCore(bytes32 _worksID, uint8 _debrisID);
     }
 
+    // 购买碎片
     function buyCore(bytes32 _worksID, uint8 _debrisID) 
         isHuman()
         isWithinLimits(msg.value)
