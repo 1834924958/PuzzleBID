@@ -13,8 +13,8 @@ library PZB_Datasets {
 
     //作品结构
     struct Works {
-        bytes32 worksID; //作品ID
-        bytes32 artistID; //归属艺术家ID
+        uint256 worksID; //作品ID
+        uint256 artistID; //归属艺术家ID
         uint8 debrisNum; //分割成游戏碎片总数
         uint256 price; //价格
         uint256 beginTime; //开售时间
@@ -27,7 +27,7 @@ library PZB_Datasets {
     //碎片结构
     struct Debris {
         uint8 debrisID; //碎片ID
-        bytes32 worksID; //作品ID
+        uint256 worksID; //作品ID
         uint256 initPrice; //初始价格
         uint256 lastPrice; //最新价格
         uint256 buyNum; //被交易总次数
@@ -38,28 +38,28 @@ library PZB_Datasets {
 
     //艺术家结构
     struct Artist {
-        bytes32 artistID; //艺术家ID
+        uint256 artistID; //艺术家ID
         address ethAddress; //钱包地址
     }
 
     //玩家结构
     struct Player {
         address ethAddress; //玩家钱包地址
-        bytes32 unionID; //唯一父级ID 可以是md5(手机+名字)  
+        uint256 unionID; //唯一父级ID 可以是md5(手机+名字)  
         address referrer; //推荐人钱包地址
         uint256 time; //创建时间
     }
 
     //作品与奖池关系结构
     struct Pot {
-        bytes32 worksID; //作品ID
+        uint256 worksID; //作品ID
         uint256 totalAmount; //总金额
     }
 
     //碎片交易记录结构    
     struct Transaction {        
-        bytes32 worksID; //作品ID
-        bytes32 debrisID; //碎片ID
+        uint256 worksID; //作品ID
+        uint256 debrisID; //碎片ID
         uint256 artistID; //艺术家ID
         uint256 dealPrice; //成交价格，ETH
         address fromAddress; //从地址
@@ -70,7 +70,7 @@ library PZB_Datasets {
     //玩家与藏品关系结构
     struct MyWorks { 
         address playerAddress; //玩家ID
-        bytes32 worksID; //碎片ID
+        uint256 worksID; //碎片ID
         uint256 totalInput; //累计投入
         uint256 totalOutput; //累计回报
         uint256 time; //创建时间
@@ -93,13 +93,13 @@ contract PZB_Events {
 
     event OnRegisterPlayer(
         address indexed ethAddress,
-        bytes32 unionID, 
+        uint256 unionID, 
         address indexed referrer,
         uint256 time); //当注册玩家时
 
     event OnAddWorks(
-        bytes32 worksID, 
-        bytes32 artistID, 
+        uint256 worksID, 
+        uint256 artistID, 
         uint8 debrisNum, 
         uint256 price, 
         uint256 beginTime, 
@@ -108,12 +108,12 @@ contract PZB_Events {
         uint8 firstBuyLimit); //当发布作品时
 
     event OnAddDebris(
-        bytes32 worksID,
+        uint256 worksID,
         uint8 debrisNum,
         uint256 initPrice); //当发布作品并添加碎片时
 
     event OnAddArtist(
-        bytes32 _artistID,
+        uint256 _artistID,
         address _artistAddress); //当添加艺术家时
         
     event OnTransaction(); //当玩家交易时
@@ -153,20 +153,20 @@ contract PuzzleBID is PZB_Events {
     //| Game data 
     //=========================================================================
     mapping(address => PZB_Datasets.Player) public players; //游戏玩家
-    //mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
-    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
-    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
-    mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
+    //mapping(uint256 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
+    mapping(uint256 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
+    mapping(uint256 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
+    mapping(uint256 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
 
-    mapping(bytes32 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
+    mapping(uint256 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
     mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
-    mapping(address => mapping(bytes32 => PZB_Datasets.MyWorks)) public myworks; //我的藏品列表 (playerAddress => (worksID => PZB_Datasets.MyWorks))
+    mapping(address => mapping(uint256 => PZB_Datasets.MyWorks)) public myworks; //我的藏品列表 (playerAddress => (worksID => PZB_Datasets.MyWorks))
     uint256 public turnover; //所有作品的总交易额
-    mapping(bytes32 => uint256) worksTurnover; //每个作品的累计交易额 如(worksID => amount) 
-    mapping(bytes32 => address) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
+    mapping(uint256 => uint256) worksTurnover; //每个作品的累计交易额 如(worksID => amount) 
+    mapping(uint256 => address) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
 
     //玩家购买记录检索表
-    mapping(address => mapping(bytes32 => PZB_Datasets.unitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.unitCount))
+    mapping(address => mapping(uint256 => PZB_Datasets.unitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.unitCount))
     
     constructor(address _platform) public {
         puzzlebidAddress = _platform; //游戏平台钱包地址
@@ -182,7 +182,7 @@ contract PuzzleBID is PZB_Events {
     }
 
     //注册游戏玩家
-    function registerPlayer(bytes32 _unionID, address _referrer) external {
+    function registerPlayer(uint256 _unionID, address _referrer) external {
         require(players[msg.sender].time == 0);
         require(_referrer != address(0));
         uint256 _now = now;
@@ -196,8 +196,8 @@ contract PuzzleBID is PZB_Events {
     //=========================================================================
     //添加一局游戏 管理员操作
     function addGame(
-        bytes32 _worksID,
-        bytes32 _artistID, 
+        uint256 _worksID,
+        uint256 _artistID, 
         uint8 _debrisNum, 
         uint256 _price, 
         uint256 _beginTime, 
@@ -258,8 +258,8 @@ contract PuzzleBID is PZB_Events {
     }
 
     //发布游戏 管理员操作
-    function publishGame(bytes32 _worksID, uint256 _beginTime) external {
-        //require(works[_worksID] != 0 && !works[_worksID].isPublish);
+    function publishGame(uint256 _worksID, uint256 _beginTime) external {
+        require(works[_worksID].beginTime != 0 && !works[_worksID].isPublish);
         if(_beginTime > 0) {
             works[_worksID].beginTime = _beginTime;
         }
@@ -292,15 +292,18 @@ contract PuzzleBID is PZB_Events {
         _;    
     }
 
+    /**
+     * @dev emergency buy uses last stored affiliate ID and team snek
+     */
     function()
         public
         payable
     {
         revert();
-        //buyCore(bytes32 _worksID, uint8 _debrisID);
+        //buyCore(uint256 _worksID, uint8 _debrisID);
     }
 
-    function buyCore(bytes32 _worksID, uint8 _debrisID) 
+    function buyCore(uint256 _worksID, uint8 _debrisID) 
         isHuman()
         isWithinLimits(msg.value)
         isRegisteredGame()
@@ -407,8 +410,8 @@ contract PuzzleBID is PZB_Events {
                 msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //当前作品奖池的80% 最后一次购买者
 
                 //首发玩家统计发放
-                mapping(address => uint256) memory tmp;
-                address[] memory firstAddress;
+                mapping(address => uint256) tmp;
+                address[] firstAddress;
                 for(i=1; i<works[_worksID].debrisNum; i++) {
                     if(tmp[debris[_worksID][_debrisID].lastBuyer] == 0 ) {
                         firstAddress.push(debris[_worksID][_debrisID].lastBuyer);
