@@ -57,15 +57,15 @@ library PZB_Datasets {
     }
 
     //碎片交易记录结构    
-    struct Transaction {        
-        bytes32 worksID; //作品ID
-        bytes32 debrisID; //碎片ID
-        uint256 artistID; //艺术家ID
-        uint256 dealPrice; //成交价格，ETH
-        address fromAddress; //从地址
-        address toAddress; //到地址
-        uint256 time; //创建时间
-    }
+    // struct Transaction {        
+    //     bytes32 worksID; //作品ID
+    //     bytes32 debrisID; //碎片ID
+    //     uint256 artistID; //艺术家ID
+    //     uint256 dealPrice; //成交价格，ETH
+    //     address fromAddress; //从地址
+    //     address toAddress; //到地址
+    //     uint256 time; //创建时间
+    // }
 
     //玩家与藏品关系结构
     struct MyWorks { 
@@ -77,7 +77,7 @@ library PZB_Datasets {
     }
 
     //玩家对作品购买行为的单元统计
-    struct unitCount {
+    struct UnitCount {
         uint256 lastTime; //同一作品同一玩家，最后一次购买时间
         uint256 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
         mapping(uint256 => uint256) debrisID; //同一作品同一玩家，购买的碎片号，用于判断是否完成了游戏
@@ -116,11 +116,11 @@ contract PZB_Events {
         bytes32 _artistID,
         address _artistAddress); //当添加艺术家时
         
-    event OnTransaction(); //当玩家交易时
-    event OnWithdraw(); //当提现时
-    event OnUpdatePot(); //当更新总奖池时
-    event OnUpdateWorksPot(); //当更新作品奖池时
-    event OnUpdateMyWorks(); //当更新作品奖池时
+    //event OnTransaction(); //当玩家交易时
+    //event OnWithdraw(); //当提现时
+    //event OnUpdatePot(); //当更新总奖池时
+    //event OnUpdateWorksPot(); //当更新作品奖池时
+    //event OnUpdateMyWorks(); //当更新作品奖池时
 }
 
 /**
@@ -166,7 +166,7 @@ contract PuzzleBID is PZB_Events {
     mapping(bytes32 => address) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
 
     //玩家购买记录检索表
-    mapping(address => mapping(bytes32 => PZB_Datasets.unitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.unitCount))
+    mapping(address => mapping(bytes32 => PZB_Datasets.UnitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.UnitCount))
     
     constructor(address _platform) public {
         puzzlebidAddress = _platform; //游戏平台钱包地址
