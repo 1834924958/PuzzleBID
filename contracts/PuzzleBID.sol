@@ -152,7 +152,8 @@ contract PuzzleBID is PZB_Events {
     mapping(address => mapping(bytes32 => PZB_Datasets.MyWorks)) public myworks; //我的藏品列表 (playerAddress => (worksID => PZB_Datasets.MyWorks))
     uint256 public turnover; //所有作品的总交易额
     mapping(bytes32 => uint256) worksTurnover; //每个作品的累计交易额 如(worksID => amount) 
-    mapping(bytes32 => address) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
+    mapping(bytes32 => address[]) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
+    mapping(address => uint256) firstCount; //首发购买按玩家统计各自投入
 
     //玩家购买记录检索表
     mapping(address => mapping(bytes32 => PZB_Datasets.UnitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.UnitCount))
@@ -394,7 +395,7 @@ contract PuzzleBID is PZB_Events {
 
         //更新当前作品的再次购买者名单
         if(playerBuy[msg.sender][_worksID].secondAmount == 0) { 
-            secondAddress[_worksID] = msg.sender;
+            secondAddress[_worksID].push(msg.sender);
         }
 
         //统计同一作品同一玩家的再次购买投入
@@ -442,19 +443,8 @@ contract PuzzleBID is PZB_Events {
         //收集碎片完成，按最后规则
         msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //当前作品奖池的80% 最后一次购买者
 
-        //首发玩家统计发放
-        mapping(address => uint256) memory tmp;
-        address[] memory firstAddress;
-        uint256 i; 
-        for(i=1; i<works[_worksID].debrisNum; i++) {
-            if(tmp[debris[_worksID][_debrisID].lastBuyer] == 0 ) {
-                firstAddress.push(debris[_worksID][_debrisID].lastBuyer);
-            }
-            tmp[debris[_worksID][_debrisID].lastBuyer] = tmp[debris[_worksID][_debrisID].lastBuyer] + debris[_worksID][_debrisID].initPrice;
-        }
-        for(i=0; i<firstAddress.length; i++) {
-            firstAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(tmp[firstAddress[i]]) / works[_worksID].price);
-        }
+        //首发玩家统计发放        
+        firstSend(_worksID, _debrisID);
 
         //后续玩家统计发放
         address[] memory tmpAddress = secondAddress[_worksID];
@@ -465,6 +455,21 @@ contract PuzzleBID is PZB_Events {
         //处理成我的藏品
         myworks[msg.sender][_worksID] = PZB_Datasets.MyWorks(msg.sender, _worksID, 0, 0, now);
 
+    }
+    
+    function firstSend(bytes32 _worksID, uint8 _debrisID) private {
+        address[] firstAddress;
+        uint8 i; 
+        for(i=1; i<works[_worksID].debrisNum; i++) {
+            if(firstCount[debris[_worksID][_debrisID].lastBuyer] == 0) {
+                firstAddress.push(debris[_worksID][_debrisID].lastBuyer);
+            }
+            firstCount[debris[_worksID][_debrisID].lastBuyer] = firstCount[debris[_worksID][_debrisID].lastBuyer] + debris[_worksID][_debrisID].initPrice;
+        }
+        for(i=0; i<firstAddress.length; i++) {
+            firstAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(firstCount[firstAddress[i]]) / works[_worksID].price);
+            delete firstCount[firstAddress[i]];
+        }
     }
 
 
