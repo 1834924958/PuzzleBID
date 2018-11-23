@@ -1,19 +1,32 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
+
+import "./interface/TeamInterface.sol"; //导入管理员团队接口
 
 /**
- * @dev PuzzleBID Game Artist
+ * @dev PuzzleBID Game 艺术家合约
  * @author Simon<vsiryxm@163.com>
  */
 contract Artist {
 
-	constructor() public {
+    TeamInterface private Team; //引入管理员，正式发布时可定义成常量
+    mapping(bytes32 => address) artists; //艺术家列表 (artistID => address)
 
-	}
+	constructor(address _teamAddress) public {
+        Team = TeamInterface(_teamAddress);
+	}	
 
-	mapping(bytes32 => address) artists; //艺术家列表 (id => address)
-
+    //不接收ETH
 	function() external payable {
         revert();
+    }
+
+    //事件
+    event OnAdd(bytes32 _artistID, address _address);
+
+    //仅开发者、合约地址可操作
+    modifier onlyDev() {
+        require(Team.isDev(msg.sender));
+        _;
     }
 
     //根据艺术家ID获取钱包地址
@@ -22,8 +35,15 @@ contract Artist {
     }
 
     //添加艺术家
-    function add() {
+    function add(bytes32 _artistID, address _address) external onlyDev() {
+        require(this.isHasArtist(_artistID) == false); //this用法 已测
+        artists[_artistID] = _address;
+        emit OnAdd(_artistID, _address);
+    }
 
+    //是否存在艺术家
+    function isHasArtist(bytes32 _artistID) external returns (bool) {
+        return artists[_artistID] != address(0);
     }
 
 }

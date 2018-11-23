@@ -1,51 +1,120 @@
 pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
-import "./interface/WorksInterface.sol"; //导入作品碎片接口
 
 /**
  * @dev PuzzleBID Game 作品合约（一作品一合约）
  * @author Simon<vsiryxm@163.com>
  */
-contract PuzzleBID {
-    using SafeMath for *;
+contract Works {
 
-    WorksInterface private works;
-
-    //初始化 连接一个作品合约
-    constructor(address _WorksAddress) public {
-    	//TODO：检查作品合约是否存在
-    	works = WorksInterface(_WorksAddress);
-    }  
-    
     //=========================================================================
-    //| Game data 
+    //| 游戏配置参数
     //=========================================================================
-    mapping(address => PZB_Datasets.Player) public players; //游戏玩家
-    //mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
-    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
-    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
-    mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
+    uint256 private freezeTime; //玩家购买一个作品中的一个碎片后冻结3分钟
+    uint256 private protectTime; //碎片保护时间30分钟
+    uint256 private increaseRatio; //% 碎片价格调整为上一次价格的110%
+    uint256 private discountTime; //碎片开始打折时间，被购买1小时后    
+    uint256 private discountRatio; //% 碎片价格调整为首发价格的95%
 
-    mapping(bytes32 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
-    //mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
-    mapping(address => mapping(bytes32 => PZB_Datasets.MyWorks)) public myworks; //我的藏品列表 (playerAddress => (worksID => PZB_Datasets.MyWorks))
-    uint256 public turnover; //所有作品的总交易额
-    mapping(bytes32 => uint256) worksTurnover; //每个作品的累计交易额 如(worksID => amount) 
-    mapping(bytes32 => address[]) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
-    mapping(address => uint256) firstCount; //首发购买按玩家统计各自投入
+    //=========================================================================
+    //| 游戏分红比例
+    //=========================================================================
+    uint8[3] firstAllot; //% 首发购买分配百分比 顺序对应艺术家80、平台2、奖池18
+    uint8[3] againAllot; //% 再次购买分配百分比 艺术家10（溢价部分）、平台2（总价）、奖池65（溢价部分）
+    uint8[3] lastAllot; //% 完成购买分配百分比 游戏完成者80、首发购买者10、后续其他购买者10
 
-    //玩家购买记录检索表
-    mapping(address => mapping(bytes32 => PZB_Datasets.UnitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.UnitCount))
-    
-    //注册游戏玩家 静默
-    function registerPlayer(bytes32 _unionID, address _referrer) external {
-        require(players[msg.sender].time == 0);
-        require(_referrer != address(0));
-        uint256 _now = now;
-        players[msg.sender] = PZB_Datasets.Player(msg.sender, _unionID, _referrer, _now);
-        //union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
-        emit OnRegisterPlayer(msg.sender, _unionID, _referrer, _now);
+    //=========================================================================
+    //| 初始化游戏参数
+    //=========================================================================
+    constructor(
+    	uint256 _freezeGap, 
+    	uint256 _protectGap, 
+    	uint256 _increaseRatio,
+    	uint256 _discountGap,
+    	uint256 _discountRatio,
+    	uint8[3] _firstAllot,
+    	uint8[3] _againAllot,
+    	uint8[3] _lastAllot,
+    	) public {
+    	freezeGap = _freezeGap.mul(1 seconds); //180 seconds
+    	protectGap = _protectGap.mul(1 seconds); //1800 seconds
+    	increaseRatio = _increaseRatio; //110
+    	discountGap = _discountGap.mul(1 seconds); //3600 seconds
+    	discountRatio = _discountRatio; //95
+
+    	firstAllot = _firstAllot; //[80, 2, 18]
+    	againAllot = _againAllot; //[10, 2, 65]
+    	lastAllot = _lastAllot; //[80, 10, 10]
+    }
+
+    //添加一局作品游戏 管理员操作
+    function add(
+        bytes32 _worksID,
+        bytes32 _artistID, 
+        uint8 _debrisNum, 
+        uint256 _price, 
+        uint256 _beginTime, 
+        address _tokenID,
+        address _artistAddress,
+        uint8 _firstBuyLimit) external onlyDev() {
+
+        require(works[_worksID].beginTime == 0);
+        require(artists[_artistID].ethAddress == address(0));
+        require(_debrisNum >= 2 && _debrisNum < 256);
+        require(_price > 0);   
+        require(_beginTime > 0 && _beginTime > now); 
+
+        works[_worksID] = PZB_Datasets.Works(
+            _worksID, 
+            _artistID, 
+            _debrisNum, 
+            _price, 
+            _beginTime, 
+            0,
+            false, 
+            _tokenID,
+            _firstBuyLimit);  //添加作品  
+
+        emit OnAddWorks(
+            _worksID,
+            _artistID, 
+            _debrisNum, 
+            _price, 
+            _beginTime,
+            false,
+            _tokenID,
+            _firstBuyLimit);  //添加作品事件  
+
+        //初始化作品碎片        
+        uint256 initPrice = _price / _debrisNum;
+        for(uint8 i=1; i<=_debrisNum; i++) {
+            debris[_worksID][i].worksID = _worksID;
+            debris[_worksID][i].initPrice = initPrice;
+        } 
+
+        emit OnAddDebris(
+            _worksID,
+            _debrisNum,
+            initPrice
+        ); //添加作品碎片事件
+
+        //初始化艺术家
+        artists[_artistID] = PZB_Datasets.Artist(_artistID, _artistAddress);
+
+        emit OnAddArtist(_artistID, _artistAddress); //添加艺术家事件
+
+        pots[_worksID] = 0; //初始化该作品奖池       
+
+    }
+
+    //发布游戏 管理员操作
+    function publishGame(bytes32 _worksID, uint256 _beginTime) external {
+        require(works[_worksID].beginTime != 0 && works[_worksID].isPublish == false);
+        if(_beginTime > 0) {
+            works[_worksID].beginTime = _beginTime;
+        }
+        works[_worksID].isPublish = true; //开启这个游戏
     }
 
     //=========================================================================
@@ -64,42 +133,18 @@ contract PuzzleBID {
         _;
     }
 
-    function()
-        public
-        payable
-    {
+    function() external payable {
         revert();
-        //buyCore(bytes32 _worksID, uint8 _debrisID);
     }
 
     //获取碎片的最新价格
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) public view returns(uint256) {
-        uint256 lastPrice;
-        if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountTime) < now) { //降价
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
-        } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
-        }
-        return lastPrice;
+        
     }
 
     //更新碎片
     function updateDebris(bytes32 _worksID, uint8 _debrisID) internal {
-        //更新碎片价格
-        //超过时间
-        if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountTime) < now) { //降价
-            debris[_worksID][_debrisID].lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
-        } 
-        //未超过时间
-        else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
-            debris[_worksID][_debrisID].lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
-        }
-
-        debris[_worksID][_debrisID].lastBuyer = msg.sender; //更新归属
-        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
-        debris[_worksID][_debrisID].lastTime = now; //更新最后被交易时间
-        playerBuy[msg.sender][_worksID].lastTime = now; //更新玩家最后购买时间
-
+        
     }
 
     //更新交易额
@@ -138,12 +183,12 @@ contract PuzzleBID {
         _;
     }    
 
-    //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID) 
+    //购买碎片
+    function buyCore(bytes32 _worksID, uint8 _debrisID) 
         isHuman()
         isRegisteredGame()
         checkPlay(_worksID, _debrisID)
-        external
+        public
         payable
     {
 
