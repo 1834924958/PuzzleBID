@@ -41,7 +41,7 @@ contract Platform {
     mapping(bytes32 => address) worksContract;//作品的合约地址集 (worksID => contractAddress)
 
     //获取平台总交易额
-    function getAllTurnover() external returns (uint256) {
+    function getAllTurnover() external view returns (uint256) {
     	return allTurnover;
     }
 
@@ -52,7 +52,7 @@ contract Platform {
     }
 
     //获取作品的交易额
-    function getTurnover(bytes32 _worksID) external returns (uint256) {
+    function getTurnover(bytes32 _worksID) external view returns (uint256) {
     	return turnover[_worksID];
     }
 
@@ -80,12 +80,12 @@ contract Platform {
     }
 
     //获取基金会address
-    function getFoundation() external returns (address) {
+    function getFoundation() external view returns (address) {
         return foundation;
     }
 
     //查询奖池实际余额
-    function getThisBalance() external returns (uint256) {
+    function getThisBalance() external view returns (uint256) {
         return address(this).balance;
     }
 

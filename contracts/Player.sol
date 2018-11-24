@@ -40,7 +40,8 @@ contract Player {
     	address ethAddress, 
     	bytes32 unionID, 
     	address referrer, 
-    	uint256 time);
+    	uint256 time
+    );
     event OnUpdateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -49,7 +50,8 @@ contract Player {
         address _address, 
         bytes32 _worksID, 
         uint256 _totalInput, 
-        uint256 _totalOutput);
+        uint256 _totalOutput
+    );
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
@@ -57,8 +59,8 @@ contract Player {
         _;
     }
 
-    mapping(bytes32 => Self) public playersByUnionId; //玩家信息 (unionID => Self)
-    mapping(address => bytes32) public playersByAddress; //根据address查询玩家unionID
+    mapping(bytes32 => Self) playersByUnionId; //玩家信息 (unionID => Self)
+    mapping(address => bytes32) playersByAddress; //根据address查询玩家unionID
 
     mapping(bytes32 => mapping(bytes32 => uint256)) firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
     mapping(bytes32 => mapping(bytes32 => uint256)) reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
@@ -84,12 +86,14 @@ contract Player {
 
     //根据unionID查询玩家信息
     function getInfoByUnionId(uint256 _unionID) external view returns (address, uint256) {
-    	return (playersByUnionId[_unionID].referrer, 
-    		    playersByUnionId[_unionID].time);
+    	return (
+            playersByUnionId[_unionID].referrer, 
+    		playersByUnionId[_unionID].time
+        );
     }
 
     //根据玩家address查询unionID
-    function getUserIdByAddress(address _address) external view returns (bytes32) {
+    function getUnionIdByAddress(address _address) external view returns (bytes32) {
     	return playersByAddress[_address];
     }
 
@@ -110,11 +114,13 @@ contract Player {
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256) {
-    	return (myworks[_unionID].ethAddress,
-    		myworks[_unionID].worksID,
-    		myworks[_unionID].totalInput,
-    		myworks[_unionID].totalOutput,
-    		myworks[_unionID].time);
+    	return (
+            myworks[_unionID].ethAddress,
+    	    myworks[_unionID].worksID,
+    	    myworks[_unionID].totalInput,
+    	    myworks[_unionID].totalOutput,
+    	    myworks[_unionID].time
+        );
     }
 
     //更新玩家对作品的首轮投入累计
@@ -136,10 +142,13 @@ contract Player {
     }   
 
     //更新我的藏品列表 记录完成游戏时的address
-    function updateMyWorks(bytes32 _unionID, address _address, 
+    function updateMyWorks(
+        bytes32 _unionID, 
+        address _address, 
     	bytes32 _worksID, 
     	uint256 _totalInput, 
-    	uint256 _totalOutput) internal onlyDev() {
+    	uint256 _totalOutput
+    ) internal onlyDev() {
     	myworks[_unionID] = MyWorks(_address, _worksID, _totalInput, _totalOutput);
         emit OnUpdateMyWorks(_address, _worksID, _totalInput, _totalOutput);
     }

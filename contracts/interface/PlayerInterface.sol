@@ -13,7 +13,7 @@ interface PlayerInterface {
     function getInfoByUnionId(uint256 _unionID) external view returns (address, uint256);
 
     //根据玩家address查询unionID
-    function getUserIdByAddress(address _address) external view returns (bytes32);
+    function getUnionIdByAddress(address _address) external view returns (bytes32);
 
     //获取玩家对作品的首发投入累计
     function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
@@ -37,10 +37,13 @@ interface PlayerInterface {
     function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
     //更新我的藏品列表
-    function updateMyWorks(bytes32 _unionID, address _address, 
+    function updateMyWorks(
+        bytes32 _unionID, 
+        address _address, 
     	bytes32 _worksID, 
     	uint256 _totalInput, 
-    	uint256 _totalOutput) external;
+    	uint256 _totalOutput
+    ) external;
 
 
 }

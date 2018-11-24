@@ -10,9 +10,9 @@ contract Team {
 
 	//管理员角色：开发团队、管理员
 	struct Admin {
-        bool isAdmin;
-        bool isDev; //true 为开发团队
-        bytes32 name; //true 为超级管理员
+        bool isAdmin; //true 为超级管理员 有关后台函数设计，都需要管理员权限
+        bool isDev; //true 为开发团队 有关合约间通信，都需要开发团队权限
+        bytes32 name; //管理员名字
     }
 
     mapping (address => Admin) admins; //管理员列表

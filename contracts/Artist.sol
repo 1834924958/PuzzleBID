@@ -9,7 +9,7 @@ import "./interface/TeamInterface.sol"; //导入管理员团队接口
 contract Artist {
 
     TeamInterface private Team; //引入管理员，正式发布时可定义成常量
-    mapping(bytes32 => address) artists; //艺术家列表 (artistID => address)
+    mapping(bytes32 => address) private artists; //艺术家列表 (artistID => address)
 
 	constructor(address _teamAddress) public {
         Team = TeamInterface(_teamAddress);
@@ -30,7 +30,7 @@ contract Artist {
     }
 
     //根据艺术家ID获取钱包地址
-    function getAddress(bytes32 _artistID) external returns (address) {
+    function getAddress(bytes32 _artistID) external view returns (address) {
     	return artists[_artistID];
     }
 
@@ -41,8 +41,8 @@ contract Artist {
         emit OnAdd(_artistID, _address);
     }
 
-    //是否存在艺术家
-    function isHasArtist(bytes32 _artistID) external returns (bool) {
+    //是否存在艺术家 true为存在
+    function isHasArtist(bytes32 _artistID) external view returns (bool) {
         return artists[_artistID] != address(0);
     }
 

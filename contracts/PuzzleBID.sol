@@ -24,7 +24,7 @@ contract PuzzleBID {
     mapping(address => PZB_Datasets.Player) public players; //游戏玩家
     //mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
     mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
-    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
+    
     mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
 
     mapping(bytes32 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
@@ -271,6 +271,12 @@ contract PuzzleBID {
         for(uint256 i=0; i<=tmpAddress.length; i++) {
             tmpAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(playerBuy[tmpAddress[i]][_worksID].secondAmount) / worksTurnover[_worksID].sub(works[_worksID].price));
         }
+    }
+
+
+    //获取当前最新时间 倒计时以此为基准
+    function getNowTime() external view returns(uint256) {
+        return now;
     }
 
 
