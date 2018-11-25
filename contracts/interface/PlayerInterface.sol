@@ -2,12 +2,14 @@ pragma solidity ^0.5.0;
 
 /**
  * @dev PuzzleBID Game 玩家合约接口
- * @author Simon<vsiryxm@163.com>
+ * @website http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team
+ *         Simon<vsiryxm@163.com>
  */
 interface PlayerInterface {
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _ethAddress, address _referrer) external returns (bool);
+    function register(bytes32 _unionID, address _ethAddress, address _referrer) external;
 
     //根据unionID查询玩家信息
     function getInfoByUnionId(uint256 _unionID) external view returns (address, uint256);

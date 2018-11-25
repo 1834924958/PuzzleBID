@@ -1,31 +1,21 @@
 pragma solidity ^0.5.0;
 
 import "./interface/TeamInterface.sol"; //导入管理员团队接口
+import "./library/Datasets.sol"; //导入结构库
 
 /**
  * @dev PuzzleBID Game 玩家合约
- * @author Simon<vsiryxm@163.com>
+ * @website http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team
+ *         Simon<vsiryxm@163.com>
  */
 contract Player {
 
     TeamInterface private Team; //引入管理员，正式发布时可定义成常量
     
-    //玩家结构
-    struct Self {
-        address[] ethAddress; //玩家address
-        address referrer; //推荐人address
-        uint256 time; //创建时间
-    }
-
-    //玩家与藏品关系结构
-    struct MyWorks { 
-        address ethAddress; //最终完成游戏的address
-        bytes32 worksID; //碎片ID
-        uint256 totalInput; //累计投入
-        uint256 totalOutput; //累计回报
-        uint256 time; //创建时间
-    }
-
+    //定义玩家结构Player，见library/Datasets.sol
+    //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
+    
 	constructor(address _teamAddress) public {
         Team = TeamInterface(_teamAddress);
 	}
@@ -59,17 +49,17 @@ contract Player {
         _;
     }
 
-    mapping(bytes32 => Self) playersByUnionId; //玩家信息 (unionID => Self)
+    mapping(bytes32 => Datasets.Player) playersByUnionId; //玩家信息 (unionID => Datasets.Player)
     mapping(address => bytes32) playersByAddress; //根据address查询玩家unionID
 
     mapping(bytes32 => mapping(bytes32 => uint256)) firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
     mapping(bytes32 => mapping(bytes32 => uint256)) reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
     mapping(bytes32 => mapping(bytes32 => uint256)) reward; //玩家获得作品的累计奖励 (unionID => (worksID => amount))
 
-    mapping(bytes32 => MyWorks) myworks; //我的藏品 (unionID => MyWorks) 
+    mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks) 
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _ethAddress, address _referrer) external returns (bool) {
+    function register(bytes32 _unionID, address _ethAddress, address _referrer) external {
         require(_unionID != 0 && _ethAddress != address(0));
          
         playersByUnionId[_unionID].ethAddress.push(_ethAddress);
@@ -81,7 +71,6 @@ contract Player {
         playersByAddress[_ethAddress] = _unionID;
 
         emit OnRegister(_ethAddress, _unionID, _referrer, now);
-        return true;
     }
 
     //根据unionID查询玩家信息
@@ -149,7 +138,7 @@ contract Player {
     	uint256 _totalInput, 
     	uint256 _totalOutput
     ) internal onlyDev() {
-    	myworks[_unionID] = MyWorks(_address, _worksID, _totalInput, _totalOutput);
+    	myworks[_unionID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput);
         emit OnUpdateMyWorks(_address, _worksID, _totalInput, _totalOutput);
     }
 

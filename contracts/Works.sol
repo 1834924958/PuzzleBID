@@ -1,20 +1,24 @@
 pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
+import "./library/Datasets.sol"; //导入结构库
 import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
 import "./interface/ArtistInterface.sol"; //导入艺术家合约接口
 
 /**
  * @dev PuzzleBID Game 作品碎片合约
- * @author Simon<vsiryxm@163.com>
+ * @website http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team
+ *         Simon<vsiryxm@163.com>
  */
 contract Works {
 
     TeamInterface private team; //引入管理员，正式发布时可定义成常量
     ArtistInterface private artist; //引入艺术家
 
-    constructor(address _teamAddress) public {
+    constructor(address _teamAddress, address _artistAddress) public {
         team = TeamInterface(_teamAddress);
+        artist = ArtistInterface(_artistAddress);
     }
 
     //不接收ETH
@@ -29,45 +33,14 @@ contract Works {
         uint256 initPrice
     );
 
-    //作品碎片结构
-    struct WorksField {
-        //=========================================================================
-        //| 作品配置
-        //=========================================================================
-        bytes32 worksID;
-        bytes32 artistID; 
-        uint8 debrisNum; 
-        uint256 price;
-        uint256 beginTime;
-        uint256 endTime;
-        uint256 isPublish;
-    }
+    //定义作品碎片结构Works，见library/Datasets.sol
+    //定义作品游戏规则结构Rule，见library/Datasets.sol
 
-    //作品游戏规则结构
-    struct Rule {
-        //=========================================================================
-        //| 游戏配置参数
-        //=========================================================================
-        uint8 firstBuyLimit; //一个作品的首发最多购买数
-        uint256 freezeGap; //玩家购买一个作品中的一个碎片后冻结3分钟
-        uint256 protectGap; //碎片保护时间30分钟
-        uint256 increaseRatio; //% 碎片价格调整为上一次价格的110%
-        uint256 discountGap; //碎片开始打折时间，被购买1小时后    
-        uint256 discountRatio; //% 碎片价格调整为首发价格的95%
-
-        //=========================================================================
-        //| 游戏分红比例
-        //=========================================================================
-        uint8[3] firstAllot; //% 首发购买分配百分比 顺序对应艺术家80、平台2、奖池18
-        uint8[3] againAllot; //% 再次购买分配百分比 艺术家10（溢价部分）、平台2（总价）、奖池65（溢价部分）
-        uint8[3] lastAllot; //% 完成购买分配百分比 游戏完成者80、首发购买者10、后续其他购买者10
-    }
-
-    mapping(bytes32 => Self) private works; //作品集 (worksID => Self)
+    mapping(bytes32 => Datasets.Works) private works; //作品集 (worksID => Datasets.Works)
     mapping(bytes32 => Rule) private rules; //游戏规则集 (worksID => Rule)
     mapping(bytes32 => uint256) private pools; //作品对应的奖池累计 (worksID => amount)
-    mapping(bytes32 => mapping(uint8 => PZB_Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (1 => PZB_Datasets.Debris))
-    
+    mapping(bytes32 => mapping(uint8 => Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (debrisID => Datasets.Debris))
+
     //当作品存在时
     modifier whenHasWorks(bytes32 _worksID) {
         require(works[_worksID].beginTime != 0);
@@ -110,14 +83,9 @@ contract Works {
             _debrisNum >= 2 && _debrisNum < 256 && //碎片数2~255
             _price > 0 && //价格必须大于0
             _beginTime > 0 && _beginTime > now //开始时间必须大于0和现在时间
-        );        
-        require(
-            _firstAllot[0] > 0 && _firstAllot[1] > 0 && _firstAllot[2] > 0 &&
-            _againAllot[0] > 0 && _againAllot[1] > 0 && _againAllot[2] > 0 &&
-            _lastAllot[0] > 0 && _lastAllot[1] > 0 && _lastAllot[2] > 0
-        ); //分配规则 百分比分子必须大于0
+        ); 
 
-        works[_worksID] = WorksField(
+        works[_worksID] = Datasets.Works(
             _worksID, 
             _artistID, 
             _debrisNum, 
@@ -134,7 +102,6 @@ contract Works {
             _price, 
             _beginTime,
             false,
-            _tokenID,
             _firstBuyLimit);  //添加作品事件
 
         initDebris(_worksID, _price, _debrisNum); //初始化作品碎片
@@ -183,6 +150,12 @@ contract Works {
             _discountRatio > 0 //作品降价百分比分子必须大于0
         );
 
+        require(
+            _firstAllot[0] > 0 && _firstAllot[1] > 0 && _firstAllot[2] > 0 &&
+            _againAllot[0] > 0 && _againAllot[1] > 0 && _againAllot[2] > 0 &&
+            _lastAllot[0] > 0 && _lastAllot[1] > 0 && _lastAllot[2] > 0
+        ); //分配规则 百分比分子必须大于0
+
         rules[_worksID] = Rule(
             _firstBuyLimit,
             _freezeGap,
@@ -198,7 +171,7 @@ contract Works {
 
     }
 
-    //发布作品游戏 仅管理员可操作
+    //发布作品游戏 才能开始玩这个游戏 仅管理员可操作
     function publish(bytes32 _worksID, uint256 _beginTime) external onlyAdmin() {
         require(works[_worksID].beginTime != 0 && works[_worksID].isPublish == false);
         if(_beginTime > 0 && _beginTime > now) {

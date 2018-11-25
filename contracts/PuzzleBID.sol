@@ -1,6 +1,10 @@
 pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
+import "./library/Datasets.sol"; //导入结构库
+import "./interface/TeamInterface.sol"; //导入管理员团队接口
+import "./interface/PlatformInterface.sol"; //导入平台接口
+import "./interface/ArtistInterface.sol"; //导入艺术家接口
 import "./interface/WorksInterface.sol"; //导入作品碎片接口
 
 /**
@@ -10,7 +14,11 @@ import "./interface/WorksInterface.sol"; //导入作品碎片接口
 contract PuzzleBID {
     using SafeMath for *;
 
-    WorksInterface private works;
+    TeamInterface private team; //引入管理员，正式发布时可定义成常量
+    PlatformInterface private platform; //引入平台
+    ArtistInterface private artist; //引入艺术家
+    WorksInterface private works; //引入作品碎片
+    
 
     //初始化 连接一个作品合约
     constructor(address _WorksAddress) public {

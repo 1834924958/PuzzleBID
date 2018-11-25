@@ -2,7 +2,9 @@ pragma solidity ^0.5.0;
 
 /**
  * @dev PuzzleBID Game 艺术家合约接口
- * @author Simon<vsiryxm@163.com>
+ * @website http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team
+ *         Simon<vsiryxm@163.com>
  */
 interface Artist {
 

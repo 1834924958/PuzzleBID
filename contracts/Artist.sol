@@ -4,7 +4,9 @@ import "./interface/TeamInterface.sol"; //导入管理员团队接口
 
 /**
  * @dev PuzzleBID Game 艺术家合约
- * @author Simon<vsiryxm@163.com>
+ * @website http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team
+ *         Simon<vsiryxm@163.com>
  */
 contract Artist {
 
