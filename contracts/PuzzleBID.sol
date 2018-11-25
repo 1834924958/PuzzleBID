@@ -12,57 +12,36 @@ import "./interface/WorksInterface.sol"; //导入作品碎片接口
  * @author Simon<vsiryxm@163.com>
  */
 contract PuzzleBID {
+
     using SafeMath for *;
 
-    TeamInterface private team; //引入管理员，正式发布时可定义成常量
-    PlatformInterface private platform; //引入平台
-    ArtistInterface private artist; //引入艺术家
-    WorksInterface private works; //引入作品碎片
-    
+    string constant public name = "PuzzleBID Game";
+    string constant public symbol = "PZB";
 
-    //初始化 连接一个作品合约
-    constructor(address _WorksAddress) public {
-    	//TODO：检查作品合约是否存在
-    	works = WorksInterface(_WorksAddress);
+    TeamInterface private team; //引入管理员合约，正式发布时可定义成常量
+    PlatformInterface private platform; //引入平台合约
+    ArtistInterface private artist; //引入艺术家合约
+    WorksInterface private works; //引入作品碎片合约
+    
+    //初始化 接入各子合约
+    constructor(
+        address _teamAddress,
+        address _platformAddress,
+        address _artistAddress,
+        address _worksAddress
+    ) public {
+        team = TeamInterface(_teamAddress);
+        platform = PlatformInterface(_platformAddress);
+        artist = ArtistInterface(_artistAddress);
+    	works = WorksInterface(_worksAddress);
     }  
-    
-    //=========================================================================
-    //| Game data 
-    //=========================================================================
-    mapping(address => PZB_Datasets.Player) public players; //游戏玩家
-    //mapping(bytes32 => mapping(uint256 => PZB_Datasets.Player)) public union_players; //一个手机号码对应多个玩家钱包 如md5(手机号码) => Player 
-    mapping(bytes32 => PZB_Datasets.Works) public works; //作品列表 如(worksID => PZB_Datasets.Works)
-    
-    mapping(bytes32 => PZB_Datasets.Artist) public artists; //通过艺术家检索作品 如(artistID => PZB_Datasets.Artist)
 
-    mapping(bytes32 => uint256) public pots; //各作品奖池 如(worksID => totalAmount)
-    //mapping(uint256 => PZB_Datasets.Transaction) public transactions; //交易记录列表
-    mapping(address => mapping(bytes32 => PZB_Datasets.MyWorks)) public myworks; //我的藏品列表 (playerAddress => (worksID => PZB_Datasets.MyWorks))
-    uint256 public turnover; //所有作品的总交易额
-    mapping(bytes32 => uint256) worksTurnover; //每个作品的累计交易额 如(worksID => amount) 
-    mapping(bytes32 => address[]) secondAddress; //每个作品的再次购买玩家名单 如(worksID => playerAddress)
-    mapping(address => uint256) firstCount; //首发购买按玩家统计各自投入
-
-    //玩家购买记录检索表
-    mapping(address => mapping(bytes32 => PZB_Datasets.UnitCount)) playerBuy; // 如(player => (worksID => PZB_Datasets.UnitCount))
-    
-    //注册游戏玩家 静默
-    function registerPlayer(bytes32 _unionID, address _referrer) external {
-        require(players[msg.sender].time == 0);
-        require(_referrer != address(0));
-        uint256 _now = now;
-        players[msg.sender] = PZB_Datasets.Player(msg.sender, _unionID, _referrer, _now);
-        //union_players[_unionID].push(players[msg.sender]); //属同一个用户塞一个篮子
-        emit OnRegisterPlayer(msg.sender, _unionID, _referrer, _now);
+    //不接收ETH，startPlay接管
+    function() external payable {
+        revert();
     }
 
-    //=========================================================================
-    //| Game business
-    //=========================================================================
-
-    /**
-     * @dev prevents contracts from interacting with PuzzleBID 
-     */
+    //玩家不能是合约地址
     modifier isHuman() {
         address _address = msg.sender;
         uint256 _size;
@@ -72,64 +51,15 @@ contract PuzzleBID {
         _;
     }
 
-    function()
-        public
-        payable
-    {
-        revert();
-        //buyCore(bytes32 _worksID, uint8 _debrisID);
-    }
-
-    //获取碎片的最新价格
-    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) public view returns(uint256) {
-        uint256 lastPrice;
-        if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountTime) < now) { //降价
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
-        } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
-        }
-        return lastPrice;
-    }
-
-    //更新碎片
-    function updateDebris(bytes32 _worksID, uint8 _debrisID) internal {
-        //更新碎片价格
-        //超过时间
-        if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountTime) < now) { //降价
-            debris[_worksID][_debrisID].lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
-        } 
-        //未超过时间
-        else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
-            debris[_worksID][_debrisID].lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
-        }
-
-        debris[_worksID][_debrisID].lastBuyer = msg.sender; //更新归属
-        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
-        debris[_worksID][_debrisID].lastTime = now; //更新最后被交易时间
-        playerBuy[msg.sender][_worksID].lastTime = now; //更新玩家最后购买时间
-
-    }
-
-    //更新交易额
-    function updateTurnover(bytes32 _worksID) internal {
-
-        //更新所有作品累计交易额
-        turnover = turnover.add(msg.value);
-
-        //更新当前作品的累计交易额
-        worksTurnover[_worksID] = worksTurnover[_worksID].add(msg.value);
-
-    }
+    m
 
     //游戏前检查
     modifier checkPlay(bytes32 _worksID, uint8 _debrisID) {
-
-        //检查支付，最小0.000000001ETH，最大100000ETH
-        require(msg.value >= 1000000000);
-        require(msg.value <= 100000000000000000000000);
-
         //检查该作品碎片能不能被买
-        require(works[_worksID].beginTime != 0); //检查该作品游戏是否存在
+        require(works.isHasWorks(_worksID)); //检查该作品游戏是否存在
+
+        
+        require(works[_worksID].beginTime != 0); 
         require(debris[_worksID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
         require(works[_worksID].isPublish && works[_worksID].beginTime <= now); //检查该作品游戏是否发布并开始
         require(works[_worksID].endTime == 0); //检查该作品游戏是否已结束
@@ -149,7 +79,6 @@ contract PuzzleBID {
     //开始游戏 游戏入口
     function startPlay(bytes32 _worksID, uint8 _debrisID) 
         isHuman()
-        isRegisteredGame()
         checkPlay(_worksID, _debrisID)
         external
         payable

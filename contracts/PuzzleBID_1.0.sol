@@ -4,6 +4,7 @@ pragma solidity ^0.4.24;
  * @title PuzzleBID
  * @website http://www.puzzlebid.com/
  * @author PuzzleBID Game Team 
+ *         Simon<vsiryxm@163.com>
  */
 
 /**
@@ -114,7 +115,6 @@ contract PZB_Events {
 
 /**
  * @dev PuzzleBID Game Contract
- * @author Simon<vsiryxm@163.com>
  */
 contract PuzzleBID is PZB_Events {
     using SafeMath for *;

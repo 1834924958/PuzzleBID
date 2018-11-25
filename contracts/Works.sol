@@ -125,16 +125,16 @@ contract Works {
     //前置操作：先添加一个作品游戏
     function configRule(
         bytes32 _worksID,
-        uint8 _firstBuyLimit,
-        uint256 _freezeGap, 
-        uint256 _protectGap, 
-        uint256 _increaseRatio,
-        uint256 _discountGap,
-        uint256 _discountRatio,
+        uint8 _firstBuyLimit, //参考值：2
+        uint256 _freezeGap, //参考值：3 
+        uint256 _protectGap, //参考值：1800
+        uint256 _increaseRatio, //参考值：110
+        uint256 _discountGap, //参考值：3600
+        uint256 _discountRatio, //参考值：95
 
-        uint8[3] _firstAllot,
-        uint8[3] _againAllot,
-        uint8[3] _lastAllot
+        uint8[3] _firstAllot, //参考值：[80, 2, 18]
+        uint8[3] _againAllot, //参考值：[10, 2, 65]
+        uint8[3] _lastAllot //参考值：[80, 10, 10]
     ) 
         external
         onlyAdmin()
@@ -151,17 +151,17 @@ contract Works {
         );
 
         require(
-            _firstAllot[0] > 0 && _firstAllot[1] > 0 && _firstAllot[2] > 0 &&
-            _againAllot[0] > 0 && _againAllot[1] > 0 && _againAllot[2] > 0 &&
-            _lastAllot[0] > 0 && _lastAllot[1] > 0 && _lastAllot[2] > 0
+            _firstAllot[0] > 0 && _firstAllot[1] > 0 && _firstAllot[2] > 0 && //% 首发购买分配百分比 顺序对应：艺术家80、平台2、奖池18
+            _againAllot[0] > 0 && _againAllot[1] > 0 && _againAllot[2] > 0 && //% 再次购买分配百分比 顺序对应：艺术家10（溢价部分）、平台2（总价）、奖池65（溢价部分）
+            _lastAllot[0] > 0 && _lastAllot[1] > 0 && _lastAllot[2] > 0 //% 完成购买分配百分比 顺序对应：游戏完成者80、首发购买者10、后续其他购买者10
         ); //分配规则 百分比分子必须大于0
 
-        rules[_worksID] = Rule(
+        rules[_worksID] = Datasets.Rule(
             _firstBuyLimit,
-            _freezeGap,
-            _protectGap,
+            _freezeGap.mul(1 seconds),
+            _protectGap.mul(1 seconds),
             _increaseRatio,
-            _discountGap,    
+            _discountGap.mul(1 seconds),    
             _discountRatio
         );
 
@@ -187,6 +187,11 @@ contract Works {
 
     //是否存在作品 true为存在
     function isHasWorks(bytes32 _worksID) external view returns (bool) {
+        return works[_worksID].beginTime != 0;
+    }
+
+    //是否存在碎片 true为存在
+    function isHasDebris(bytes32 _worksID) external view returns (bool) {
         return works[_worksID].beginTime != 0;
     }
 

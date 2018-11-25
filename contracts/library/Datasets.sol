@@ -28,6 +28,20 @@ library Datasets {
         uint256 endTime; //作品游戏结束时间
         uint256 isPublish; //作品游戏发布开关 true为开启
     }
+
+    //碎片结构
+    struct Debris {
+        uint8 debrisID; //碎片ID
+        bytes32 worksID; //作品ID
+        uint256 initPrice; //初始价格
+        uint256 lastPrice; //最新成交价格
+        uint256 buyNum; //被交易总次数
+        address firstBuyer; //首发购买者，冗余
+        address lastBuyer; //最后一次购买者，冗余
+        bytes32 firstUnionID; //首发购买者ID，冗余
+        bytes32 lastUnionID; //最后一次购买者ID，冗余
+        uint256 lastTime; //最后一次被购买时间
+    }
     
     //作品游戏规则结构
     struct Rule {
@@ -48,5 +62,7 @@ library Datasets {
         uint8[3] againAllot; //% 再次购买分配百分比 顺序对应：艺术家10（溢价部分）、平台2（总价）、奖池65（溢价部分）
         uint8[3] lastAllot;  //% 完成购买分配百分比 顺序对应：游戏完成者80、首发购买者10、后续其他购买者10
     }
+
+
 
 }
