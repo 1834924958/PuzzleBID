@@ -13,12 +13,12 @@ contract Artist {
     TeamInterface private Team; //引入管理员，正式发布时可定义成常量
     mapping(bytes32 => address) private artists; //艺术家列表 (artistID => address)
 
-	constructor(address _teamAddress) public {
+    constructor(address _teamAddress) public {
         Team = TeamInterface(_teamAddress);
-	}	
+    }
 
     //不接收ETH
-	function() external payable {
+    function() external payable {
         revert();
     }
 
@@ -33,7 +33,7 @@ contract Artist {
 
     //根据艺术家ID获取钱包地址
     function getAddress(bytes32 _artistID) external view returns (address) {
-    	return artists[_artistID];
+        return artists[_artistID];
     }
 
     //添加艺术家

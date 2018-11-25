@@ -10,20 +10,20 @@ import "./interface/TeamInterface.sol"; //导入管理员团队接口
  */
 contract Platform {
 
-	address private foundation; //基金会address
+    address private foundation; //基金会address
     TeamInterface private Team; //引入管理员，正式发布时可定义成常量
 
-	constructor(address _foundAddress, address _teamAddress) public {
-		require(
+    constructor(address _foundAddress, address _teamAddress) public {
+        require(
             _foundAddress != address(0) &&
             _teamAddress != address(0)
         );
-		foundation = _foundAddress;
+        foundation = _foundAddress;
         Team = TeamInterface(_teamAddress);
-	}
+    }
 
     //不接收ETH，deposit接管
-	function() external payable {
+    function() external payable {
         revert();
     }
 
@@ -44,7 +44,7 @@ contract Platform {
 
     //获取平台总交易额
     function getAllTurnover() external view returns (uint256) {
-    	return allTurnover;
+        return allTurnover;
     }
 
     //获取作品的交易额
@@ -54,13 +54,13 @@ contract Platform {
 
     //更新平台总交易额 仅开发者、合约地址可操作
     function updateAllTurnover(uint256 _amount) external onlyDev() {
-    	allTurnover = allTurnover.add(_amount); 
+        allTurnover = allTurnover.add(_amount); 
         emit OnUpdateAllTurnover(uint256 _amount);
     }   
 
     //更新作品的交易额 仅开发者、合约地址可操作
     function updateTurnover(bytes32 _worksID, uint256 _amount) external onlyDev() {
-    	allTurnover = allTurnover.add(_amount); 
+        allTurnover = allTurnover.add(_amount); 
         emit OnUpdateTurnover(_worksID, _amount);
     }
 
@@ -72,8 +72,8 @@ contract Platform {
 
     //平台合约代为保管奖池中的ETH
     function deposit(bytes32 _worksID) external payable {
-    	require(this.isHasWorks(_worksID)); //不接受非法合约地址存款
-    	emit OnDeposit(_worksID, msg.sender, msg.value);
+        require(this.isHasWorks(_worksID)); //不接受非法合约地址存款
+        emit OnDeposit(_worksID, msg.sender, msg.value);
     }
 
     //获取基金会address
