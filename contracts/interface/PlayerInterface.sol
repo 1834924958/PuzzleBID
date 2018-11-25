@@ -42,10 +42,9 @@ interface PlayerInterface {
     function updateMyWorks(
         bytes32 _unionID, 
         address _address, 
-    	bytes32 _worksID, 
-    	uint256 _totalInput, 
-    	uint256 _totalOutput
+        bytes32 _worksID, 
+        uint256 _totalInput, 
+        uint256 _totalOutput
     ) external;
-
 
 }
