@@ -63,6 +63,12 @@ library Datasets {
         uint8[3] lastAllot;  //% 完成购买分配百分比 顺序对应：游戏完成者80、首发购买者10、后续其他购买者10
     }
 
+    //玩家对作品购买行为的单元统计
+    struct PlayerCount {
+        uint256 lastTime; //同一作品同一玩家，最后一次购买时间
+        uint256 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
+        uint256 secondAmount; //二手购买总计金额
+    }
 
 
 }
