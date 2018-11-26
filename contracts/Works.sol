@@ -13,6 +13,8 @@ import "./interface/ArtistInterface.sol"; //导入艺术家合约接口
  */
 contract Works {
 
+    using SafeMath for *;
+
     TeamInterface private team; //引入管理员，正式发布时可定义成常量
     ArtistInterface private artist; //引入艺术家
 
@@ -65,6 +67,12 @@ contract Works {
         _;
     }
 
+    //仅开发者、合约地址可操作
+    modifier onlyDev() {
+        require(team.isDev(msg.sender));
+        _;
+    }
+
     //添加一个作品游戏 仅管理员可操作
     //前置操作：先添加艺术家
     function addWorks(
@@ -107,7 +115,7 @@ contract Works {
         initDebris(_worksID, _price, _debrisNum); //初始化作品碎片
     }
 
-    //初始化作品碎片
+    //初始化作品碎片 碎片编号从1开始
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) internal {      
         uint256 initPrice = _price / _debrisNum;
         for(uint8 i=1; i<=_debrisNum; i++) {
@@ -191,8 +199,8 @@ contract Works {
     }
 
     //是否存在碎片 true为存在
-    function isHasDebris(bytes32 _worksID) external view returns (bool) {
-        return works[_worksID].beginTime != 0;
+    function isHasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+        return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
     }
 
     //作品游戏是否发布 仅发布时才可以玩这个游戏
@@ -200,31 +208,80 @@ contract Works {
         return works[_worksID].isPublish;
     }
 
-    //作品游戏是否结束
-    function isGameOver(bytes32 _worksID, address _sender) external view returns (bool) {
-        if(works[_worksID].endTime != 0) {
-            return true;
-        }
-        bool isFinished = true; //游戏完成标志
+    //作品游戏是否可以开玩 仅发布且到了开始时间才可以玩这个游戏
+    function isStart(bytes32 _worksID) external view returns (bool) {
+        return works[_worksID].beginTime >= now;
+    }
+
+    //作品碎片是否在保护期时间段内 true为被保护状态
+    function isProtect(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+        uint256 protectGap = rules[_worksID].protectGap;
+        return debris[_worksID][_debrisID].lastTime.add(protectGap) < now ? false : true;
+    }
+
+    //作品游戏是否结束 true为已结束
+    function isGameOver(bytes32 _worksID) external view returns (bool) {
+        return works[_worksID].endTime != 0;
+    }
+    
+    //作品碎片是否收集完成
+    function isFinish(bytes32 _worksID, address _unionID) external view returns (bool) {
+        bool isFinish = true; //收集完成标志
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
-            if(debris[_worksID][_debrisID].lastBuyer != _sender) {
-                isFinished = false;
+            if(debris[_worksID][_debrisID].lastUnionID != _unionID) {
+                isFinish = false;
                 break;
             }
             i++;
         }
-        return isFinished;
+        return isFinish;
     }
 
-    //获取碎片的最新价格
-    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) public view returns(uint256) {
-        
+    //获取碎片的实时价格
+    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
+        uint256 discountGap = rules[_worksID].discountGap;
+        uint256 discountRatio = rules[_worksID].discountRatio;
+        uint256 increaseRatio = rules[_worksID].increaseRatio;
+        uint256 lastPrice; //有可能为0
+
+        if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountGap) < now) { //降价
+
+            //过去多个时间段时，乘以折扣的n次方
+            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; //几个时间段
+            if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { //有余数时多计1
+                n = n.add(1);
+            }
+            for(uint256 i=0; i<n; i++) {
+                if(0 == i) {
+                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
+                } else {
+                    lastPrice = lastPrice.mul(discountRatio / 100);
+                }                
+            }            
+
+        } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
+            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
+        } else {
+            lastPrice = debris[_worksID][_debrisID].lastPrice;
+        }
+        return lastPrice;
+    }
+
+    //获取碎片的最后被交易的价格
+    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+        return debris[_worksID][_debrisID].lastPrice;
     }
 
     //更新碎片
-    function updateDebris(bytes32 _worksID, uint8 _debrisID) internal {
-        
+    function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
+        //更新碎片价格
+        //超过时间
+        debris[_worksID][_debrisID].lastPrice = this.getDebrisPrice(_worksID, _debrisID);
+        debris[_worksID][_debrisID].lastUnionID = _unionID; //更新归属
+        debris[_worksID][_debrisID].lastBuyer = _sender; //更新归属
+        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
+        debris[_worksID][_debrisID].lastTime = now; //更新最后被交易时间
     }
 
 

@@ -11,7 +11,7 @@ import "./library/Datasets.sol"; //导入结构库
  */
 contract Player {
 
-    TeamInterface private Team; //引入管理员，正式发布时可定义成常量
+    TeamInterface private Team; //实例化管理员团队合约，正式发布时可定义成常量
     
     //定义玩家结构Player，见library/Datasets.sol
     //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
@@ -49,28 +49,68 @@ contract Player {
         _;
     }
 
-    mapping(bytes32 => Datasets.Player) playersByUnionId; //玩家信息 (unionID => Datasets.Player)
-    mapping(address => bytes32) playersByAddress; //根据address查询玩家unionID
+    mapping(bytes32 => Datasets.Player) private playersByUnionId; //玩家信息 (unionID => Datasets.Player)
+    mapping(address => bytes32) private playersByAddress; //根据address查询玩家unionID (address => unionID)
+    address[] private playerAddressSets; //检索辅助 玩家address集 查询address是否已存在
+    bytes32[] private playersUnionIdSets; //检索辅助 玩家unionID集 查询unionID是否已存在
 
-    mapping(bytes32 => mapping(bytes32 => uint256)) firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
-    mapping(bytes32 => mapping(bytes32 => uint256)) reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
-    mapping(bytes32 => mapping(bytes32 => uint256)) reward; //玩家获得作品的累计奖励 (unionID => (worksID => amount))
+    mapping(bytes32 => mapping(bytes32 => uint256)) private firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
+    mapping(bytes32 => mapping(bytes32 => uint256)) private reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
+    mapping(bytes32 => mapping(bytes32 => uint256)) private reward; //玩家获得作品的累计奖励 (unionID => (worksID => amount))
 
-    mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks) 
+    mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks)
+
+    //是否存在这个address   address存在则被认为是老用户
+    function isHasAddress(address _address) external view returns (bool) {
+        bool isHasAddress = false;
+        for(uint256 i=0; i<playerAddressSets.length; i++) {
+            if(playerAddressSets[i] == _address) {
+                isHasAddress = true;
+                break;
+            }
+        }
+        return isHasAddress;
+    }
+
+    //是否存在这个unionID unionID存在则被认为是老用户
+    function isHasUnionId(bytes32 _unionID) external view returns (bool) {
+        bool isHasUnionId = false;
+        for(uint256 i=0; i<playersUnionIdSets.length; i++) {
+            if(playersUnionIdSets[i] == _unionID) {
+                isHasUnionId = true;
+                break;
+            }
+        }
+        return isHasUnionId;
+    }
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _ethAddress, address _referrer) external {
-        require(_unionID != 0 && _ethAddress != address(0));
+    function register(bytes32 _unionID, address _address, address _referrer) external returns (bool) {
+        require(_unionID != 0 && _address != address(0));
+
+        require (
+            (this.isHasUnionId(_unionID) || this.isHasAddress(_address)) && 
+            playersByAddress[_address] == _unionID
+        ); //检查address和unionID是否为合法绑定关系 避免address被多个unionID绑定
+
+        if(this.isHasAddress(_address)) {
+            return false;
+        }
          
-        playersByUnionId[_unionID].ethAddress.push(_ethAddress);
+        playersByUnionId[_unionID].ethAddress.push(_address);
         if(_referrer != address(0)) {
         	playersByUnionId[_unionID].referrer = _referrer;
         }        
         playersByUnionId[_unionID].time = now;
 
-        playersByAddress[_ethAddress] = _unionID;
+        playersByAddress[_address] = _unionID;
 
-        emit OnRegister(_ethAddress, _unionID, _referrer, now);
+        playerAddressSets.push(_address);
+        playersUnionIdSets.push(_unionID);
+
+        emit OnRegister(_address, _unionID, _referrer, now);
+
+        return true;
     }
 
     //根据unionID查询玩家信息

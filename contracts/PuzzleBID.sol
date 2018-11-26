@@ -2,13 +2,14 @@ pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
 import "./library/Datasets.sol"; //导入结构库
-import "./interface/TeamInterface.sol"; //导入管理员团队接口
-import "./interface/PlatformInterface.sol"; //导入平台接口
-import "./interface/ArtistInterface.sol"; //导入艺术家接口
-import "./interface/WorksInterface.sol"; //导入作品碎片接口
+import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
+import "./interface/PlatformInterface.sol"; //导入平台合约接口
+import "./interface/ArtistInterface.sol"; //导入艺术家合约接口
+import "./interface/WorksInterface.sol"; //导入作品碎片合约接口
+import "./interface/PlayerInterface.sol"; //导入玩家合约接口
 
 /**
- * @dev PuzzleBID Game 作品合约（一作品一合约）
+ * @dev PuzzleBID Game 主合约
  * @author Simon<vsiryxm@163.com>
  */
 contract PuzzleBID {
@@ -18,22 +19,26 @@ contract PuzzleBID {
     string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZB";
 
-    TeamInterface private team; //引入管理员合约，正式发布时可定义成常量
-    PlatformInterface private platform; //引入平台合约
-    ArtistInterface private artist; //引入艺术家合约
-    WorksInterface private works; //引入作品碎片合约
+    TeamInterface private team; //实例化管理员合约，正式发布时可定义成常量
+    PlatformInterface private platform; //实例化平台合约
+    ArtistInterface private artist; //实例化艺术家合约
+    WorksInterface private works; //实例化作品碎片合约
+    PlayerInterface private player; //实例化玩家合约
     
     //初始化 接入各子合约
     constructor(
         address _teamAddress,
         address _platformAddress,
         address _artistAddress,
-        address _worksAddress
+        address _worksAddress,
+        address _playerAddress
     ) public {
         team = TeamInterface(_teamAddress);
         platform = PlatformInterface(_platformAddress);
         artist = ArtistInterface(_artistAddress);
     	works = WorksInterface(_worksAddress);
+    	player = PlayerInterface(_playerAddress);
+    	
     }  
 
     //不接收ETH，startPlay接管
@@ -51,19 +56,18 @@ contract PuzzleBID {
         _;
     }
 
-    m
-
     //游戏前检查
     modifier checkPlay(bytes32 _worksID, uint8 _debrisID) {
+    	//检查支付，最小0.000000001ETH，最大100000ETH
+    	require(msg.value >= 1000000000);
+        require(msg.value <= 100000000000000000000000);
+
         //检查该作品碎片能不能被买
         require(works.isHasWorks(_worksID)); //检查该作品游戏是否存在
-
-        
-        require(works[_worksID].beginTime != 0); 
-        require(debris[_worksID][_debrisID].initPrice != 0); //检查该作品碎片是否存在
-        require(works[_worksID].isPublish && works[_worksID].beginTime <= now); //检查该作品游戏是否发布并开始
-        require(works[_worksID].endTime == 0); //检查该作品游戏是否已结束
-        require(debris[_worksID][_debrisID].lastTime.add(protectTime) < now); //检查该作品碎片是否在30分钟保护期内
+        require(works.isHasDebris(_worksID, _debrisID)); //检查该作品碎片是否存在
+        require(works.isGameOver(_worksID)); //检查游戏是否已结束
+        require(works.isPublish(_worksID) && works.isStart(_worksID)); //检查该作品游戏是否发布并开始
+        require(works.isProtect(_worksID, _debrisID)); //检查该作品碎片是否在30分钟保护期内
         
         //检查玩家能不能买该作品碎片
         require(playerBuy[msg.sender][_worksID].lastTime.add(freezeTime)  < now); //检查同一作品同一玩家是否超过5分钟冻结期
@@ -72,25 +76,29 @@ contract PuzzleBID {
         require((playerBuy[msg.sender][_worksID].firstBuyNum.add(1) > works[_worksID].firstBuyLimit) && (debris[_worksID][_debrisID].buyNum > 0)); //限制首发购买超出情况        
 
         //检查支付的ETH够不够？      
-        require(msg.value >= getDebrisPrice(_worksID, _debrisID));
+        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID));
         _;
     }    
 
     //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
         isHuman()
         checkPlay(_worksID, _debrisID)
         external
         payable
     {
+    	player.register(_unionID, msg.sender, address(0)); //静默注册
 
-        uint256 lastPrice = debris[_worksID][_debrisID].lastPrice;
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格
 
-        //更新碎片：价格、归属、被购买次数、最后被交易时间
-        updateDebris(_worksID, _debrisID);
+        //更新碎片：价格、归属、被购买次数
+        works.updateDebris(_worksID, _debrisID);
 
-        //更新交易额
-        updateTurnover(_worksID);
+        playerBuy[msg.sender][_worksID].lastTime = now; //更新玩家最后购买时间
+        
+        platform.updateTurnover(_worksID, msg.value); //更新作品的交易额
+        platform.updateAllTurnover(msg.value); //更新平台的交易额
+        
 
         //分分分
         if(debris[_worksID][_debrisID].buyNum > 0) { 
