@@ -60,7 +60,7 @@ contract PuzzleBID {
     }
 
     //游戏前检查
-    modifier checkPlay(bytes32 _worksID, uint8 _debrisID) {
+    modifier checkPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) {
         //检查支付，最小0.000000001ETH，最大100000ETH
         require(msg.value >= 1000000000);
         require(msg.value <= 100000000000000000000000);
@@ -73,7 +73,7 @@ contract PuzzleBID {
         require(works.isProtect(_worksID, _debrisID)); //检查该作品碎片是否在30分钟保护期内
         
         //检查玩家能不能买该作品碎片 
-        require(player.isFreeze(msg.sender, _worksID, works.getFreezeGap(_worksID))); //检查同一作品同一玩家是否超过5分钟冻结期
+        require(player.isFreeze(_unionID, _worksID)); //检查同一作品同一玩家是否超过5分钟冻结期
         require((player.getFirstBuyNum(msg.sender, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && works.isSecond(_worksID, _debrisID)); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
         _;
@@ -82,7 +82,7 @@ contract PuzzleBID {
     //开始游戏 游戏入口
     function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
         isHuman()
-        checkPlay(_worksID, _debrisID)
+        checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
@@ -98,15 +98,15 @@ contract PuzzleBID {
 
         platform.updateAllTurnover(msg.value); //更新平台总交易额
         
-        //分红
+        //分红业务
         if(works.isSecond(_worksID, _debrisID)) { 
-            //如果是再次购买，按再次规则
+            //碎片如果是被玩家再次购买，按再次规则
             secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
         } else { 
-            //如果是首发购买，按首发规则
+            //碎片如果是被玩家第一次购买，按首发规则
             firstPlay(_worksID, _debrisID, _unionID);       
         }
-        //完成游戏
+        //碎片如果被同一玩家收集完成，结束游戏
         if(works.isFinish(_worksID, _debrisID, _unionID)) {
             finishGame(_worksID, _debrisID, _unionID);
         }

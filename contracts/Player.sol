@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./library/SafeMath.sol"; //导入安全运算库
 import "./library/Datasets.sol"; //导入结构库
 import "./interface/TeamInterface.sol"; //导入管理员团队接口
+import "./interface/WorksInterface.sol"; //导入管理员团队接口
 
 /**
  * @dev PuzzleBID Game 玩家合约
@@ -14,13 +15,15 @@ contract Player {
 
     using SafeMath for *;
 
-    TeamInterface private Team; //实例化管理员团队合约，正式发布时可定义成常量
+    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
+    WorksInterface private works; //实例化作品碎片合约
     
     //定义玩家结构Player，见library/Datasets.sol
     //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
     
-    constructor(address _teamAddress) public {
-        Team = TeamInterface(_teamAddress);
+    constructor(address _teamAddress, address _worksAddress) public {
+        team = TeamInterface(_teamAddress);
+        works = WorksInterface(_worksAddress);
     }
 
     //不接收ETH
@@ -48,7 +51,7 @@ contract Player {
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
-        require(Team.isDev(msg.sender));
+        require(team.isDev(msg.sender));
         _;
     }
 
@@ -131,8 +134,9 @@ contract Player {
     }
 
     //玩家账号是否处于冻结期 true为处在冻结期
-    function isFreeze(address _sender, bytes32 _worksID, uint256 _freezeGap) external view returns (bool) {
-        return playerCount[_sender][_worksID].lastTime.add(_freezeGap) < now ? false : true;
+    function isFreeze(address _unionID, bytes32 _worksID, uint256 _freezeGap) external view returns (bool) {
+        uint256 freezeGap = works.getFreezeGap(_worksID);
+        return playerCount[_unionID][_worksID].lastTime.add(freezeGap) < now ? false : true;
     }
 
     //获取玩家已经购买首发数
@@ -153,6 +157,15 @@ contract Player {
     //获取玩家对作品的累计奖励
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
         return reward[_unionID][_worksID];
+    }
+
+    //获取玩家账号冻结倒计时
+    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
+        uint256 freezeGap = works.getFreezeGap(_worksID);
+        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
+            return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
+        }
+        return 0;
     }
 
     //获取我的藏品列表
