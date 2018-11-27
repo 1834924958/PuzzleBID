@@ -10,11 +10,11 @@ import "./interface/TeamInterface.sol"; //导入管理员团队接口
  */
 contract Artist {
 
-    TeamInterface private Team; //引入管理员，正式发布时可定义成常量
+    TeamInterface private team; //引入管理员，正式发布时可定义成常量
     mapping(bytes32 => address) private artists; //艺术家列表 (artistID => address)
 
     constructor(address _teamAddress) public {
-        Team = TeamInterface(_teamAddress);
+        team = TeamInterface(_teamAddress);
     }
 
     //不接收ETH
@@ -27,7 +27,7 @@ contract Artist {
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
-        require(Team.isDev(msg.sender));
+        require(team.isDev(msg.sender));
         _;
     }
 

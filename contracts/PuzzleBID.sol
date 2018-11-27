@@ -203,7 +203,7 @@ contract PuzzleBID {
     }
 
 
-    //获取当前最新时间 倒计时以此为基准
+    //获取当前最新时间
     function getNowTime() external view returns(uint256) {
         return now;
     }

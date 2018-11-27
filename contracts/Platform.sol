@@ -11,7 +11,7 @@ import "./interface/TeamInterface.sol"; //导入管理员团队接口
 contract Platform {
 
     address private foundation; //基金会address
-    TeamInterface private Team; //引入管理员，正式发布时可定义成常量
+    TeamInterface private team; //引入管理员，正式发布时可定义成常量
 
     constructor(address _foundAddress, address _teamAddress) public {
         require(
@@ -19,7 +19,7 @@ contract Platform {
             _teamAddress != address(0)
         );
         foundation = _foundAddress;
-        Team = TeamInterface(_teamAddress);
+        team = TeamInterface(_teamAddress);
     }
 
     //不接收ETH，deposit接管
@@ -35,7 +35,7 @@ contract Platform {
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
-        require(Team.isDev(msg.sender));
+        require(team.isDev(msg.sender));
         _;
     }
 
