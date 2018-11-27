@@ -34,6 +34,12 @@ contract Works {
         uint8 _debrisNum,
         uint256 initPrice
     );
+    event OnUpdateDebris(
+        bytes32 worksID, 
+        uint8 debrisID, 
+        bytes32 unionID, 
+        address indexed sender
+    );
 
     //定义作品碎片结构Works，见library/Datasets.sol
     //定义作品游戏规则结构Rule，见library/Datasets.sol
@@ -203,7 +209,7 @@ contract Works {
         return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
     }
 
-    //作品游戏是否发布 仅发布时才可以玩这个游戏
+    //作品游戏是否发布 
     function isPublish(bytes32 _worksID) external view returns (bool) {
         return works[_worksID].isPublish;
     }
@@ -219,13 +225,18 @@ contract Works {
         return debris[_worksID][_debrisID].lastTime.add(protectGap) < now ? false : true;
     }
 
+    //作品碎片是否为二手交易 true为二手交易
+    function isSecond(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+        return debris[_worksID][_debrisID].buyNum > 0;
+    }
+
     //作品游戏是否结束 true为已结束
     function isGameOver(bytes32 _worksID) external view returns (bool) {
         return works[_worksID].endTime != 0;
     }
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, address _unionID) external view returns (bool) {
+    function isFinish(bytes32 _worksID, uint8 _debrisID, address _unionID) external view returns (bool) {
         bool isFinish = true; //收集完成标志
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
@@ -236,7 +247,7 @@ contract Works {
             i++;
         }
         return isFinish;
-    }
+    }    
 
     //获取碎片的实时价格
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
@@ -263,7 +274,7 @@ contract Works {
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
         } else {
-            lastPrice = debris[_worksID][_debrisID].lastPrice;
+            lastPrice = debris[_worksID][_debrisID].lastPrice; //碎片第一次被购买，不降不涨
         }
         return lastPrice;
     }
@@ -273,15 +284,24 @@ contract Works {
         return debris[_worksID][_debrisID].lastPrice;
     }
 
+    //获取玩家账号冻结时间 单位s
+    function getFreezeGap(bytes32 _worksID) external view returns(uint256) {
+        return rules[_worksID].freezeGap;
+    }
+
+    //获取玩家首发购买上限数
+    function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256) {
+        return rules[_worksID].FirstBuyLimit;
+    }
+
     //更新碎片
     function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
-        //更新碎片价格
-        //超过时间
         debris[_worksID][_debrisID].lastPrice = this.getDebrisPrice(_worksID, _debrisID);
         debris[_worksID][_debrisID].lastUnionID = _unionID; //更新归属
         debris[_worksID][_debrisID].lastBuyer = _sender; //更新归属
         debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
         debris[_worksID][_debrisID].lastTime = now; //更新最后被交易时间
+        emit OnUpdateDebris(_worksID, _debrisID, _unionID, _sender);
     }
 
 

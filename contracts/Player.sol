@@ -1,7 +1,8 @@
 pragma solidity ^0.5.0;
 
-import "./interface/TeamInterface.sol"; //导入管理员团队接口
+import "./library/SafeMath.sol"; //导入安全运算库
 import "./library/Datasets.sol"; //导入结构库
+import "./interface/TeamInterface.sol"; //导入管理员团队接口
 
 /**
  * @dev PuzzleBID Game 玩家合约
@@ -11,26 +12,28 @@ import "./library/Datasets.sol"; //导入结构库
  */
 contract Player {
 
+    using SafeMath for *;
+
     TeamInterface private Team; //实例化管理员团队合约，正式发布时可定义成常量
     
     //定义玩家结构Player，见library/Datasets.sol
     //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
     
-	constructor(address _teamAddress) public {
+    constructor(address _teamAddress) public {
         Team = TeamInterface(_teamAddress);
-	}
+    }
 
     //不接收ETH
-	function() external payable {
+    function() external payable {
         revert();
     }
 
     //事件
     event OnRegister(
-    	address ethAddress, 
-    	bytes32 unionID, 
-    	address referrer, 
-    	uint256 time
+        address ethAddress, 
+        bytes32 unionID, 
+        address referrer, 
+        uint256 time
     );
     event OnUpdateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -54,6 +57,7 @@ contract Player {
     address[] private playerAddressSets; //检索辅助 玩家address集 查询address是否已存在
     bytes32[] private playersUnionIdSets; //检索辅助 玩家unionID集 查询unionID是否已存在
 
+    mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
     mapping(bytes32 => mapping(bytes32 => uint256)) private firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
     mapping(bytes32 => mapping(bytes32 => uint256)) private reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
     mapping(bytes32 => mapping(bytes32 => uint256)) private reward; //玩家获得作品的累计奖励 (unionID => (worksID => amount))
@@ -99,7 +103,7 @@ contract Player {
          
         playersByUnionId[_unionID].ethAddress.push(_address);
         if(_referrer != address(0)) {
-        	playersByUnionId[_unionID].referrer = _referrer;
+            playersByUnionId[_unionID].referrer = _referrer;
         }        
         playersByUnionId[_unionID].time = now;
 
@@ -115,58 +119,83 @@ contract Player {
 
     //根据unionID查询玩家信息
     function getInfoByUnionId(uint256 _unionID) external view returns (address, uint256) {
-    	return (
+        return (
             playersByUnionId[_unionID].referrer, 
-    		playersByUnionId[_unionID].time
+            playersByUnionId[_unionID].time
         );
     }
 
     //根据玩家address查询unionID
     function getUnionIdByAddress(address _address) external view returns (bytes32) {
-    	return playersByAddress[_address];
+        return playersByAddress[_address];
+    }
+
+    //玩家账号是否处于冻结期 true为处在冻结期
+    function isFreeze(address _sender, bytes32 _worksID, uint256 _freezeGap) external view returns (bool) {
+        return playerCount[_sender][_worksID].lastTime.add(_freezeGap) < now ? false : true;
+    }
+
+    //获取玩家已经购买首发数
+    function getFirstBuyNum(address _sender, bytes32 _worksID) external view returns (uint256) {
+        return playerCount[_sender][_worksID].firstBuyNum;
     }
 
     //获取玩家对作品的首发投入累计
     function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-    	return firstInvest[_unionID][_worksID];
+        return firstInvest[_unionID][_worksID];
     }
 
     //获取玩家对作品的再次投入累计
     function getReinvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-    	return reinvest[_unionID][_worksID];
+        return reinvest[_unionID][_worksID];
     }
 
     //获取玩家对作品的累计奖励
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-    	return reward[_unionID][_worksID];
+        return reward[_unionID][_worksID];
     }
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256) {
-    	return (
+        return (
             myworks[_unionID].ethAddress,
-    	    myworks[_unionID].worksID,
-    	    myworks[_unionID].totalInput,
-    	    myworks[_unionID].totalOutput,
-    	    myworks[_unionID].time
+            myworks[_unionID].worksID,
+            myworks[_unionID].totalInput,
+            myworks[_unionID].totalOutput,
+            myworks[_unionID].time
         );
+    }
+
+    //更新玩家对作品碎片的最后购买时间
+    function updateLastTime(bytes32 _unionID, bytes32 _worksID) external onlyDev() {
+        playerCount[_unionID][_worksID].lastTime = now;
+    }
+
+    //更新玩家对作品碎片的首发购买累计
+    function updateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum) external onlyDev() {
+        playerCount[_unionID][_worksID].firstBuyNum = playerCount[_unionID][_worksID].firstBuyNum.add(_firstBuyNum);
+    }
+
+    //更新玩家对作品碎片的二次购买累计金额
+    function updateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _secondAmount) external onlyDev() {
+        playerCount[_unionID][_worksID].secondAmount = playerCount[_unionID][_worksID].secondAmount.add(_secondAmount);
     }
 
     //更新玩家对作品的首轮投入累计
     function updateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-    	firstInvest[_unionID][_worksID] = firstInvest[_unionID][_worksID].add(_amount);
+        firstInvest[_unionID][_worksID] = firstInvest[_unionID][_worksID].add(_amount);
         emit OnUpdateFirstInvest(_unionID, _worksID, _amount);
     }
 
     //更新玩家对作品的再次投入累计    
     function updateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-    	reinvest[_unionID][_worksID] = reinvest[_unionID][_worksID].add(_amount);
+        reinvest[_unionID][_worksID] = reinvest[_unionID][_worksID].add(_amount);
         emit OnUpdateReinvest(_unionID, _worksID, _amount);
     }
 
     //更新玩家获得作品的累计奖励
     function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-    	reward[_unionID][_worksID] = reward[_unionID][_worksID].add(_amount);
+        reward[_unionID][_worksID] = reward[_unionID][_worksID].add(_amount);
         emit OnUpdateReward(_unionID, _worksID, _amount);
     }   
 
@@ -174,11 +203,11 @@ contract Player {
     function updateMyWorks(
         bytes32 _unionID, 
         address _address, 
-    	bytes32 _worksID, 
-    	uint256 _totalInput, 
-    	uint256 _totalOutput
+        bytes32 _worksID, 
+        uint256 _totalInput, 
+        uint256 _totalOutput
     ) internal onlyDev() {
-    	myworks[_unionID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput);
+        myworks[_unionID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput);
         emit OnUpdateMyWorks(_address, _worksID, _totalInput, _totalOutput);
     }
 
