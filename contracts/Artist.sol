@@ -38,13 +38,13 @@ contract Artist {
 
     //添加艺术家
     function add(bytes32 _artistID, address _address) external onlyDev() {
-        require(this.isHasArtist(_artistID) == false); //this用法 已测
+        require(this.hasArtist(_artistID) == false); //this用法 已测
         artists[_artistID] = _address;
         emit OnAdd(_artistID, _address);
     }
 
     //是否存在艺术家 true为存在
-    function isHasArtist(bytes32 _artistID) external view returns (bool) {
+    function hasArtist(bytes32 _artistID) external view returns (bool) {
         return artists[_artistID] != address(0);
     }
 

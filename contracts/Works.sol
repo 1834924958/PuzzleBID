@@ -63,7 +63,7 @@ contract Works {
 
     //当艺术家存在时
     modifier whenHasArtist(bytes32 _artistID) {
-        require(artist.isHasArtist(_artistID));
+        require(artist.hasArtist(_artistID));
         _;
     }
 
@@ -200,12 +200,12 @@ contract Works {
     }
 
     //是否存在作品 true为存在
-    function isHasWorks(bytes32 _worksID) external view returns (bool) {
+    function hasWorks(bytes32 _worksID) external view returns (bool) {
         return works[_worksID].beginTime != 0;
     }
 
     //是否存在碎片 true为存在
-    function isHasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+    function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
         return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
     }
 

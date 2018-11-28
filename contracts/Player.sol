@@ -69,27 +69,27 @@ contract Player {
     mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks)
 
     //是否存在这个address   address存在则被认为是老用户
-    function isHasAddress(address _address) external view returns (bool) {
-        bool isHas = false;
+    function hasAddress(address _address) external view returns (bool) {
+        bool has = false;
         for(uint256 i=0; i<playerAddressSets.length; i++) {
             if(playerAddressSets[i] == _address) {
-                isHas = true;
+                has = true;
                 break;
             }
         }
-        return isHas;
+        return has;
     }
 
     //是否存在这个unionID unionID存在则被认为是老用户
-    function isHasUnionId(bytes32 _unionID) external view returns (bool) {
-        bool isHas = false;
+    function hasUnionId(bytes32 _unionID) external view returns (bool) {
+        bool has = false;
         for(uint256 i=0; i<playersUnionIdSets.length; i++) {
             if(playersUnionIdSets[i] == _unionID) {
-                isHas = true;
+                has = true;
                 break;
             }
         }
-        return isHas;
+        return has;
     }
 
     //根据unionID查询玩家信息
@@ -156,11 +156,11 @@ contract Player {
         require(_unionID != 0 && _address != address(0));
 
         require (
-            (this.isHasUnionId(_unionID) || this.isHasAddress(_address)) && 
+            (this.hasUnionId(_unionID) || this.hasAddress(_address)) && 
             playersByAddress[_address] == _unionID
         ); //检查address和unionID是否为合法绑定关系 避免address被多个unionID绑定
 
-        if(this.isHasAddress(_address)) {
+        if(this.hasAddress(_address)) {
             return false;
         }
          
