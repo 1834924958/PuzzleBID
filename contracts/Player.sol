@@ -1,15 +1,15 @@
 pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
-import "./library/Datasets.sol"; //导入结构库
+import "./library/Datasets.sol"; //导入公共结构库
 import "./interface/TeamInterface.sol"; //导入管理员团队接口
 import "./interface/WorksInterface.sol"; //导入管理员团队接口
 
 /**
- * @dev PuzzleBID Game 玩家合约
- * @website http://www.puzzlebid.com/
- * @author PuzzleBID Game Team
- *         Simon<vsiryxm@163.com>
+ * @title PuzzleBID Game 玩家合约
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
  */
 contract Player {
 

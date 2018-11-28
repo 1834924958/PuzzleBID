@@ -1,10 +1,10 @@
 pragma solidity ^0.5.0;
 
 /**
- * @dev PuzzleBID Game 管理员团队合约接口
- * @website http://www.puzzlebid.com/
- * @author PuzzleBID Game Team
- *         Simon<vsiryxm@163.com>
+ * @title PuzzleBID Game 管理员团队合约接口
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
  */
 interface TeamInterface {
 

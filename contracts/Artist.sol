@@ -3,14 +3,14 @@ pragma solidity ^0.5.0;
 import "./interface/TeamInterface.sol"; //导入管理员团队接口
 
 /**
- * @dev PuzzleBID Game 艺术家合约
- * @website http://www.puzzlebid.com/
- * @author PuzzleBID Game Team
- *         Simon<vsiryxm@163.com>
+ * @title PuzzleBID Game 艺术家合约
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
  */
 contract Artist {
 
-    TeamInterface private team; //引入管理员，正式发布时可定义成常量
+    TeamInterface private team; //实例化管理员合约，正式发布时可定义成常量
     mapping(bytes32 => address) private artists; //艺术家列表 (artistID => address)
 
     constructor(address _teamAddress) public {

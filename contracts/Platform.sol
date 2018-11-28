@@ -3,15 +3,15 @@ pragma solidity ^0.5.0;
 import "./interface/TeamInterface.sol"; //导入管理员团队接口
 
 /**
- * @dev PuzzleBID Game 平台合约
- * @website http://www.puzzlebid.com/
- * @author PuzzleBID Game Team
- *         Simon<vsiryxm@163.com>
+ * @title PuzzleBID Game 平台合约
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
  */
 contract Platform {
 
     address private foundation; //基金会address
-    TeamInterface private team; //引入管理员，正式发布时可定义成常量
+    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
 
     constructor(address _foundAddress, address _teamAddress) public {
         require(

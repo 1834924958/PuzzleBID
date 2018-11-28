@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
-import "./library/Datasets.sol"; //导入结构库
+import "./library/Datasets.sol"; //导入公共结构库
 import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
 import "./interface/PlatformInterface.sol"; //导入平台合约接口
 import "./interface/ArtistInterface.sol"; //导入艺术家合约接口
@@ -9,10 +9,10 @@ import "./interface/WorksInterface.sol"; //导入作品碎片合约接口
 import "./interface/PlayerInterface.sol"; //导入玩家合约接口
 
 /**
- * @dev PuzzleBID Game 主合约
- * @website http://www.puzzlebid.com/
- * @author PuzzleBID Game Team
- *         Simon<vsiryxm@163.com>
+ * @title PuzzleBID Game 主合约
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
  */
 contract PuzzleBID {
 
@@ -21,7 +21,7 @@ contract PuzzleBID {
     string constant public name = "PuzzleBID Game";
     string constant public symbol = "PZB";
 
-    TeamInterface private team; //实例化管理员合约，正式发布时可定义成常量
+    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
     PlatformInterface private platform; //实例化平台合约
     ArtistInterface private artist; //实例化艺术家合约
     WorksInterface private works; //实例化作品碎片合约
