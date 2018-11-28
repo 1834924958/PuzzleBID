@@ -33,9 +33,9 @@ contract Player {
 
     //事件
     event OnRegister(
-        address ethAddress, 
-        bytes32 unionID, 
-        address referrer, 
+        address indexed _address, 
+        bytes32 _unionID, 
+        address indexed _referrer, 
         uint256 time
     );
     event OnUpdateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -43,10 +43,11 @@ contract Player {
     event OnUpdateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateMyWorks(
         bytes32 _unionID, 
-        address _address, 
+        address indexed _address, 
         bytes32 _worksID, 
         uint256 _totalInput, 
-        uint256 _totalOutput
+        uint256 _totalOutput,
+        uint256 _time
     );
 
     //仅开发者、合约地址可操作
@@ -69,59 +70,30 @@ contract Player {
 
     //是否存在这个address   address存在则被认为是老用户
     function isHasAddress(address _address) external view returns (bool) {
-        bool isHasAddress = false;
+        bool isHas = false;
         for(uint256 i=0; i<playerAddressSets.length; i++) {
             if(playerAddressSets[i] == _address) {
-                isHasAddress = true;
+                isHas = true;
                 break;
             }
         }
-        return isHasAddress;
+        return isHas;
     }
 
     //是否存在这个unionID unionID存在则被认为是老用户
     function isHasUnionId(bytes32 _unionID) external view returns (bool) {
-        bool isHasUnionId = false;
+        bool isHas = false;
         for(uint256 i=0; i<playersUnionIdSets.length; i++) {
             if(playersUnionIdSets[i] == _unionID) {
-                isHasUnionId = true;
+                isHas = true;
                 break;
             }
         }
-        return isHasUnionId;
-    }
-
-    //注册玩家 静默
-    function register(bytes32 _unionID, address _address, address _referrer) external returns (bool) {
-        require(_unionID != 0 && _address != address(0));
-
-        require (
-            (this.isHasUnionId(_unionID) || this.isHasAddress(_address)) && 
-            playersByAddress[_address] == _unionID
-        ); //检查address和unionID是否为合法绑定关系 避免address被多个unionID绑定
-
-        if(this.isHasAddress(_address)) {
-            return false;
-        }
-         
-        playersByUnionId[_unionID].ethAddress.push(_address);
-        if(_referrer != address(0)) {
-            playersByUnionId[_unionID].referrer = _referrer;
-        }        
-        playersByUnionId[_unionID].time = now;
-
-        playersByAddress[_address] = _unionID;
-
-        playerAddressSets.push(_address);
-        playersUnionIdSets.push(_unionID);
-
-        emit OnRegister(_address, _unionID, _referrer, now);
-
-        return true;
+        return isHas;
     }
 
     //根据unionID查询玩家信息
-    function getInfoByUnionId(uint256 _unionID) external view returns (address, uint256) {
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address, uint256) {
         return (
             playersByUnionId[_unionID].referrer, 
             playersByUnionId[_unionID].time
@@ -134,14 +106,14 @@ contract Player {
     }
 
     //玩家账号是否处于冻结期 true为处在冻结期
-    function isFreeze(address _unionID, bytes32 _worksID, uint256 _freezeGap) external view returns (bool) {
+    function isFreeze(bytes32 _unionID, bytes32 _worksID) external view returns (bool) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
         return playerCount[_unionID][_worksID].lastTime.add(freezeGap) < now ? false : true;
     }
 
     //获取玩家已经购买首发数
-    function getFirstBuyNum(address _sender, bytes32 _worksID) external view returns (uint256) {
-        return playerCount[_sender][_worksID].firstBuyNum;
+    function getFirstBuyNum(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+        return playerCount[_unionID][_worksID].firstBuyNum;
     }
 
     //获取玩家对作品的首发投入累计
@@ -177,6 +149,35 @@ contract Player {
             myworks[_unionID].totalOutput,
             myworks[_unionID].time
         );
+    }
+
+    //注册玩家 静默
+    function register(bytes32 _unionID, address _address, address _referrer) external returns (bool) {
+        require(_unionID != 0 && _address != address(0));
+
+        require (
+            (this.isHasUnionId(_unionID) || this.isHasAddress(_address)) && 
+            playersByAddress[_address] == _unionID
+        ); //检查address和unionID是否为合法绑定关系 避免address被多个unionID绑定
+
+        if(this.isHasAddress(_address)) {
+            return false;
+        }
+         
+        playersByUnionId[_unionID].ethAddress.push(_address);
+        if(_referrer != address(0)) {
+            playersByUnionId[_unionID].referrer = _referrer;
+        }        
+        playersByUnionId[_unionID].time = now;
+
+        playersByAddress[_address] = _unionID;
+
+        playerAddressSets.push(_address);
+        playersUnionIdSets.push(_unionID);
+
+        emit OnRegister(_address, _unionID, _referrer, now);
+
+        return true;
     }
 
     //更新玩家对作品碎片的最后购买时间
@@ -219,9 +220,9 @@ contract Player {
         bytes32 _worksID, 
         uint256 _totalInput, 
         uint256 _totalOutput
-    ) internal onlyDev() {
-        myworks[_unionID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput);
-        emit OnUpdateMyWorks(_address, _worksID, _totalInput, _totalOutput);
+    ) external onlyDev() {
+        myworks[_unionID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput, now);
+        emit OnUpdateMyWorks(_unionID, _address, _worksID, _totalInput, _totalOutput, now);
     }
 
 

@@ -1,5 +1,11 @@
 pragma solidity ^0.5.0;
 
+/**
+ * @title PuzzleBID Game 公共结构库
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
+ */
 library Datasets {
 
     //玩家结构

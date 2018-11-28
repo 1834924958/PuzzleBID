@@ -32,13 +32,13 @@ contract Works {
     event OnInitDebris(
         bytes32 _worksID,
         uint8 _debrisNum,
-        uint256 initPrice
+        uint256 _initPrice
     );
     event OnUpdateDebris(
-        bytes32 worksID, 
-        uint8 debrisID, 
-        bytes32 unionID, 
-        address indexed sender
+        bytes32 _worksID, 
+        uint8 _debrisID, 
+        bytes32 _unionID, 
+        address indexed _sender
     );
 
     //定义作品碎片结构Works，见library/Datasets.sol

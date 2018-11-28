@@ -40,6 +40,14 @@ contract Team {
 
     }
 
+    //事件
+    event OnUpdateAdmin(
+        address indexed _address, 
+        bool _isAdmin, 
+        bool _isDev, 
+        bytes32 _name
+    );
+
     //仅超级管理员可操作
     modifier onlyOwner() {
     	require(msg.sender == owner);
@@ -48,7 +56,8 @@ contract Team {
 
     //更新管理员成员
     function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
-    	admins[_address] = Admin(_isAdmin, _isDev, _name);
+    	admins[_address] = Admin(_isAdmin, _isDev, _name);        
+        emit OnUpdateAdmin(_address, _isAdmin, _isDev, _name);
     }
 
     //是否为超管

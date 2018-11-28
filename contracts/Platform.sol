@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+import "./library/SafeMath.sol"; //导入安全运算库
 import "./interface/TeamInterface.sol"; //导入管理员团队接口
 
 /**
@@ -9,6 +10,8 @@ import "./interface/TeamInterface.sol"; //导入管理员团队接口
  * @dev Simon<vsiryxm@163.com>
  */
 contract Platform {
+
+    using SafeMath for *;
 
     address private foundation; //基金会address
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
@@ -39,6 +42,12 @@ contract Platform {
         _;
     }
 
+    //仅管理员可操作
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+
     uint256 allTurnover; //平台总交易额
     mapping(bytes32 => uint256) turnover; //作品的交易额 (worksID => amount)
 
@@ -55,7 +64,7 @@ contract Platform {
     //更新平台总交易额 仅开发者、合约地址可操作
     function updateAllTurnover(uint256 _amount) external onlyDev() {
         allTurnover = allTurnover.add(_amount); 
-        emit OnUpdateAllTurnover(uint256 _amount);
+        emit OnUpdateAllTurnover(_amount);
     }   
 
     //更新作品的交易额 仅开发者、合约地址可操作
@@ -72,7 +81,7 @@ contract Platform {
 
     //平台合约代为保管奖池中的ETH
     function deposit(bytes32 _worksID) external payable {
-        require(this.isHasWorks(_worksID)); //不接受非法合约地址存款
+        require(_worksID != bytes32(0)); 
         emit OnDeposit(_worksID, msg.sender, msg.value);
     }
 
