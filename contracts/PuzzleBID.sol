@@ -74,7 +74,10 @@ contract PuzzleBID {
         
         //检查玩家能不能买该作品碎片 
         require(player.isFreeze(_unionID, _worksID)); //检查同一作品同一玩家是否超过5分钟冻结期
-        require((player.getFirstBuyNum(msg.sender, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && works.isSecond(_worksID, _debrisID)); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
+        require(
+            (player.getFirstBuyNum(msg.sender, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
+            works.isSecond(_worksID, _debrisID)
+        ); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
         _;
     }    
@@ -202,12 +205,10 @@ contract PuzzleBID {
         }
     }
 
-
     //获取当前最新时间
     function getNowTime() external view returns(uint256) {
         return now;
     }
-
 
  }
 
