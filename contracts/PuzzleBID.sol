@@ -118,25 +118,26 @@ contract PuzzleBID {
 
     //首发购买
     function firstPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) internal {
-
-        //更新当前作品碎片首发购买名单
-        debris[_worksID][_debrisID].firstBuyer = msg.sender; 
-
-        //更新同一作品同一玩家首发购买数
-        playerCount[msg.sender][_worksID].firstBuyNum = playerCount[msg.sender][_worksID].firstBuyNum.add(1); 
+                
+        works.updateFirstBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片首发购买名单       
+        player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
         
         //分配并转账
-        artists[works[_worksID].artistID].ethAddress.transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 艺术家
-        puzzlebidAddress.transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 平台
-        pots[_worksID] = pots[_worksID].add(msg.value.mul(firstAllot[2]) / 100); //销售价的18% 奖池 即当前合约地址       
+        uint8[3] firstAllot = works.getFirstAllot(_worksID); //首发购买分配百分比
+        address artistAddress =  artist.getAddress(works.getArtist(_worksID)); //作品对应的艺术家address
+        
+        artistAddress.transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
+        platform.getFoundAddress().transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 归平台
+
+        works.updatePools(_worksID, msg.value.mul(firstAllot[2]) / 100); //销售价的18% 归奖池
+        platform.deposit.value(msg.value.mul(firstAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
     
     }
 
     //二次购买
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) internal {
 
-        //更新当前作品碎片的最后购买者
-        debris[_worksID][_debrisID].lastBuyer = msg.sender; 
+        works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
 
         //更新当前作品的再次购买者名单
         if(playerCount[msg.sender][_worksID].secondAmount == 0) { 
@@ -144,6 +145,7 @@ contract PuzzleBID {
         }
 
         //统计同一作品同一玩家的再次购买投入
+        
         playerCount[msg.sender][_worksID].secondAmount = playerCount[msg.sender][_worksID].secondAmount.add(msg.value); 
         
         //有溢价才分分分     

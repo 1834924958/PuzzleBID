@@ -48,7 +48,7 @@ contract PlayerInterface {
     function updateLastTime(bytes32 _unionID, bytes32 _worksID) external;
 
     //更新玩家对作品碎片的首发购买累计
-    function updateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum) external;
+    function updateFirstBuyNum(bytes32 _unionID, bytes32 _worksID) external;
 
     //更新玩家对作品碎片的二次购买累计金额
     function updateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _secondAmount) external;

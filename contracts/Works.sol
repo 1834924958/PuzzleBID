@@ -302,6 +302,16 @@ contract Works {
         return 0;
     }
 
+    //获取作品对应的艺术家ID
+    function getArtist(bytes32 _worksID) external view returns(bytes32) {
+        return works[_worksID].artistID;
+    }
+
+    //获取首发购买分配百分比分子 数组
+    function getFirstAllot(bytes32 _worksID) external view returns(uint8[3]) {
+        return rules[_worksID].firstAllot;
+    }
+
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
         if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0) {
@@ -329,6 +339,25 @@ contract Works {
         debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
         debris[_worksID][_debrisID].lastTime = now; //更新最后被交易时间
         emit OnUpdateDebris(_worksID, _debrisID, _unionID, _sender);
+    }
+
+    //更新作品碎片的首发购买者
+    function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
+        debris[_worksID][_debrisID].firstBuyer = _sender;
+        debris[_worksID][_debrisID].firstUnionID = _unionID;
+    }
+
+    //更新作品碎片的最后购买者
+    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
+        debris[_worksID][_debrisID].lastBuyer = _sender;
+        debris[_worksID][_debrisID].lastUnionID = _unionID;
+    }
+
+    
+
+    //更新作品奖池累计
+    function updatePools(bytes32 _worksID, uint256 _value) external onlyDev() {
+        pools[_worksID] = pools[_worksID].add(_value);
     }
 
 

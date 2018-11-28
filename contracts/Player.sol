@@ -186,8 +186,8 @@ contract Player {
     }
 
     //更新玩家对作品碎片的首发购买累计
-    function updateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum) external onlyDev() {
-        playerCount[_unionID][_worksID].firstBuyNum = playerCount[_unionID][_worksID].firstBuyNum.add(_firstBuyNum);
+    function updateFirstBuyNum(bytes32 _unionID, bytes32 _worksID) external onlyDev() {
+        playerCount[_unionID][_worksID].firstBuyNum = playerCount[_unionID][_worksID].firstBuyNum.add(1);
     }
 
     //更新玩家对作品碎片的二次购买累计金额

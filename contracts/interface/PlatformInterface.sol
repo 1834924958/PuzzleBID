@@ -24,6 +24,6 @@ interface PlatformInterface {
     function deposit(bytes32 _worksID) external payable;
 
     //获取基金会address
-    function getFoundation() external view returns (address);
+    function getFoundAddress() external view returns (address);
 
 }
