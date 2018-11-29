@@ -136,7 +136,7 @@ contract Works {
     }
 
     //初始化作品碎片 碎片编号从1开始
-    function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) internal {      
+    function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
         uint256 initPrice = _price / _debrisNum;
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
@@ -326,15 +326,33 @@ contract Works {
         return works[_worksID].artistID;
     }
 
-    //获取首发购买分配百分比分子 数组
-    function getAllot(bytes32 _worksID, uint8 flag) external view returns(uint8[3] memory) {
-        if(1 == flag) {
+    //获取首发购买分配百分比分子 返回数组
+    function getAllot(bytes32 _worksID, uint8 _flag) external view returns(uint8[3] memory) {
+        require(_flag < 3);
+        if(0 == flag) {
             return rules[_worksID].firstAllot;
-        } else if(2 == flag) {
+        } else if(1 == flag) {
             return rules[_worksID].againAllot;
         } else {
             return rules[_worksID].lastAllot;
         }        
+    }
+
+    //获取首发购买分配百分比分子 返回整型
+    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8) {
+        require(_flag < 3 && _element < 3);
+        if(1 == _flag) {
+            return rules[_worksID].firstAllot[_element];
+        } else if(2 == _flag) {
+            return rules[_worksID].againAllot[_element];
+        } else {
+            return rules[_worksID].lastAllot[_element];
+        }        
+    }
+
+    //获取作品奖池累计
+    function getPools(bytes32 _worksID) external view returns (uint256) {
+        return pools[_worksID];
     }
 
     //获取碎片保护期倒计时 单位s
@@ -391,6 +409,5 @@ contract Works {
         pools[_worksID] = pools[_worksID].add(_value);
         emit OnUpdatePools(_worksID, _value);
     }
-
 
  }

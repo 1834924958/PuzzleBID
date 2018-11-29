@@ -111,19 +111,21 @@ contract PuzzleBID {
         }
         //碎片如果被同一玩家收集完成，结束游戏
         if(works.isFinish(_worksID, _debrisID, _unionID)) {
-            finishGame(_worksID, _debrisID, _unionID);
+            works.updateEndTime(_worksID); //更新作品游戏结束时间
+            finishGame(_worksID, _debrisID); //游戏收尾
+            collectWorks(_worksID, _unionID); //我的藏品
         }
 
     }
 
     //首发购买
-    function firstPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) internal {
+    function firstPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) private {
                 
         works.updateFirstBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片首发购买名单       
         player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
         
         //分配并转账
-        uint8[3] memory firstAllot = works.getAllot(_worksID, 1); //首发购买分配百分比 1-首发 2-再次 3-最后
+        uint8[3] memory firstAllot = works.getAllot(_worksID, 0); //首发购买分配百分比 0-首发 1-再次 2-最后
         
         artist.getAddress(works.getArtist(_worksID)).transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
         platform.getFoundAddress().transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 归平台
@@ -134,7 +136,7 @@ contract PuzzleBID {
     }
 
     //二次购买 TODO
-    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) internal {
+    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
 
         works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
 
@@ -149,7 +151,7 @@ contract PuzzleBID {
         uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
         //有溢价才分红
         if(lastPrice > _oldPrice) { 
-            uint8[3] memory againAllot = works.getAllot(_worksID, 2);
+            uint8[3] memory againAllot = works.getAllot(_worksID, 1);
             uint256 overflow = lastPrice.sub(_oldPrice); //计算溢价
             artist.getAddress(works.getArtist(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
             platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); //总价的2% 归平台
@@ -170,18 +172,17 @@ contract PuzzleBID {
     }
 
     //完成游戏
-    function finishGame(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) internal {              
-
-        works.updateEndTime(_worksID); //更新作品游戏结束时间
-
+    function finishGame(bytes32 _worksID, uint8 _debrisID) private {              
         //收集碎片完成，按最后规则
-        msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //当前作品奖池的80% 最后一次购买者  
+        uint8 lastAllot = works.getAllot(_worksID, 2, 0);
+        msg.sender.transfer(works.getPools(_worksID).mul(lastAllot / 100)); //当前作品奖池的80% 最后一次购买者  
         firstSend(_worksID, _debrisID); //首发玩家统计发放
         secondSend(_worksID, _debrisID); //后续玩家统计发放
-        
-        //处理成我的藏品
-        player.updateMyWorks(_unionID, msg.sender, _worksID, 0, 0);
+    }
 
+    //处理成我的藏品
+    function collectWorks(bytes32 _worksID, bytes32 _unionID) private {
+        player.updateMyWorks(_unionID, msg.sender, _worksID, 0, 0);
     }
     
     //首发玩家统计发放
