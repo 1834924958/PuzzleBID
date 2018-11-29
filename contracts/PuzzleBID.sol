@@ -212,7 +212,7 @@ contract PuzzleBID {
         }
     }
 
-    //获取当前最新时间
+    //获取游戏当前最新时间
     function getNowTime() external view returns(uint256) {
         return now;
     }

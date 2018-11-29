@@ -38,7 +38,7 @@ contract Artist {
 
     //添加艺术家
     function add(bytes32 _artistID, address _address) external onlyDev() {
-        require(this.hasArtist(_artistID) == false); //this用法 已测
+        require(this.hasArtist(_artistID) == false);
         artists[_artistID] = _address;
         emit OnAdd(_artistID, _address);
     }

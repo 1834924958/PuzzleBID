@@ -10,7 +10,6 @@ interface TeamInterface {
 
     //更新管理员成员
     function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
-    //抽象方法可以扩展modifer，已测
 
     //是否为超管
     function isOwner() external view returns (bool);

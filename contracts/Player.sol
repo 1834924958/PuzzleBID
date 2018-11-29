@@ -38,6 +38,7 @@ contract Player {
         address indexed _referrer, 
         uint256 time
     );
+    event OnUpdateLastAddress(bytes32 _unionID, address _sender);
     event OnUpdateLastTime(bytes32 _unionID, bytes32 _worksID, uint256 _time);
     event OnUpdateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum);
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _secondAmount);
@@ -98,6 +99,7 @@ contract Player {
     //根据unionID查询玩家信息
     function getInfoByUnionId(bytes32 _unionID) external view returns (address, uint256) {
         return (
+            playersByUnionId[_unionID].lastAddress,
             playersByUnionId[_unionID].referrer, 
             playersByUnionId[_unionID].time
         );
@@ -127,6 +129,11 @@ contract Player {
     //获取玩家对作品的首发投入累计
     function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
         return firstInvest[_unionID][_worksID];
+    }
+
+    //获取玩家最近使用的address
+    function getLastAddress(bytes32 _unionID) external view returns (address) {
+        return playersByUnionId[_unionID].lastAddress;
     }
 
     //获取玩家对作品的再次投入累计
@@ -175,7 +182,8 @@ contract Player {
         playersByUnionId[_unionID].ethAddress.push(_address);
         if(_referrer != address(0)) {
             playersByUnionId[_unionID].referrer = _referrer;
-        }        
+        }
+        playersByUnionId[_unionID].lastAddress = _address;
         playersByUnionId[_unionID].time = now;
 
         playersByAddress[_address] = _unionID;
@@ -187,6 +195,14 @@ contract Player {
         emit OnRegister(_address, _unionID, _referrer, now);
 
         return true;
+    }
+
+    //更新玩家最近使用的address
+    function updateLastAddress(bytes32 _unionID, address _sender) external {
+        if(playersByUnionId[_unionID].lastAddress != _sender) {
+            playersByUnionId[_unionID].lastAddress = _sender;
+            emit OnUpdateLastAddress(_unionID, _sender);
+        }
     }
 
     //更新玩家对作品碎片的最后购买时间
