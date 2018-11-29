@@ -40,12 +40,26 @@ contract Works {
         bytes32 _unionID, 
         address indexed _sender
     );
+    event OnUpdateFirstBuyer(
+        bytes32 _worksID, 
+        uint8 _debrisID, 
+        bytes32 _unionID, 
+        address indexed _sender
+    );
+    event OnUpdateLastBuyer(
+        bytes32 _worksID, 
+        uint8 _debrisID, 
+        bytes32 _unionID, 
+        address indexed _sender
+    );
+    event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
+    event OnUpdatePools(bytes32 _worksID, uint256 _value);
 
     //定义作品碎片结构Works，见library/Datasets.sol
     //定义作品游戏规则结构Rule，见library/Datasets.sol
 
     mapping(bytes32 => Datasets.Works) private works; //作品集 (worksID => Datasets.Works)
-    mapping(bytes32 => Rule) private rules; //游戏规则集 (worksID => Rule)
+    mapping(bytes32 => Datasets.Rule) private rules; //游戏规则集 (worksID => Rule)
     mapping(bytes32 => uint256) private pools; //作品对应的奖池累计 (worksID => amount)
     mapping(bytes32 => mapping(uint8 => Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (debrisID => Datasets.Debris))
 
@@ -249,12 +263,12 @@ contract Works {
         return isFinish;
     }    
 
-    //获取碎片的实时价格
+    //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
         uint256 discountGap = rules[_worksID].discountGap;
         uint256 discountRatio = rules[_worksID].discountRatio;
         uint256 increaseRatio = rules[_worksID].increaseRatio;
-        uint256 lastPrice; //有可能为0
+        uint256 lastPrice;
 
         if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountGap) < now) { //降价
 
@@ -284,6 +298,11 @@ contract Works {
         return debris[_worksID][_debrisID].lastPrice;
     }
 
+    //获取碎片的最后购买者address
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+        return debris[_worksID][_debrisID].lastBuyer;
+    }
+
     //获取玩家账号冻结时间 单位s
     function getFreezeGap(bytes32 _worksID) external view returns(uint256) {
         return rules[_worksID].freezeGap;
@@ -308,8 +327,14 @@ contract Works {
     }
 
     //获取首发购买分配百分比分子 数组
-    function getFirstAllot(bytes32 _worksID) external view returns(uint8[3]) {
-        return rules[_worksID].firstAllot;
+    function getAllot(bytes32 _worksID, uint8 flag) external view returns(uint8[3]) {
+        if(1 == flag) {
+            return rules[_worksID].firstAllot;
+        } else if(2 == flag) {
+            return rules[_worksID].againAllot;
+        } else {
+            return rules[_worksID].lastAllot;
+        }        
     }
 
     //获取碎片保护期倒计时 单位s
@@ -345,19 +370,26 @@ contract Works {
     function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
+        emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
     }
 
     //更新作品碎片的最后购买者
     function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
         debris[_worksID][_debrisID].lastBuyer = _sender;
         debris[_worksID][_debrisID].lastUnionID = _unionID;
+        emit OnUpdateLastBuyer(_worksID, _debrisID, _unionID, _sender);
     }
 
-    
+    //更新作品碎片游戏结束时间
+    function updateEndTime(bytes32 _worksID) external onlyDev() {
+        works[_worksID].endTime = now;
+        emit OnUpdateEndTime(_worksID, now);
+    }   
 
     //更新作品奖池累计
     function updatePools(bytes32 _worksID, uint256 _value) external onlyDev() {
         pools[_worksID] = pools[_worksID].add(_value);
+        emit OnUpdatePools(_worksID, _value);
     }
 
 

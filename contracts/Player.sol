@@ -38,6 +38,9 @@ contract Player {
         address indexed _referrer, 
         uint256 time
     );
+    event OnUpdateLastTime(bytes32 _unionID, bytes32 _worksID, uint256 _time);
+    event OnUpdateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum);
+    event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _secondAmount);
     event OnUpdateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -116,6 +119,11 @@ contract Player {
         return playerCount[_unionID][_worksID].firstBuyNum;
     }
 
+    //获取玩家对作品碎片的二次购买累计金额
+    function getSecondAmount(bytes32 _unionID, bytes32 _worksID) external returns (uint256) {
+        return playerCount[_unionID][_worksID].secondAmount;
+    }
+
     //获取玩家对作品的首发投入累计
     function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
         return firstInvest[_unionID][_worksID];
@@ -152,8 +160,8 @@ contract Player {
     }
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _address, address _referrer) external returns (bool) {
-        require(_unionID != 0 && _address != address(0));
+    function register(bytes32 _unionID, address _address, bytes32 _worksID, address _referrer) external returns (bool) {
+        require(_unionID != 0 && _address != address(0) && _worksID != bytes32(0));
 
         require (
             (this.hasUnionId(_unionID) || this.hasAddress(_address)) && 
@@ -174,6 +182,7 @@ contract Player {
 
         playerAddressSets.push(_address);
         playersUnionIdSets.push(_unionID);
+        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0); //初始化玩家单元统计数据
 
         emit OnRegister(_address, _unionID, _referrer, now);
 
@@ -183,16 +192,19 @@ contract Player {
     //更新玩家对作品碎片的最后购买时间
     function updateLastTime(bytes32 _unionID, bytes32 _worksID) external onlyDev() {
         playerCount[_unionID][_worksID].lastTime = now;
+        emit OnUpdateLastTime(_unionID, _worksID, now);
     }
 
     //更新玩家对作品碎片的首发购买累计
     function updateFirstBuyNum(bytes32 _unionID, bytes32 _worksID) external onlyDev() {
         playerCount[_unionID][_worksID].firstBuyNum = playerCount[_unionID][_worksID].firstBuyNum.add(1);
+        emit OnUpdateFirstBuyNum(_unionID, _worksID, playerCount[_unionID][_worksID].firstBuyNum);
     }
 
     //更新玩家对作品碎片的二次购买累计金额
     function updateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _secondAmount) external onlyDev() {
         playerCount[_unionID][_worksID].secondAmount = playerCount[_unionID][_worksID].secondAmount.add(_secondAmount);
+        emit OnUpdateSecondAmount(_unionID, _worksID, _secondAmount);
     }
 
     //更新玩家对作品的首轮投入累计

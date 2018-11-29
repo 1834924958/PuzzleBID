@@ -26,6 +26,9 @@ contract PlayerInterface {
     //获取玩家已经购买首发数
     function getFirstBuyNum(address _sender, bytes32 _worksID) external view returns (uint256);
 
+    //获取玩家对作品碎片的二次购买累计金额
+    function getSecondAmount(bytes32 _unionID, bytes32 _worksID) external returns (uint256);
+
     //获取玩家对作品的首发投入累计
     function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 

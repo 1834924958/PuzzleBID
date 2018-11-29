@@ -89,7 +89,7 @@ contract PuzzleBID {
         external
         payable
     {
-        player.register(_unionID, msg.sender, address(0)); //静默注册
+        player.register(_unionID, msg.sender, _worksID, address(0)); //静默注册
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
 
@@ -123,10 +123,9 @@ contract PuzzleBID {
         player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
         
         //分配并转账
-        uint8[3] firstAllot = works.getFirstAllot(_worksID); //首发购买分配百分比
-        address artistAddress =  artist.getAddress(works.getArtist(_worksID)); //作品对应的艺术家address
+        uint8[3] firstAllot = works.getAllot(_worksID, 1); //首发购买分配百分比 1-首发 2-再次 3-最后
         
-        artistAddress.transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
+        artist.getAddress(works.getArtist(_worksID)).transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
         platform.getFoundAddress().transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 归平台
 
         works.updatePools(_worksID, msg.value.mul(firstAllot[2]) / 100); //销售价的18% 归奖池
@@ -134,31 +133,38 @@ contract PuzzleBID {
     
     }
 
-    //二次购买
+    //二次购买 TODO
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) internal {
 
         works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
 
-        //更新当前作品的再次购买者名单
-        if(playerCount[msg.sender][_worksID].secondAmount == 0) { 
+        //更新当前作品的再次购买者名单 TODO
+        if(0 == player.getSecondAmount(_unionID, _worksID)) {
             secondAddress[_worksID].push(msg.sender);
         }
 
         //统计同一作品同一玩家的再次购买投入
-        
-        playerCount[msg.sender][_worksID].secondAmount = playerCount[msg.sender][_worksID].secondAmount.add(msg.value); 
-        
-        //有溢价才分分分     
-        if(debris[_worksID][_debrisID].lastPrice > _oldPrice) { 
-            uint256 overflow = debris[_worksID][_debrisID].lastPrice.sub(_oldPrice); //计算溢价
-            artists[works[_worksID].artistID].ethAddress.transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 艺术家
-            puzzlebidAddress.transfer(debris[_worksID][_debrisID].lastPrice.mul(againAllot[1]) / 100); //总价的2% 平台
-            pots[_worksID] = pots[_worksID].add(overflow.mul(againAllot[2]) / 100); //溢价的18% 奖池
-            debris[_worksID][_debrisID].lastBuyer.transfer(debris[_worksID][_debrisID].lastPrice.sub(overflow.mul(againAllot[0]) / 100).sub(debris[_worksID][_debrisID].lastPrice.mul(againAllot[1]) / 100).sub(overflow.mul(againAllot[2]) / 100)); //剩余部分归上一买家
+        player.updateSecondAmount(_unionID, _worksID, msg.value);
+             
+        uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
+        //有溢价才分红
+        if(lastPrice > _oldPrice) { 
+            uint8[3] againAllot = works.getAllot(_worksID, 2);
+            uint256 overflow = lastPrice.sub(_oldPrice); //计算溢价
+            artist.getAddress(works.getArtist(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
+            platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); //总价的2% 归平台
+            works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的18% 归奖池
+            platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
+
+            works.getLastBuyer(_worksID, _debrisID).transfer(
+                lastPrice.sub(overflow.mul(againAllot[0]) / 100)
+                .sub(lastPrice.mul(againAllot[1]) / 100)
+                .sub(overflow.mul(againAllot[2]) / 100)
+            ); //剩余部分归上一买家
         } 
-        //无溢价，把此次打折后的ETH全额转给上一买家
+        //无溢价，把此次降价后的ETH全额转给上一买家
         else { 
-            debris[_worksID][_debrisID].lastBuyer.transfer(debris[_worksID][_debrisID].lastPrice);
+            works.getLastBuyer(_worksID, _debrisID).transfer(lastPrice);
         }
 
     }
@@ -166,17 +172,12 @@ contract PuzzleBID {
     //完成游戏
     function finishGame(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) internal {              
 
-        //更新作品游戏结束时间
-        works[_worksID].endTime = now; 
+        works.updateEndTime(_worksID); //更新作品游戏结束时间
 
         //收集碎片完成，按最后规则
-        msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //当前作品奖池的80% 最后一次购买者
-
-        //首发玩家统计发放        
-        firstSend(_worksID, _debrisID);
-
-        //后续玩家统计发放
-        secondSend(_worksID, _debrisID);
+        msg.sender.transfer(pots[_worksID].mul(lastAllot[0] / 100)); //当前作品奖池的80% 最后一次购买者  
+        firstSend(_worksID, _debrisID); //首发玩家统计发放
+        secondSend(_worksID, _debrisID); //后续玩家统计发放
         
         //处理成我的藏品
         myworks[msg.sender][_worksID] = PZB_Datasets.MyWorks(msg.sender, _worksID, 0, 0, now);
