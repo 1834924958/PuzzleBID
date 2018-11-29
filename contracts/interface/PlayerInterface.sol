@@ -9,10 +9,10 @@ pragma solidity ^0.5.0;
 contract PlayerInterface {
 
     //是否存在这个address   address存在则被认为是老用户
-    function isHasAddress(address _address) external view returns (bool);
+    function hasAddress(address _address) external view returns (bool);
 
     //是否存在这个unionID unionID存在则被认为是老用户
-    function isHasUnionId(bytes32 _unionID) external view returns (bool);
+    function hasUnionId(bytes32 _unionID) external view returns (bool);
 
     //根据unionID查询玩家信息
     function getInfoByUnionId(uint256 _unionID) external view returns (address, uint256);

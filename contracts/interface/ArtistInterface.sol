@@ -15,6 +15,6 @@ interface Artist {
     function add(bytes32 _artistID, address _address) external;
 
     //是否存在艺术家
-    function isHasArtist(bytes32 _artistID) external view returns (bool);
+    function hasArtist(bytes32 _artistID) external view returns (bool);
 
 }

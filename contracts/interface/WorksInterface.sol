@@ -43,10 +43,10 @@ interface WorksInterface {
     function close(bytes32 _worksID) external;
 
     //是否存在作品 true为存在
-    function isHasWorks(bytes32 _worksID) external view returns (bool);
+    function hasWorks(bytes32 _worksID) external view returns (bool);
 
     //是否存在碎片 true为存在
-    function isHasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool);
+    function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool);
 
     //作品游戏是否发布 
     function isPublish(bytes32 _worksID) external view returns (bool);
