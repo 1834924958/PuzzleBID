@@ -123,7 +123,7 @@ contract PuzzleBID {
         player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
         
         //分配并转账
-        uint8[3] firstAllot = works.getAllot(_worksID, 1); //首发购买分配百分比 1-首发 2-再次 3-最后
+        uint8[3] memory firstAllot = works.getAllot(_worksID, 1); //首发购买分配百分比 1-首发 2-再次 3-最后
         
         artist.getAddress(works.getArtist(_worksID)).transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
         platform.getFoundAddress().transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 归平台
@@ -149,7 +149,7 @@ contract PuzzleBID {
         uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
         //有溢价才分红
         if(lastPrice > _oldPrice) { 
-            uint8[3] againAllot = works.getAllot(_worksID, 2);
+            uint8[3] memory againAllot = works.getAllot(_worksID, 2);
             uint256 overflow = lastPrice.sub(_oldPrice); //计算溢价
             artist.getAddress(works.getArtist(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
             platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); //总价的2% 归平台
@@ -180,7 +180,7 @@ contract PuzzleBID {
         secondSend(_worksID, _debrisID); //后续玩家统计发放
         
         //处理成我的藏品
-        myworks[msg.sender][_worksID] = PZB_Datasets.MyWorks(msg.sender, _worksID, 0, 0, now);
+        player.updateMyWorks(_unionID, msg.sender, _worksID, 0, 0);
 
     }
     
@@ -204,7 +204,10 @@ contract PuzzleBID {
     function secondSend(bytes32 _worksID, uint8 _debrisID) private {
         address[] tmpAddress = secondAddress[_worksID];
         for(uint256 i=0; i<=tmpAddress.length; i++) {
-            tmpAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(playerCount[tmpAddress[i]][_worksID].secondAmount) / worksTurnover[_worksID].sub(works[_worksID].price));
+            tmpAddress[i].transfer(
+                (pots[_worksID].mul(lastAllot[1]) / 100)
+                .mul(playerCount[tmpAddress[i]][_worksID].secondAmount)
+                 / worksTurnover[_worksID].sub(works[_worksID].price));
         }
     }
 

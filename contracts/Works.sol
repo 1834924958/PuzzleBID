@@ -327,7 +327,7 @@ contract Works {
     }
 
     //获取首发购买分配百分比分子 数组
-    function getAllot(bytes32 _worksID, uint8 flag) external view returns(uint8[3]) {
+    function getAllot(bytes32 _worksID, uint8 flag) external view returns(uint8[3] memory) {
         if(1 == flag) {
             return rules[_worksID].firstAllot;
         } else if(2 == flag) {
