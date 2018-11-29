@@ -160,9 +160,9 @@ contract Works {
         uint256 _discountGap, //参考值：3600
         uint256 _discountRatio, //参考值：95
 
-        uint8[3] _firstAllot, //参考值：[80, 2, 18]
-        uint8[3] _againAllot, //参考值：[10, 2, 65]
-        uint8[3] _lastAllot //参考值：[80, 10, 10]
+        uint8[3] calldata _firstAllot, //参考值：[80, 2, 18]
+        uint8[3] calldata _againAllot, //参考值：[10, 2, 65]
+        uint8[3] calldata _lastAllot //参考值：[80, 10, 10]
     ) 
         external
         onlyAdmin()
