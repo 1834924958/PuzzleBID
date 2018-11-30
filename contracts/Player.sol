@@ -35,7 +35,7 @@ contract Player {
     event OnRegister(
         address indexed _address, 
         bytes32 _unionID, 
-        address indexed _referrer, 
+        bytes32 _referrer, 
         uint256 time
     );
     event OnUpdateLastAddress(bytes32 _unionID, address _sender);
@@ -66,8 +66,9 @@ contract Player {
     bytes32[] private playersUnionIdSets; //检索辅助 玩家unionID集 查询unionID是否已存在
 
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
-    mapping(bytes32 => mapping(bytes32 => uint256)) private firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
-    mapping(bytes32 => mapping(bytes32 => uint256)) private reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
+    
+    //mapping(bytes32 => mapping(bytes32 => uint256)) private firstInvest; //玩家对作品的首轮投入累计 (unionID => (worksID => amount))
+    //mapping(bytes32 => mapping(bytes32 => uint256)) private reinvest; //玩家对作品的再次投入累计 (unionID => (worksID => amount))
     mapping(bytes32 => mapping(bytes32 => uint256)) private reward; //玩家获得作品的累计奖励 (unionID => (worksID => amount))
 
     mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks)
@@ -97,7 +98,7 @@ contract Player {
     }
 
     //根据unionID查询玩家信息
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, uint256) {
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256) {
         return (
             playersByUnionId[_unionID].lastAddress,
             playersByUnionId[_unionID].referrer, 
@@ -127,9 +128,9 @@ contract Player {
     }
 
     //获取玩家对作品的首发投入累计
-    function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-        return firstInvest[_unionID][_worksID];
-    }
+    // function getFirstInvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+    //     return firstInvest[_unionID][_worksID];
+    // }
 
     //获取玩家最近使用的address
     function getLastAddress(bytes32 _unionID) external view returns (address) {
@@ -137,9 +138,9 @@ contract Player {
     }
 
     //获取玩家对作品的再次投入累计
-    function getReinvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-        return reinvest[_unionID][_worksID];
-    }
+    // function getReinvest(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+    //     return reinvest[_unionID][_worksID];
+    // }
 
     //获取玩家对作品的累计奖励
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
@@ -166,8 +167,13 @@ contract Player {
         );
     }
 
+    //是否为合法绑定关系的玩家 避免address被多个unionID绑定 true为合法
+    function isLegalPlayer(bytes32 _unionID, address _address) {
+        return (this.hasUnionId(_unionID) || this.hasAddress(_address)) && playersByAddress[_address] == _unionID;
+    }
+
     //注册玩家 静默
-    function register(bytes32 _unionID, address _address, bytes32 _worksID, address _referrer) external returns (bool) {
+    function register(bytes32 _unionID, address _address, bytes32 _worksID, bytes32 _referrer) external returns (bool) {
         require(_unionID != 0 && _address != address(0) && _worksID != bytes32(0));
 
         require (
@@ -180,7 +186,7 @@ contract Player {
         }
          
         playersByUnionId[_unionID].ethAddress.push(_address);
-        if(_referrer != address(0)) {
+        if(_referrer != bytes32(0)) {
             playersByUnionId[_unionID].referrer = _referrer;
         }
         playersByUnionId[_unionID].lastAddress = _address;
@@ -224,16 +230,16 @@ contract Player {
     }
 
     //更新玩家对作品的首轮投入累计
-    function updateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-        firstInvest[_unionID][_worksID] = firstInvest[_unionID][_worksID].add(_amount);
-        emit OnUpdateFirstInvest(_unionID, _worksID, _amount);
-    }
+    // function updateFirstInvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
+    //     firstInvest[_unionID][_worksID] = firstInvest[_unionID][_worksID].add(_amount);
+    //     emit OnUpdateFirstInvest(_unionID, _worksID, _amount);
+    // }
 
     //更新玩家对作品的再次投入累计    
-    function updateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-        reinvest[_unionID][_worksID] = reinvest[_unionID][_worksID].add(_amount);
-        emit OnUpdateReinvest(_unionID, _worksID, _amount);
-    }
+    // function updateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
+    //     reinvest[_unionID][_worksID] = reinvest[_unionID][_worksID].add(_amount);
+    //     emit OnUpdateReinvest(_unionID, _worksID, _amount);
+    // }
 
     //更新玩家获得作品的累计奖励
     function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {

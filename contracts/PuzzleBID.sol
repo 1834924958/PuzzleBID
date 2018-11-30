@@ -78,18 +78,18 @@ contract PuzzleBID {
             (player.getFirstBuyNum(msg.sender, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
             works.isSecond(_worksID, _debrisID)
         ); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
-        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
+        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？ TODO：多余还给玩家
         _;
     }    
 
     //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, address(0)); //静默注册
+        player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
 
@@ -185,7 +185,7 @@ contract PuzzleBID {
         player.updateMyWorks(_unionID, msg.sender, _worksID, 0, 0);
     }
     
-    //首发玩家统计发放
+    //首发玩家统计发放 一个作品的奖池总额的10%
     function firstSend(bytes32 _worksID, uint8 _debrisID) private {
         address[] storage firstAddress;
         uint8 i; 
@@ -201,7 +201,7 @@ contract PuzzleBID {
         }
     }
     
-    //后续玩家统计发放
+    //后续玩家统计发放 一个作品的奖池总额的10%
     function secondSend(bytes32 _worksID, uint8 _debrisID) private {
         address[] tmpAddress = secondAddress[_worksID];
         for(uint256 i=0; i<=tmpAddress.length; i++) {

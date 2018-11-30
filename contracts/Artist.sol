@@ -48,4 +48,6 @@ contract Artist {
         return artists[_artistID] != address(0);
     }
 
+    function updateAddress() {}
+
 }

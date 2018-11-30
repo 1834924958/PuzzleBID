@@ -69,7 +69,7 @@ contract Platform {
 
     //更新作品的交易额 仅开发者、合约地址可操作
     function updateTurnover(bytes32 _worksID, uint256 _amount) external onlyDev() {
-        allTurnover = allTurnover.add(_amount); 
+        turnover[_worksID] = turnover[_worksID].add(_amount); 
         emit OnUpdateTurnover(_worksID, _amount);
     }
 

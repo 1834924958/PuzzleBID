@@ -154,10 +154,10 @@ contract Works {
     function configRule(
         bytes32 _worksID,
         uint8 _firstBuyLimit, //参考值：2
-        uint256 _freezeGap, //参考值：3 
-        uint256 _protectGap, //参考值：1800
+        uint256 _freezeGap, //参考值：180s 
+        uint256 _protectGap, //参考值：1800s
         uint256 _increaseRatio, //参考值：110
-        uint256 _discountGap, //参考值：3600
+        uint256 _discountGap, //参考值：3600s
         uint256 _discountRatio, //参考值：95
 
         uint8[3] calldata _firstAllot, //参考值：[80, 2, 18]
@@ -277,19 +277,18 @@ contract Works {
             if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { //有余数时多计1
                 n = n.add(1);
             }
-            for(uint256 i=0; i<n; i++) {
-                if(0 == i) {
-                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
-                } else {
-                    lastPrice = lastPrice.mul(discountRatio / 100);
-                }                
-            }            
+            if(0 == i) {
+                lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
+            } else {
+                lastPrice = lastPrice.mul((discountRatio / 100).pwr(n)); //n次方
+            } 
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
         } else {
             lastPrice = debris[_worksID][_debrisID].lastPrice; //碎片第一次被购买，不降不涨
         }
+
         return lastPrice;
     }
 
@@ -299,9 +298,11 @@ contract Works {
     }
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(address) {
         return debris[_worksID][_debrisID].lastBuyer;
     }
+
+    function getLastUnionId() {}
 
     //获取玩家账号冻结时间 单位s
     function getFreezeGap(bytes32 _worksID) external view returns(uint256) {
@@ -311,14 +312,6 @@ contract Works {
     //获取玩家首发购买上限数
     function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256) {
         return rules[_worksID].FirstBuyLimit;
-    }
-
-    //获取作品碎片游戏开始倒计时 单位s
-    function getStartHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
-        if(works[_worksID].beginTime.sub(now) > 0 ) {
-            return works[_worksID].beginTime.sub(now);
-        }
-        return 0;
     }
 
     //获取作品对应的艺术家ID
@@ -353,6 +346,14 @@ contract Works {
     //获取作品奖池累计
     function getPools(bytes32 _worksID) external view returns (uint256) {
         return pools[_worksID];
+    }
+
+    //获取作品碎片游戏开始倒计时 单位s
+    function getStartHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+        if(works[_worksID].beginTime.sub(now) > 0 ) {
+            return works[_worksID].beginTime.sub(now);
+        }
+        return 0;
     }
 
     //获取碎片保护期倒计时 单位s
