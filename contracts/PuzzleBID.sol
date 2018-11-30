@@ -80,10 +80,10 @@ contract PuzzleBID {
         ); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？ TODO：多余还给玩家
         _;
-    }    
+    }
 
     //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer)
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
@@ -123,7 +123,8 @@ contract PuzzleBID {
                 
         works.updateFirstBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片首发购买名单       
         player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
-        
+        works.updateFirstUnionId(_worksID, _unionID); //更新当前作品碎片首发购买名单 去重复 用于完成游戏时结算
+
         //分配并转账
         uint8[3] memory firstAllot = works.getAllot(_worksID, 0); //首发购买分配百分比 0-首发 1-再次 2-最后
         
@@ -139,6 +140,7 @@ contract PuzzleBID {
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
 
         works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
+        works.updateSecondUnionId(_worksID, _unionID); //更新当前作品碎片二次购买名单 去重复 用于完成游戏时结算
 
         //更新当前作品的再次购买者名单 TODO
         if(0 == player.getSecondAmount(_unionID, _worksID)) {

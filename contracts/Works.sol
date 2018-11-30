@@ -54,6 +54,8 @@ contract Works {
     );
     event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
+    event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
+    event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
 
     //定义作品碎片结构Works，见library/Datasets.sol
     //定义作品游戏规则结构Rule，见library/Datasets.sol
@@ -61,7 +63,9 @@ contract Works {
     mapping(bytes32 => Datasets.Works) private works; //作品集 (worksID => Datasets.Works)
     mapping(bytes32 => Datasets.Rule) private rules; //游戏规则集 (worksID => Rule)
     mapping(bytes32 => uint256) private pools; //作品对应的奖池累计 (worksID => amount)
-    mapping(bytes32 => mapping(uint8 => Datasets.Debris)) public debris; //作品碎片列表 如(worksID => (debrisID => Datasets.Debris))
+    mapping(bytes32 => mapping(uint8 => Datasets.Debris)) private debris; //作品碎片列表 如(worksID => (debrisID => Datasets.Debris))
+    mapping(bytes32 => bytes32[]) firstUnionID; //作品首发购买者名单 (worksID => unionID[]) 去重复 辅助游戏结束时结算
+    mapping(bytes32 => bytes32[]) secondUnionID; //作品二次购买者名单 (worksID => unionID[]) 去重复 辅助游戏结束时结算
 
     //当作品存在时
     modifier whenHasWorks(bytes32 _worksID) {
@@ -261,7 +265,47 @@ contract Works {
             i++;
         }
         return isFinish;
-    }    
+    }  
+
+    //是否存在首发购买者名单中
+    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool) {
+        if(0 == firstUnionID[_worksID].length) {
+            return false;
+        }
+        bool isHas = false;
+        for(uint256 i=0; i<firstUnionID[_worksID].length; i++) {
+            if(firstUnionID[_worksID][i] == _unionID) {
+                isHas = true;
+                break;
+            }
+        }
+        return isHas;
+    }
+
+    //是否存在二次购买者名单中
+    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool) {
+        if(0 == secondUnionID[_worksID].length) {
+            return false;
+        }
+        bool isHas = false;
+        for(uint256 i=0; i<secondUnionID[_worksID].length; i++) {
+            if(secondUnionID[_worksID][i] == _unionID) {
+                isHas = true;
+                break;
+            }
+        }
+        return isHas;
+    }  
+
+    //获取作品的首发购买者名单
+    function getFirstUnionId(bytes32 _worksID) external returns (bytes32[] memory) {
+        return firstUnionID[_worksID];
+    }
+
+    //获取作品的二次购买者名单
+    function getSecondUnionId(bytes32 _worksID) external returns (bytes32[] memory) {
+        return secondUnionId[_worksID];
+    }
 
     //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
@@ -403,12 +447,28 @@ contract Works {
     function updateEndTime(bytes32 _worksID) external onlyDev() {
         works[_worksID].endTime = now;
         emit OnUpdateEndTime(_worksID, now);
-    }   
+    }
 
     //更新作品奖池累计
     function updatePools(bytes32 _worksID, uint256 _value) external onlyDev() {
         pools[_worksID] = pools[_worksID].add(_value);
         emit OnUpdatePools(_worksID, _value);
+    }
+
+    //更新作品的首发购买者名单
+    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
+        if(this.hasFirstUnionId == false) {
+            firstUnionID[_worksID].push(_unionID);
+            emit OnUpdateFirstUnionId(_worksID, _unionID);
+        }
+    }
+
+    //更新作品的二次购买者名单
+    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
+        if(this.hasSecondUnionId == false) {
+            secondUnionID[_worksID].push(_unionID);
+            emit OnUpdateSecondUnionId(_worksID, _unionID);
+        }
     }
 
  }
