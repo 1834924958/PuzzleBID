@@ -78,18 +78,18 @@ contract PuzzleBID {
             (player.getFirstBuyNum(msg.sender, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
             works.isSecond(_worksID, _debrisID)
         ); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
-        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？ TODO：多余还给玩家
+        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
         _;
-    }
+    }    
 
     //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer)
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
+        player.register(_unionID, msg.sender, _worksID, address(0)); //静默注册
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
 
@@ -123,8 +123,7 @@ contract PuzzleBID {
                 
         works.updateFirstBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片首发购买名单       
         player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
-        works.updateFirstUnionId(_worksID, _unionID); //更新当前作品碎片首发购买名单 去重复 用于完成游戏时结算
-
+        
         //分配并转账
         uint8[3] memory firstAllot = works.getAllot(_worksID, 0); //首发购买分配百分比 0-首发 1-再次 2-最后
         
@@ -140,7 +139,6 @@ contract PuzzleBID {
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
 
         works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
-        works.updateSecondUnionId(_worksID, _unionID); //更新当前作品碎片二次购买名单 去重复 用于完成游戏时结算
 
         //更新当前作品的再次购买者名单 TODO
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
@@ -187,31 +185,32 @@ contract PuzzleBID {
         player.updateMyWorks(_unionID, msg.sender, _worksID, 0, 0);
     }
     
-    //首发玩家统计发放 一个作品的奖池总额的10%
+    //首发玩家统计发放
     function firstSend(bytes32 _worksID, uint8 _debrisID) private {
-        address[] storage firstAddress;
-        uint8 i; 
-        for(i=1; i<works[_worksID].debrisNum; i++) {
-            if(firstCount[debris[_worksID][_debrisID].lastBuyer] == 0) {
-                firstAddress.push(debris[_worksID][_debrisID].lastBuyer);
+        address[] firstAddress;
+        mapping(bytes32 => uint256) firstCount;
+
+        uint8 i;
+        bytes32 unionID; 
+        uint256 initPrice = works.getInitPrice(_worksID, 1);
+        for(i=1; i<works.getDebrisNum(_worksID); i++) {
+            unionID = works.getLastUnionId(_worksID, i);
+            if(0 == firstCount[unionID]) {
+                firstAddress.push(player.getLastAddress(unionID));
             }
-            firstCount[debris[_worksID][_debrisID].lastBuyer] = firstCount[debris[_worksID][_debrisID].lastBuyer] + debris[_worksID][_debrisID].initPrice;
+            firstCount[unionID] = firstCount[unionID].add(initPrice);
         }
+
         for(i=0; i<firstAddress.length; i++) {
             firstAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(firstCount[firstAddress[i]]) / works[_worksID].price);
             delete firstCount[firstAddress[i]];
         }
+        delete firstAddress;
     }
     
-    //后续玩家统计发放 一个作品的奖池总额的10%
+    //后续玩家统计发放
     function secondSend(bytes32 _worksID, uint8 _debrisID) private {
-        address[] tmpAddress = secondAddress[_worksID];
-        for(uint256 i=0; i<=tmpAddress.length; i++) {
-            tmpAddress[i].transfer(
-                (pots[_worksID].mul(lastAllot[1]) / 100)
-                .mul(playerCount[tmpAddress[i]][_worksID].secondAmount)
-                 / worksTurnover[_worksID].sub(works[_worksID].price));
-        }
+        
     }
 
     //获取游戏当前最新时间

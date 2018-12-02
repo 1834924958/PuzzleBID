@@ -336,6 +336,11 @@ contract Works {
         return lastPrice;
     }
 
+    //获取碎片的初始价格
+    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+        return debris[_worksID][_debrisID].initPrice;
+    }
+
     //获取碎片的最后被交易的价格
     function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
         return debris[_worksID][_debrisID].lastPrice;
@@ -346,7 +351,10 @@ contract Works {
         return debris[_worksID][_debrisID].lastBuyer;
     }
 
-    function getLastUnionId() {}
+    //获取碎片的最后购买者unionID
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(address) {
+        return debris[_worksID][_debrisID].lastUnionID;
+    }
 
     //获取玩家账号冻结时间 单位s
     function getFreezeGap(bytes32 _worksID) external view returns(uint256) {
@@ -361,6 +369,11 @@ contract Works {
     //获取作品对应的艺术家ID
     function getArtist(bytes32 _worksID) external view returns(bytes32) {
         return works[_worksID].artistID;
+    }
+
+    //获取作品分割的碎片数
+    function getDebrisNum(bytes32 _worksID) {
+        return works[_worksID].debrisNum;
     }
 
     //获取首发购买分配百分比分子 返回数组
