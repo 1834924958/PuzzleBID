@@ -67,19 +67,19 @@ interface WorksInterface {
     function isFinish(bytes32 _worksID, uint8 _debrisID, address _unionID) external view returns (bool);
 
     //是否存在首发购买者名单中
-    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool);
+    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //是否存在二次购买者名单中
-    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool);
+    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //获取作品的首发购买者名单
-    function getFirstUnionId(bytes32 _worksID) external returns (bytes32[] memory);
+    function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
 
     //获取作品的二次购买者名单
-    function getSecondUnionId(bytes32 _worksID) external returns (bytes32[] memory);
+    function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
 
     //获取作品的初始总价
-    function getPrice(bytes32 _worksID) external returns (uint256);
+    function getPrice(bytes32 _worksID) external view returns (uint256);
 
     //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
@@ -94,7 +94,7 @@ interface WorksInterface {
     function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(address);
 
     //获取碎片的最后购买者unionID
-    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(address);
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(bytes32);
 
     //获取玩家账号冻结时间 单位s
     function getFreezeGap(bytes32 _worksID) external view returns(uint256);
@@ -118,7 +118,7 @@ interface WorksInterface {
     function getPools(bytes32 _worksID) external view returns (uint256);
 
     //获取作品碎片游戏开始倒计时 单位s
-    function getStartHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+    function getStartHourglass(bytes32 _worksID) external view returns(uint256);
 
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);

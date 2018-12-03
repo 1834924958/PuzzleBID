@@ -33,6 +33,6 @@ interface PlatformInterface {
     function getFoundAddress() external view returns (address);
 
     //查询奖池实际余额 仅开发者、合约地址可操作
-    function getThisBalance() external view returns (uint256);
+    function balances() external view returns (uint256);
 
 }

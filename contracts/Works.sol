@@ -5,6 +5,7 @@ import "./library/Datasets.sol"; //导入公共结构库
 import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
 import "./interface/ArtistInterface.sol"; //导入艺术家合约接口
 
+
 /**
  * @title PuzzleBID Game 作品碎片合约
  * @dev http://www.puzzlebid.com/
@@ -29,6 +30,14 @@ contract Works {
     }
 
     //事件
+    event OnAddWorks(
+        bytes32 _worksID,
+        bytes32 _artistID, 
+        uint8 _debrisNum, 
+        uint256 _price, 
+        uint256 _beginTime,
+        bool _isPublish
+    );
     event OnInitDebris(
         bytes32 _worksID,
         uint8 _debrisNum,
@@ -133,8 +142,8 @@ contract Works {
             _debrisNum, 
             _price, 
             _beginTime,
-            false,
-            _firstBuyLimit);  //添加作品事件
+            false
+        );  //添加作品事件
 
         initDebris(_worksID, _price, _debrisNum); //初始化作品碎片
     }
@@ -194,7 +203,10 @@ contract Works {
             _protectGap.mul(1 seconds),
             _increaseRatio,
             _discountGap.mul(1 seconds),    
-            _discountRatio
+            _discountRatio,
+            _firstAllot,
+            _againAllot,
+            _lastAllot
         );
 
         rules[_worksID].firstAllot = _firstAllot;
@@ -254,21 +266,21 @@ contract Works {
     }
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, uint8 _debrisID, address _unionID) external view returns (bool) {
-        bool isFinish = true; //收集完成标志
+    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool) {
+        bool finish = true; //收集完成标志
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
             if(debris[_worksID][_debrisID].lastUnionID != _unionID) {
-                isFinish = false;
+                finish = false;
                 break;
             }
             i++;
         }
-        return isFinish;
-    }  
+        return finish;
+    } 
 
     //是否存在首发购买者名单中
-    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool) {
+    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         if(0 == firstUnionID[_worksID].length) {
             return false;
         }
@@ -283,7 +295,7 @@ contract Works {
     }
 
     //是否存在二次购买者名单中
-    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool) {
+    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         if(0 == secondUnionID[_worksID].length) {
             return false;
         }
@@ -298,17 +310,17 @@ contract Works {
     }  
 
     //获取作品的首发购买者名单
-    function getFirstUnionId(bytes32 _worksID) external returns (bytes32[] memory) {
+    function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory) {
         return firstUnionID[_worksID];
     }
 
     //获取作品的二次购买者名单
-    function getSecondUnionId(bytes32 _worksID) external returns (bytes32[] memory) {
-        return secondUnionId[_worksID];
+    function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory) {
+        return secondUnionID[_worksID];
     }
 
     //获取作品的初始总价
-    function getPrice(bytes32 _worksID) external returns (uint256) {
+    function getPrice(bytes32 _worksID) external view returns (uint256) {
         return works[_worksID].price;
     }
 
@@ -326,11 +338,7 @@ contract Works {
             if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { //有余数时多计1
                 n = n.add(1);
             }
-            if(0 == i) {
-                lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio / 100);
-            } else {
-                lastPrice = lastPrice.mul((discountRatio / 100).pwr(n)); //n次方
-            } 
+            lastPrice = lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
@@ -357,7 +365,7 @@ contract Works {
     }
 
     //获取碎片的最后购买者unionID
-    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(address) {
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(bytes32) {
         return debris[_worksID][_debrisID].lastUnionID;
     }
 
@@ -368,7 +376,7 @@ contract Works {
 
     //获取玩家首发购买上限数
     function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256) {
-        return rules[_worksID].FirstBuyLimit;
+        return rules[_worksID].firstBuyLimit;
     }
 
     //获取作品对应的艺术家ID
@@ -384,9 +392,9 @@ contract Works {
     //获取首发购买分配百分比分子 返回数组
     function getAllot(bytes32 _worksID, uint8 _flag) external view returns(uint8[3] memory) {
         require(_flag < 3);
-        if(0 == flag) {
+        if(0 == _flag) {
             return rules[_worksID].firstAllot;
-        } else if(1 == flag) {
+        } else if(1 == _flag) {
             return rules[_worksID].againAllot;
         } else {
             return rules[_worksID].lastAllot;
@@ -411,7 +419,7 @@ contract Works {
     }
 
     //获取作品碎片游戏开始倒计时 单位s
-    function getStartHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
         if(works[_worksID].beginTime.sub(now) > 0 ) {
             return works[_worksID].beginTime.sub(now);
         }

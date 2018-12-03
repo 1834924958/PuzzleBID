@@ -75,9 +75,9 @@ contract Platform {
     }
 
     //更新平台基金会address 仅管理员可操作
-    function updateFoundAddress(address _foundation) external onlyAdmin() {
-        foundation = _foundation;
-        emit OnUpdateFoundAddress(msg.sender, _foundation);
+    function updateFoundAddress(address _foundAddress) external onlyAdmin() {
+        foundAddress = _foundAddress;
+        emit OnUpdateFoundAddress(msg.sender, _foundAddress);
     }
 
     //平台合约代为保管奖池中的ETH
@@ -87,7 +87,7 @@ contract Platform {
     }
 
     //从奖池中转账ETH到指定address
-    function transferTo(address _receiver, uint256 _amount) external onlyDev() {
+    function transferTo(address payable _receiver, uint256 _amount) external onlyDev() {
         require(_amount <= address(this).balance);
         _receiver.transfer(_amount);
         emit OnTransferTo(_receiver, _amount);
@@ -99,7 +99,7 @@ contract Platform {
     }
 
     //查询奖池实际余额 仅开发者、合约地址可操作
-    function getThisBalance() external view onlyDev() returns (uint256) {
+    function balances() external view onlyDev() returns (uint256) {
         return address(this).balance;
     }
 

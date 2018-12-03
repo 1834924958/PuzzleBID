@@ -33,7 +33,7 @@ library Datasets {
         uint256 price; //作品初始价格
         uint256 beginTime; //作品游戏开始时间
         uint256 endTime; //作品游戏结束时间
-        uint256 isPublish; //作品游戏发布开关 true为开启
+        bool isPublish; //作品游戏发布开关 true为开启
     }
 
     //碎片结构
