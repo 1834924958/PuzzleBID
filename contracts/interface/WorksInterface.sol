@@ -24,15 +24,15 @@ interface WorksInterface {
     function configRule(
         bytes32 _worksID,
         uint8 _firstBuyLimit, //参考值：2
-        uint256 _freezeGap, //参考值：3 
-        uint256 _protectGap, //参考值：1800
+        uint256 _freezeGap, //参考值：180s 
+        uint256 _protectGap, //参考值：1800s
         uint256 _increaseRatio, //参考值：110
-        uint256 _discountGap, //参考值：3600
+        uint256 _discountGap, //参考值：3600s
         uint256 _discountRatio, //参考值：95
 
-        uint8[3] _firstAllot, //参考值：[80, 2, 18]
-        uint8[3] _againAllot, //参考值：[10, 2, 65]
-        uint8[3] _lastAllot //参考值：[80, 10, 10]
+        uint8[3] calldata _firstAllot, //参考值：[80, 2, 18]
+        uint8[3] calldata _againAllot, //参考值：[10, 2, 65]
+        uint8[3] calldata _lastAllot //参考值：[80, 10, 10]
     ) 
         external;
 
@@ -66,17 +66,56 @@ interface WorksInterface {
     //作品碎片是否收集完成
     function isFinish(bytes32 _worksID, uint8 _debrisID, address _unionID) external view returns (bool);
 
-    //获取碎片的实时价格
+    //是否存在首发购买者名单中
+    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool);
+
+    //是否存在二次购买者名单中
+    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external returns (bool);
+
+    //获取作品的首发购买者名单
+    function getFirstUnionId(bytes32 _worksID) external returns (bytes32[] memory);
+
+    //获取作品的二次购买者名单
+    function getSecondUnionId(bytes32 _worksID) external returns (bytes32[] memory);
+
+    //获取作品的初始总价
+    function getPrice(bytes32 _worksID) external returns (uint256);
+
+    //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+
+    //获取碎片的初始价格
+    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
 
     //获取碎片的最后被交易的价格
     function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+
+    //获取碎片的最后购买者address
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(address);
+
+    //获取碎片的最后购买者unionID
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(address);
 
     //获取玩家账号冻结时间 单位s
     function getFreezeGap(bytes32 _worksID) external view returns(uint256);
 
     //获取玩家首发购买上限数
     function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256);
+
+    //获取作品对应的艺术家ID
+    function getArtistId(bytes32 _worksID) external view returns(bytes32);
+
+    //获取作品分割的碎片数
+    function getDebrisNum(bytes32 _worksID) external view returns(uint8);
+
+    //获取首发购买分配百分比分子 返回数组
+    function getAllot(bytes32 _worksID, uint8 _flag) external view returns(uint8[3] memory);
+
+    //获取首发购买分配百分比分子 返回整型
+    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8);
+
+    //获取作品奖池累计
+    function getPools(bytes32 _worksID) external view returns (uint256);
 
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
@@ -89,5 +128,23 @@ interface WorksInterface {
 
     //更新碎片
     function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
+
+    //更新作品碎片的首发购买者
+    function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
+
+    //更新作品碎片的最后购买者
+    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
+
+    //更新作品碎片游戏结束时间
+    function updateEndTime(bytes32 _worksID) external;
+
+    //更新作品奖池累计
+    function updatePools(bytes32 _worksID, uint256 _value) external;
+
+    //更新作品的首发购买者名单
+    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external;
+
+    //更新作品的二次购买者名单
+    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external;
 
  }

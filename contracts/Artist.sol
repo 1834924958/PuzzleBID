@@ -24,6 +24,7 @@ contract Artist {
 
     //事件
     event OnAdd(bytes32 _artistID, address _address);
+    event OnUpdateAddress(bytes32 _artistID, address _address);
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
@@ -48,6 +49,11 @@ contract Artist {
         return artists[_artistID] != address(0);
     }
 
-    function updateAddress() {}
+    //更新艺术家address
+    function updateAddress(bytes32 _artistID, address _address) external onlyDev() {
+        require(_address != address(0));
+        artists[_artistID] = _address;
+        emit OnUpdateAddress(_artistID, _address);
+    }
 
 }

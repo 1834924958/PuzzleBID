@@ -13,7 +13,7 @@ contract Platform {
 
     using SafeMath for *;
 
-    address private foundation; //基金会address
+    address private foundAddress; //基金会address
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
 
     constructor(address _foundAddress, address _teamAddress) public {
@@ -21,7 +21,7 @@ contract Platform {
             _foundAddress != address(0) &&
             _teamAddress != address(0)
         );
-        foundation = _foundAddress;
+        foundAddress = _foundAddress;
         team = TeamInterface(_teamAddress);
     }
 
@@ -34,7 +34,8 @@ contract Platform {
     event OnDeposit(bytes32 _worksID, address indexed _address, uint256 _amount); //作品ID，操作的合约地址，存进来的ETH数量
     event OnUpdateTurnover(bytes32 _worksID, uint256 _amount);
     event OnUpdateAllTurnover(uint256 _amount);
-    event OnUpdateFoundation(address indexed _sender, address indexed _foundation);
+    event OnUpdateFoundAddress(address indexed _sender, address indexed _address);
+    event OnTransferTo(address indexed _receiver, uint256 _amount);
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
@@ -74,9 +75,9 @@ contract Platform {
     }
 
     //更新平台基金会address 仅管理员可操作
-    function updateFoundation(address _foundation) external onlyAdmin() {
+    function updateFoundAddress(address _foundation) external onlyAdmin() {
         foundation = _foundation;
-        emit OnUpdateFoundation(msg.sender, _foundation);
+        emit OnUpdateFoundAddress(msg.sender, _foundation);
     }
 
     //平台合约代为保管奖池中的ETH
@@ -85,9 +86,16 @@ contract Platform {
         emit OnDeposit(_worksID, msg.sender, msg.value);
     }
 
+    //从奖池中转账ETH到指定address
+    function transferTo(address _receiver, uint256 _amount) external onlyDev() {
+        require(_amount <= address(this).balance);
+        _receiver.transfer(_amount);
+        emit OnTransferTo(_receiver, _amount);
+    }
+
     //获取基金会address
     function getFoundAddress() external view returns (address) {
-        return foundation;
+        return foundAddress;
     }
 
     //查询奖池实际余额 仅开发者、合约地址可操作

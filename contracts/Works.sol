@@ -307,6 +307,11 @@ contract Works {
         return secondUnionId[_worksID];
     }
 
+    //获取作品的初始总价
+    function getPrice(bytes32 _worksID) external returns (uint256) {
+        return works[_worksID].price;
+    }
+
     //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
         uint256 discountGap = rules[_worksID].discountGap;
@@ -367,12 +372,12 @@ contract Works {
     }
 
     //获取作品对应的艺术家ID
-    function getArtist(bytes32 _worksID) external view returns(bytes32) {
+    function getArtistId(bytes32 _worksID) external view returns(bytes32) {
         return works[_worksID].artistID;
     }
 
     //获取作品分割的碎片数
-    function getDebrisNum(bytes32 _worksID) {
+    function getDebrisNum(bytes32 _worksID) external view returns(uint8) {
         return works[_worksID].debrisNum;
     }
 
@@ -470,7 +475,7 @@ contract Works {
 
     //更新作品的首发购买者名单
     function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
-        if(this.hasFirstUnionId == false) {
+        if(this.hasFirstUnionId(_worksID, _unionID) == false) {
             firstUnionID[_worksID].push(_unionID);
             emit OnUpdateFirstUnionId(_worksID, _unionID);
         }
@@ -478,7 +483,7 @@ contract Works {
 
     //更新作品的二次购买者名单
     function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
-        if(this.hasSecondUnionId == false) {
+        if(this.hasSecondUnionId(_worksID, _unionID) == false) {
             secondUnionID[_worksID].push(_unionID);
             emit OnUpdateSecondUnionId(_worksID, _unionID);
         }

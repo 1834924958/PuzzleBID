@@ -74,6 +74,7 @@ library Datasets {
     struct PlayerCount {
         uint256 lastTime; //同一作品同一玩家，最后一次购买时间
         uint256 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
+        uint256 firstAmount; //同一作品同一玩家，首发购买总计金额
         uint256 secondAmount; //同一作品同一玩家，二次购买总计金额
     }
 

@@ -66,8 +66,8 @@ contract PuzzleBID {
         require(msg.value <= 100000000000000000000000);
 
         //检查该作品碎片能不能被买
-        require(works.isHasWorks(_worksID)); //检查该作品游戏是否存在
-        require(works.isHasDebris(_worksID, _debrisID)); //检查该作品碎片是否存在
+        require(works.hasWorks(_worksID)); //检查该作品游戏是否存在
+        require(works.hasDebris(_worksID, _debrisID)); //检查该作品碎片是否存在
         require(works.isGameOver(_worksID)); //检查游戏是否已结束
         require(works.isPublish(_worksID) && works.isStart(_worksID)); //检查该作品游戏是否发布并开始
         require(works.isProtect(_worksID, _debrisID)); //检查该作品碎片是否在30分钟保护期内
@@ -75,7 +75,7 @@ contract PuzzleBID {
         //检查玩家能不能买该作品碎片 
         require(player.isFreeze(_unionID, _worksID)); //检查同一作品同一玩家是否超过5分钟冻结期
         require(
-            (player.getFirstBuyNum(msg.sender, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
+            (player.getFirstBuyNum(_unionID, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
             works.isSecond(_worksID, _debrisID)
         ); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
@@ -89,7 +89,7 @@ contract PuzzleBID {
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, address(0)); //静默注册
+        player.register(_unionID, msg.sender, _worksID, _unionID); //静默注册
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
 
@@ -123,29 +123,32 @@ contract PuzzleBID {
                 
         works.updateFirstBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片首发购买名单       
         player.updateFirstBuyNum(_unionID, _worksID); //更新同一作品同一玩家首发购买数
+        player.updateFirstAmount(_unionID, _worksID, msg.value); //更新同一作品同一玩家的首发购买投入
         
         //分配并转账
         uint8[3] memory firstAllot = works.getAllot(_worksID, 0); //首发购买分配百分比 0-首发 1-再次 2-最后
         
-        artist.getAddress(works.getArtist(_worksID)).transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
+        artist.getAddress(works.getArtistId(_worksID)).transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
         platform.getFoundAddress().transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 归平台
 
         works.updatePools(_worksID, msg.value.mul(firstAllot[2]) / 100); //销售价的18% 归奖池
         platform.deposit.value(msg.value.mul(firstAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
+
+
     
     }
 
-    //二次购买 TODO
+    //二次购买
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
 
         works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
 
-        //更新当前作品的再次购买者名单 TODO
+        //更新当前作品的再次购买者名单
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
-            secondAddress[_worksID].push(msg.sender);
+            works.updateSecondUnionId(_worksID, _unionID);
         }
 
-        //统计同一作品同一玩家的再次购买投入
+        //更新同一作品同一玩家的再次购买投入
         player.updateSecondAmount(_unionID, _worksID, msg.value);
              
         uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
@@ -153,7 +156,7 @@ contract PuzzleBID {
         if(lastPrice > _oldPrice) { 
             uint8[3] memory againAllot = works.getAllot(_worksID, 1);
             uint256 overflow = lastPrice.sub(_oldPrice); //计算溢价
-            artist.getAddress(works.getArtist(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
+            artist.getAddress(works.getArtistId(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
             platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); //总价的2% 归平台
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的18% 归奖池
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
@@ -187,30 +190,35 @@ contract PuzzleBID {
     
     //首发玩家统计发放
     function firstSend(bytes32 _worksID, uint8 _debrisID) private {
-        address[] firstAddress;
-        mapping(bytes32 => uint256) firstCount;
-
         uint8 i;
-        bytes32 unionID; 
-        uint256 initPrice = works.getInitPrice(_worksID, 1);
-        for(i=1; i<works.getDebrisNum(_worksID); i++) {
-            unionID = works.getLastUnionId(_worksID, i);
-            if(0 == firstCount[unionID]) {
-                firstAddress.push(player.getLastAddress(unionID));
-            }
-            firstCount[unionID] = firstCount[unionID].add(initPrice);
+        bytes32[] tmpFirstUnionId = works.getFirstUnionId(_worksID); //首发玩家名单
+        address tmpAddress; //玩家最近使用的address
+        uint256 tmpAmount; //首发玩家应得分红
+        uint8 lastAllot = works.getAllot(_worksID, 2, 1);
+        for(i=0; i<tmpFirstUnionId.length; i++) {
+            tmpAddress = player.getLastAddress(tmpFirstUnionId[i]);
+            tmpAmount = player.getFirstAmount(tmpFirstUnionId[i], _worksID); //玩家首发投入累计
+            //应得分红 = 作品对应的奖池 * 10% * (玩家首发投入累计 / 作品初始价格即首发总投入)
+            tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / works.getPrice(_worksID));
+            platform.transferTo(tmpAddress, tmpAmount); //平台合约代为发放奖池中的ETH
         }
-
-        for(i=0; i<firstAddress.length; i++) {
-            firstAddress[i].transfer((pots[_worksID].mul(lastAllot[1]) / 100).mul(firstCount[firstAddress[i]]) / works[_worksID].price);
-            delete firstCount[firstAddress[i]];
-        }
-        delete firstAddress;
     }
     
     //后续玩家统计发放
     function secondSend(bytes32 _worksID, uint8 _debrisID) private {
-        
+        uint8 i;
+        bytes32[] tmpSecondUnionId = works.getSecondUnionId(_worksID); //二次购买玩家名单
+        address tmpAddress; //玩家最近使用的address
+        uint256 tmpAmount; //首发玩家应得分红
+        uint8 lastAllot = works.getAllot(_worksID, 2, 2);
+        for(i=0; i<tmpSecondUnionId.length; i++) {
+            tmpAddress = player.getLastAddress(tmpSecondUnionId[i]);
+            tmpAmount = player.getSecondAmount(tmpSecondUnionId[i], _worksID); //玩家二次投入累计
+            //应得分红 = 作品对应的奖池 * 10% * (玩家二次投入累计 / 作品二次总投入)
+            //作品二次总投入 = 作品的总交易额 - 作品初始价格即首发总投入
+            tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / works.getTurnover(_worksID).sub(works.getPrice(_worksID)));
+            platform.transferTo(tmpAddress, tmpAmount); //平台合约代为发放奖池中的ETH
+        }
     }
 
     //获取游戏当前最新时间
