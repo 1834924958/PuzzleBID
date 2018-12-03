@@ -60,6 +60,13 @@ updateAddress("0xe10adc3949ba59abbe56e057f20f883e", "0x4b0897b0513fdc7c541b6d9d7
 接第一章导入的合约，将以下合约粘贴并编译：
 1、Works.sol
 2、WorksInterface.sol
+部署
+```
+Deploy("0x692a70d2e424a56d2c6c27aa97d1a86395877b3a","0x0dcd2f752394c41875e259e00bb44fd505297caf")
+```
+
+
+### 
 
 
 ### 三、平台
