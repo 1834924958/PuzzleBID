@@ -30,7 +30,7 @@ interface PlatformInterface {
     function transferTo(address _receiver, uint256 _amount) external;
 
     //获取基金会address
-    function getFoundAddress() external view returns (address);
+    function getFoundAddress() external view returns (address payable);
 
     //查询奖池实际余额 仅开发者、合约地址可操作
     function balances() external view returns (uint256);

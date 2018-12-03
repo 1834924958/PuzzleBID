@@ -9,7 +9,7 @@ pragma solidity ^0.5.0;
 interface ArtistInterface {
 
     //根据艺术家ID获取钱包地址
-    function getAddress(bytes32 _artistID) external view returns (address);
+    function getAddress(bytes32 _artistID) external view returns (address payable);
 
     //添加艺术家
     function add(bytes32 _artistID, address _address) external;

@@ -91,7 +91,7 @@ interface WorksInterface {
     function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address);
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address payable);
 
     //获取碎片的最后购买者unionID
     function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns (bytes32);

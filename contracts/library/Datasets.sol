@@ -43,8 +43,8 @@ library Datasets {
         uint256 initPrice; //初始价格
         uint256 lastPrice; //最新成交价格
         uint256 buyNum; //被交易总次数
-        address firstBuyer; //首发购买者，冗余
-        address lastBuyer; //最后一次购买者，冗余
+        address payable firstBuyer; //首发购买者，冗余
+        address payable lastBuyer; //最后一次购买者，冗余
         bytes32 firstUnionID; //首发购买者ID，冗余
         bytes32 lastUnionID; //最后一次购买者ID，冗余
         uint256 lastTime; //最后一次被购买时间

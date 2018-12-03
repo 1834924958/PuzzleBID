@@ -13,10 +13,10 @@ contract Platform {
 
     using SafeMath for *;
 
-    address private foundAddress; //基金会address
+    address payable private foundAddress; //基金会address
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
 
-    constructor(address _foundAddress, address _teamAddress) public {
+    constructor(address payable _foundAddress, address _teamAddress) public {
         require(
             _foundAddress != address(0) &&
             _teamAddress != address(0)
@@ -75,7 +75,7 @@ contract Platform {
     }
 
     //更新平台基金会address 仅管理员可操作
-    function updateFoundAddress(address _foundAddress) external onlyAdmin() {
+    function updateFoundAddress(address payable _foundAddress) external onlyAdmin() {
         foundAddress = _foundAddress;
         emit OnUpdateFoundAddress(msg.sender, _foundAddress);
     }
@@ -94,7 +94,7 @@ contract Platform {
     }
 
     //获取基金会address
-    function getFoundAddress() external view returns (address) {
+    function getFoundAddress() external view returns (address payable) {
         return foundAddress;
     }
 

@@ -360,7 +360,7 @@ contract Works {
     }
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address) {
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address payable) {
         return debris[_worksID][_debrisID].lastBuyer;
     }
 
@@ -446,7 +446,7 @@ contract Works {
     }
 
     //更新碎片
-    function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
+    function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address payable _sender) external onlyDev() {
         debris[_worksID][_debrisID].lastPrice = this.getDebrisPrice(_worksID, _debrisID);
         debris[_worksID][_debrisID].lastUnionID = _unionID; //更新归属
         debris[_worksID][_debrisID].lastBuyer = _sender; //更新归属
@@ -456,14 +456,14 @@ contract Works {
     }
 
     //更新作品碎片的首发购买者
-    function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
+    function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address payable _sender) external onlyDev() {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
     }
 
     //更新作品碎片的最后购买者
-    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external onlyDev() {
+    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address payable _sender) external onlyDev() {
         debris[_worksID][_debrisID].lastBuyer = _sender;
         debris[_worksID][_debrisID].lastUnionID = _unionID;
         emit OnUpdateLastBuyer(_worksID, _debrisID, _unionID, _sender);

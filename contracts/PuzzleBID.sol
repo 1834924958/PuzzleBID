@@ -112,7 +112,7 @@ contract PuzzleBID {
         //碎片如果被同一玩家收集完成，结束游戏
         if(works.isFinish(_worksID, _debrisID, _unionID)) {
             works.updateEndTime(_worksID); //更新作品游戏结束时间
-            finishGame(_worksID, _debrisID); //游戏收尾
+            finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品
         }
 
@@ -127,7 +127,6 @@ contract PuzzleBID {
         
         //分配并转账
         uint8[3] memory firstAllot = works.getAllot(_worksID, 0); //首发购买分配百分比 0-首发 1-再次 2-最后
-        
         artist.getAddress(works.getArtistId(_worksID)).transfer(msg.value.mul(firstAllot[0]) / 100); //销售价的80% 归艺术家
         platform.getFoundAddress().transfer(msg.value.mul(firstAllot[1]) / 100); //销售价的2% 归平台
 
@@ -175,12 +174,12 @@ contract PuzzleBID {
     }
 
     //完成游戏
-    function finishGame(bytes32 _worksID, uint8 _debrisID) private {              
+    function finishGame(bytes32 _worksID) private {              
         //收集碎片完成，按最后规则
         uint8 lastAllot = works.getAllot(_worksID, 2, 0);
         msg.sender.transfer(works.getPools(_worksID).mul(lastAllot / 100)); //当前作品奖池的80% 最后一次购买者  
-        firstSend(_worksID, _debrisID); //首发玩家统计发放
-        secondSend(_worksID, _debrisID); //后续玩家统计发放
+        firstSend(_worksID); //首发玩家统计发放
+        secondSend(_worksID); //后续玩家统计发放
     }
 
     //处理成我的藏品
@@ -189,9 +188,9 @@ contract PuzzleBID {
     }
     
     //首发玩家统计发放
-    function firstSend(bytes32 _worksID, uint8 _debrisID) private {
+    function firstSend(bytes32 _worksID) private {
         uint8 i;
-        bytes32[] tmpFirstUnionId = works.getFirstUnionId(_worksID); //首发玩家名单
+        bytes32[] memory tmpFirstUnionId = works.getFirstUnionId(_worksID); //首发玩家名单
         address tmpAddress; //玩家最近使用的address
         uint256 tmpAmount; //首发玩家应得分红
         uint8 lastAllot = works.getAllot(_worksID, 2, 1);
@@ -205,9 +204,9 @@ contract PuzzleBID {
     }
     
     //后续玩家统计发放
-    function secondSend(bytes32 _worksID, uint8 _debrisID) private {
+    function secondSend(bytes32 _worksID) private {
         uint8 i;
-        bytes32[] tmpSecondUnionId = works.getSecondUnionId(_worksID); //二次购买玩家名单
+        bytes32[] memory tmpSecondUnionId = works.getSecondUnionId(_worksID); //二次购买玩家名单
         address tmpAddress; //玩家最近使用的address
         uint256 tmpAmount; //首发玩家应得分红
         uint8 lastAllot = works.getAllot(_worksID, 2, 2);
@@ -216,7 +215,7 @@ contract PuzzleBID {
             tmpAmount = player.getSecondAmount(tmpSecondUnionId[i], _worksID); //玩家二次投入累计
             //应得分红 = 作品对应的奖池 * 10% * (玩家二次投入累计 / 作品二次总投入)
             //作品二次总投入 = 作品的总交易额 - 作品初始价格即首发总投入
-            tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / works.getTurnover(_worksID).sub(works.getPrice(_worksID)));
+            tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
             platform.transferTo(tmpAddress, tmpAmount); //平台合约代为发放奖池中的ETH
         }
     }

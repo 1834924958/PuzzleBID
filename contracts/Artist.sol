@@ -11,7 +11,7 @@ import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
 contract Artist {
 
     TeamInterface private team; //实例化管理员合约，正式发布时可定义成常量
-    mapping(bytes32 => address) private artists; //艺术家列表 (artistID => address)
+    mapping(bytes32 => address payable) private artists; //艺术家列表 (artistID => address)
 
     constructor(address _teamAddress) public {
         team = TeamInterface(_teamAddress);
@@ -33,12 +33,12 @@ contract Artist {
     }
 
     //根据艺术家ID获取钱包地址
-    function getAddress(bytes32 _artistID) external view returns (address) {
+    function getAddress(bytes32 _artistID) external view returns (address payable) {
         return artists[_artistID];
     }
 
     //添加艺术家
-    function add(bytes32 _artistID, address _address) external onlyDev() {
+    function add(bytes32 _artistID, address payable _address) external onlyDev() {
         require(this.hasArtist(_artistID) == false);
         artists[_artistID] = _address;
         emit OnAdd(_artistID, _address);
@@ -50,7 +50,7 @@ contract Artist {
     }
 
     //更新艺术家address
-    function updateAddress(bytes32 _artistID, address _address) external onlyDev() {
+    function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
         require(_address != address(0));
         artists[_artistID] = _address;
         emit OnUpdateAddress(_artistID, _address);
