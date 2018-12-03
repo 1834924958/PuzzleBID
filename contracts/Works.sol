@@ -130,7 +130,7 @@ contract Works {
             _worksID, 
             _artistID, 
             _debrisNum, 
-            _price, 
+            _price.mul(1 wei), 
             _beginTime, 
             0,
             false
@@ -150,7 +150,7 @@ contract Works {
 
     //初始化作品碎片 碎片编号从1开始
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
-        uint256 initPrice = _price / _debrisNum;
+        uint256 initPrice = (_price / _debrisNum).mul(1 wei);
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
@@ -325,7 +325,7 @@ contract Works {
     }
 
     //获取碎片的实时价格 有可能为0
-    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
+    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {        
         uint256 discountGap = rules[_worksID].discountGap;
         uint256 discountRatio = rules[_worksID].discountRatio;
         uint256 increaseRatio = rules[_worksID].increaseRatio;
@@ -350,47 +350,47 @@ contract Works {
     }
 
     //获取碎片的初始价格
-    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         return debris[_worksID][_debrisID].initPrice;
     }
 
     //获取碎片的最后被交易的价格
-    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         return debris[_worksID][_debrisID].lastPrice;
     }
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(address) {
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address) {
         return debris[_worksID][_debrisID].lastBuyer;
     }
 
     //获取碎片的最后购买者unionID
-    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(bytes32) {
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns (bytes32) {
         return debris[_worksID][_debrisID].lastUnionID;
     }
 
     //获取玩家账号冻结时间 单位s
-    function getFreezeGap(bytes32 _worksID) external view returns(uint256) {
+    function getFreezeGap(bytes32 _worksID) external view returns (uint256) {
         return rules[_worksID].freezeGap;
     }
 
     //获取玩家首发购买上限数
-    function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256) {
+    function getFirstBuyLimit(bytes32 _worksID) external view returns (uint256) {
         return rules[_worksID].firstBuyLimit;
     }
 
     //获取作品对应的艺术家ID
-    function getArtistId(bytes32 _worksID) external view returns(bytes32) {
+    function getArtistId(bytes32 _worksID) external view returns (bytes32) {
         return works[_worksID].artistID;
     }
 
     //获取作品分割的碎片数
-    function getDebrisNum(bytes32 _worksID) external view returns(uint8) {
+    function getDebrisNum(bytes32 _worksID) external view returns (uint8) {
         return works[_worksID].debrisNum;
     }
 
     //获取首发购买分配百分比分子 返回数组
-    function getAllot(bytes32 _worksID, uint8 _flag) external view returns(uint8[3] memory) {
+    function getAllot(bytes32 _worksID, uint8 _flag) external view returns (uint8[3] memory) {
         require(_flag < 3);
         if(0 == _flag) {
             return rules[_worksID].firstAllot;
@@ -402,7 +402,7 @@ contract Works {
     }
 
     //获取首发购买分配百分比分子 返回整型
-    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8) {
+    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns (uint8) {
         require(_flag < 3 && _element < 3);
         if(1 == _flag) {
             return rules[_worksID].firstAllot[_element];
@@ -419,7 +419,7 @@ contract Works {
     }
 
     //获取作品碎片游戏开始倒计时 单位s
-    function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
+    function getStartHourglass(bytes32 _worksID) external view returns (uint256) {
         if(works[_worksID].beginTime.sub(now) > 0 ) {
             return works[_worksID].beginTime.sub(now);
         }
@@ -427,7 +427,7 @@ contract Works {
     }
 
     //获取碎片保护期倒计时 单位s
-    function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0) {
             return debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now);
         }
@@ -435,7 +435,7 @@ contract Works {
     }
 
     //获取碎片降价倒计时 单位s 无限个倒计时段 过了第一个倒计时段 进入下一个倒计时段...
-    function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         uint256 discountGap = rules[_worksID].discountGap;
         //过去多个时间段时，乘以折扣的n次方
         uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; //几个时间段

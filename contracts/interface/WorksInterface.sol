@@ -64,7 +64,7 @@ interface WorksInterface {
     function isGameOver(bytes32 _worksID) external view returns (bool);
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, uint8 _debrisID, address _unionID) external view returns (bool);
+    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool);
 
     //是否存在首发购买者名单中
     function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
@@ -82,49 +82,49 @@ interface WorksInterface {
     function getPrice(bytes32 _worksID) external view returns (uint256);
 
     //获取碎片的实时价格 有可能为0
-    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //获取碎片的初始价格
-    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //获取碎片的最后被交易的价格
-    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(address);
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address);
 
     //获取碎片的最后购买者unionID
-    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(bytes32);
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns (bytes32);
 
     //获取玩家账号冻结时间 单位s
-    function getFreezeGap(bytes32 _worksID) external view returns(uint256);
+    function getFreezeGap(bytes32 _worksID) external view returns (uint256);
 
     //获取玩家首发购买上限数
-    function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256);
+    function getFirstBuyLimit(bytes32 _worksID) external view returns (uint256);
 
     //获取作品对应的艺术家ID
-    function getArtistId(bytes32 _worksID) external view returns(bytes32);
+    function getArtistId(bytes32 _worksID) external view returns (bytes32);
 
     //获取作品分割的碎片数
-    function getDebrisNum(bytes32 _worksID) external view returns(uint8);
+    function getDebrisNum(bytes32 _worksID) external view returns (uint8);
 
     //获取首发购买分配百分比分子 返回数组
-    function getAllot(bytes32 _worksID, uint8 _flag) external view returns(uint8[3] memory);
+    function getAllot(bytes32 _worksID, uint8 _flag) external view returns (uint8[3] memory);
 
     //获取首发购买分配百分比分子 返回整型
-    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8);
+    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns (uint8);
 
     //获取作品奖池累计
     function getPools(bytes32 _worksID) external view returns (uint256);
 
     //获取作品碎片游戏开始倒计时 单位s
-    function getStartHourglass(bytes32 _worksID) external view returns(uint256);
+    function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
     //获取碎片保护期倒计时 单位s
-    function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+    function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //获取碎片降价倒计时 单位s 无限个倒计时段 过了第一个倒计时段 进入下一个倒计时段...
-    function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256);
+    function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //更新碎片
     function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;

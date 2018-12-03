@@ -27,7 +27,7 @@ interface PlayerInterface {
     function getFirstBuyNum(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家对作品碎片的二次购买累计金额
-    function getSecondAmount(bytes32 _unionID, bytes32 _worksID) external returns (uint256);
+    function getSecondAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家对作品的首发投入累计
     function getFirstAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
@@ -39,7 +39,7 @@ interface PlayerInterface {
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家账号冻结倒计时
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns(uint256);
+    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
