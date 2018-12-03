@@ -189,7 +189,6 @@ contract Team {
 
     }
 
-
     event OnUpdateAdmin(
         address indexed _address, 
         bool _isAdmin, 
@@ -214,6 +213,7 @@ contract Team {
     function isAdmin(address _sender) external view returns (bool) {
         return admins[_sender].isAdmin;
     }
+
     function isDev(address _sender) external view returns (bool) {
         return admins[_sender].isDev;
     }
@@ -250,7 +250,6 @@ contract Artist {
     event OnAdd(bytes32 _artistID, address _address);
     event OnUpdateAddress(bytes32 _artistID, address _address);
 
-    
     modifier onlyDev() {
         require(team.isDev(msg.sender));
         _;
@@ -259,7 +258,6 @@ contract Artist {
     function getAddress(bytes32 _artistID) external view returns (address payable) {
         return artists[_artistID];
     }
-
    
     function add(bytes32 _artistID, address payable _address) external onlyDev() {
         require(this.hasArtist(_artistID) == false);
@@ -267,12 +265,10 @@ contract Artist {
         emit OnAdd(_artistID, _address);
     }
 
-    
     function hasArtist(bytes32 _artistID) external view returns (bool) {
         return artists[_artistID] != address(0);
     }
 
-    
     function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
         require(_address != address(0));
         artists[_artistID] = _address;
@@ -285,7 +281,6 @@ contract Artist {
 
 interface WorksInterface {
 
-    
     function addWorks(
         bytes32 _worksID,
         bytes32 _artistID, 
@@ -295,7 +290,6 @@ interface WorksInterface {
     ) 
         external;
 
-  
     function configRule(
         bytes32 _worksID,
         uint8 _firstBuyLimit, 
@@ -319,92 +313,65 @@ interface WorksInterface {
 
     function isStart(bytes32 _worksID) external view returns (bool);
 
-
     function isProtect(bytes32 _worksID, uint8 _debrisID) external view returns (bool);
-
 
     function isSecond(bytes32 _worksID, uint8 _debrisID) external view returns (bool);
 
-
     function isGameOver(bytes32 _worksID) external view returns (bool);
     
-
     function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool);
 
-
     function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
-
 
     function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
 
-
     function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
-
 
     function getPrice(bytes32 _worksID) external view returns (uint256);
 
-
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
-
 
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
-
     function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
-
 
     function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address payable);
 
-
     function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns (bytes32);
-
 
     function getFreezeGap(bytes32 _worksID) external view returns (uint256);
 
-
     function getFirstBuyLimit(bytes32 _worksID) external view returns (uint256);
-
 
     function getArtistId(bytes32 _worksID) external view returns (bytes32);
 
-
     function getDebrisNum(bytes32 _worksID) external view returns (uint8);
-
 
     function getAllot(bytes32 _worksID, uint8 _flag) external view returns (uint8[3] memory);
 
     function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns (uint8);
 
-
     function getPools(bytes32 _worksID) external view returns (uint256);
-
 
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
-
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
-
 
     function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
-
     function updateDebris(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
-
 
     function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
 
-  
     function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
 
     function updateEndTime(bytes32 _worksID) external;
 
-
     function updatePools(bytes32 _worksID, uint256 _value) external;
 
     function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external;
-
 
     function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external;
 
@@ -413,15 +380,11 @@ interface WorksInterface {
 
 interface ArtistInterface {
 
-
     function getAddress(bytes32 _artistID) external view returns (address payable);
-
 
     function add(bytes32 _artistID, address _address) external;
 
-
     function hasArtist(bytes32 _artistID) external view returns (bool);
-
 
     function updateAddress(bytes32 _artistID, address _address) external;
 
@@ -441,11 +404,9 @@ contract Works {
         artist = ArtistInterface(_artistAddress);
     }
 
-
     function() external payable {
         revert();
     }
-
 
     event OnAddWorks(
         bytes32 _worksID,
@@ -483,8 +444,6 @@ contract Works {
     event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
     event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
 
-
-
     mapping(bytes32 => Datasets.Works) private works; 
     mapping(bytes32 => Datasets.Rule) private rules; 
     mapping(bytes32 => uint256) private pools; 
@@ -492,12 +451,10 @@ contract Works {
     mapping(bytes32 => bytes32[]) firstUnionID; 
     mapping(bytes32 => bytes32[]) secondUnionID; 
 
-
     modifier whenHasWorks(bytes32 _worksID) {
         require(works[_worksID].beginTime != 0);
         _;
     }
-
 
     modifier whenNotHasWorks(bytes32 _worksID) {
         require(works[_worksID].beginTime == 0);
@@ -508,7 +465,6 @@ contract Works {
         require(artist.hasArtist(_artistID));
         _;
     }
-
 
     modifier onlyAdmin() {
         require(team.isAdmin(msg.sender));
@@ -560,7 +516,6 @@ contract Works {
         initDebris(_worksID, _price, _debrisNum);
     }
 
-   
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
         uint256 initPrice = _price / _debrisNum;
         for(uint8 i=1; i<=_debrisNum; i++) {
@@ -574,7 +529,6 @@ contract Works {
         );
     }
 
-    
     function configRule(
         bytes32 _worksID,
         uint8 _firstBuyLimit, 
@@ -623,7 +577,6 @@ contract Works {
         rules[_worksID].firstAllot = _firstAllot;
         rules[_worksID].againAllot = _againAllot;
         rules[_worksID].lastAllot = _lastAllot;
-
     }
 
     function publish(bytes32 _worksID, uint256 _beginTime) external onlyAdmin() {
