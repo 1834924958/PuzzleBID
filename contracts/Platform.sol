@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./library/SafeMath.sol"; //导入安全运算库
-import "./interface/TeamInterface.sol"; //导入管理员团队接口
+import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
 
 /**
  * @title PuzzleBID Game 平台合约

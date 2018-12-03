@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "./interface/TeamInterface.sol"; //导入管理员团队接口
+import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
 
 /**
  * @title PuzzleBID Game 艺术家合约
