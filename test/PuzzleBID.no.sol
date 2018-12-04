@@ -983,7 +983,7 @@ interface PlayerInterface {
 
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
 
@@ -1133,7 +1133,7 @@ contract Player {
         return reward[_unionID][_worksID];
     }
 
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
         if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
