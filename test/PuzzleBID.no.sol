@@ -1298,13 +1298,13 @@ contract PuzzleBID {
         _;
     }    
 
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, _unionID); 
+        player.register(_unionID, msg.sender, _worksID, _referrer); 
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); 
 

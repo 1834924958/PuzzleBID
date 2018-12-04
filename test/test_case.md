@@ -323,14 +323,22 @@ updateMyWorks("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32c
 
 #### 7.8 其他
 ```
-updateFirstBuyNum("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf") //更新玩家首发购买数量
+updateFirstBuyNum("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf") //更新玩家首发购买碎片的数量
 
 updateReward("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf", 10000) //更新玩家对作品的累计奖励
+getReward("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf") //查询玩家对作品的累计奖励
 
+getFirstAmount("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取玩家的首发投入金额
 
-getFirstAmount("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf")
+getFreezeHourglass("0x38363135323136363839353431000000", "0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取玩家账号冻结倒计时
 
-bytes32 _unionID, bytes32 _worksID
+getInfoByUnionId("0x38363135323136363839353431000000") //通过UnionID查询玩家注册信息
+
+getUnionIdByAddress("0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //按钱包地址查询UnionID
+
+hasAddress("0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //是否存在这个钱包地址
+
+hasUnionId("0x38363135323136363839353431000000") //是否存在这个UnionID
 
 ```
 
