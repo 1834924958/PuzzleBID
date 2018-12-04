@@ -1323,7 +1323,7 @@ contract PuzzleBID {
             firstPlay(_worksID, _debrisID, _unionID);       
         }
 
-        if(works.isFinish(_worksID, _debrisID, _unionID)) {
+        if(works.isFinish(_worksID, _unionID)) {
             works.updateEndTime(_worksID); 
             finishGame(_worksID);
             collectWorks(_worksID, _unionID); 

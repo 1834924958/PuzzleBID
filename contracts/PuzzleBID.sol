@@ -110,7 +110,7 @@ contract PuzzleBID {
             firstPlay(_worksID, _debrisID, _unionID);       
         }
         //碎片如果被同一玩家收集完成，结束游戏
-        if(works.isFinish(_worksID, _debrisID, _unionID)) {
+        if(works.isFinish(_worksID, _unionID)) {
             works.updateEndTime(_worksID); //更新作品游戏结束时间
             finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品
