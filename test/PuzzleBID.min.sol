@@ -212,12 +212,13 @@ contract Team {
     }
 
     //事件
-    event OnUpdateAdmin(
+    event OnAddAdmin(
         address indexed _address, 
         bool _isAdmin, 
         bool _isDev, 
         bytes32 _name
     );
+    event OnRemoveAdmin(address _address);
 
     //仅超级管理员可操作
     modifier onlyOwner() {
@@ -225,10 +226,16 @@ contract Team {
         _;
     }
 
-    //更新管理员成员
-    function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
+    //添加管理员成员
+    function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
         admins[_address] = Admin(_isAdmin, _isDev, _name);        
-        emit OnUpdateAdmin(_address, _isAdmin, _isDev, _name);
+        emit OnAddAdmin(_address, _isAdmin, _isDev, _name);
+    }
+
+    //更新管理员成员
+    function removeAdmin(address _address) external onlyOwner() {
+        delete admins[_address];        
+        emit OnRemoveAdmin(_address);
     }
 
     //是否为超管
@@ -252,8 +259,11 @@ contract Team {
 
 interface TeamInterface {
 
-    //更新管理员成员
-    function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
+    //添加、更新管理员成员
+    function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
+
+    //删除管理员成员
+    function removeAdmin(address _address) external;
 
     //是否为超管
     function isOwner() external view returns (bool);
@@ -759,7 +769,7 @@ contract Works {
         bool finish = true; //收集完成标志
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
-            if(debris[_worksID][_debrisID].lastUnionID != _unionID) {
+            if(debris[_worksID][i].lastUnionID != _unionID) {
                 finish = false;
                 break;
             }
@@ -893,9 +903,9 @@ contract Works {
     //获取首发购买分配百分比分子 返回整型
     function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8) {
         require(_flag < 3 && _element < 3);
-        if(1 == _flag) {
+        if(0 == _flag) {
             return rules[_worksID].firstAllot[_element];
-        } else if(2 == _flag) {
+        } else if(1 == _flag) {
             return rules[_worksID].againAllot[_element];
         } else {
             return rules[_worksID].lastAllot[_element];

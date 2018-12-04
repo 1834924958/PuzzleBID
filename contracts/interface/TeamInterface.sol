@@ -8,8 +8,11 @@ pragma solidity ^0.5.0;
  */
 interface TeamInterface {
 
-    //更新管理员成员
-    function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
+    //添加、更新管理员成员
+    function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
+
+    //删除管理员成员
+    function removeAdmin(address _address) external;
 
     //是否为超管
     function isOwner() external view returns (bool);

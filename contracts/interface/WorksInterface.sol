@@ -64,7 +64,7 @@ interface WorksInterface {
     function isGameOver(bytes32 _worksID) external view returns (bool);
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool);
+    function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //是否存在首发购买者名单中
     function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);

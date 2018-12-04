@@ -189,21 +189,31 @@ contract Team {
 
     }
 
-    event OnUpdateAdmin(
+    //事件
+    event OnAddAdmin(
         address indexed _address, 
         bool _isAdmin, 
         bool _isDev, 
         bytes32 _name
     );
+    event OnRemoveAdmin(address _address);
 
+    //仅超级管理员可操作
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
+    //添加管理员成员
+    function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
         admins[_address] = Admin(_isAdmin, _isDev, _name);        
-        emit OnUpdateAdmin(_address, _isAdmin, _isDev, _name);
+        emit OnAddAdmin(_address, _isAdmin, _isDev, _name);
+    }
+
+    //更新管理员成员
+    function removeAdmin(address _address) external onlyOwner() {
+        delete admins[_address];        
+        emit OnRemoveAdmin(_address);
     }
 
     function isOwner() external view returns (bool) {
@@ -224,7 +234,9 @@ contract Team {
 
 interface TeamInterface {
 
-    function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
+    function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external;
+
+    function removeAdmin(address _address) external;
 
     function isOwner() external view returns (bool);
 
@@ -319,7 +331,7 @@ interface WorksInterface {
 
     function isGameOver(bytes32 _worksID) external view returns (bool);
     
-    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool);
+    function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
@@ -620,11 +632,11 @@ contract Works {
         return works[_worksID].endTime != 0;
     }
 
-    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool) {
+    function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         bool finish = true; 
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
-            if(debris[_worksID][_debrisID].lastUnionID != _unionID) {
+            if(debris[_worksID][i].lastUnionID != _unionID) {
                 finish = false;
                 break;
             }
@@ -741,9 +753,9 @@ contract Works {
 
     function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8) {
         require(_flag < 3 && _element < 3);
-        if(1 == _flag) {
+        if(0 == _flag) {
             return rules[_worksID].firstAllot[_element];
-        } else if(2 == _flag) {
+        } else if(1 == _flag) {
             return rules[_worksID].againAllot[_element];
         } else {
             return rules[_worksID].lastAllot[_element];

@@ -26,12 +26,13 @@ contract Team {
     }
 
     //事件
-    event OnUpdateAdmin(
+    event OnAddAdmin(
         address indexed _address, 
         bool _isAdmin, 
         bool _isDev, 
         bytes32 _name
     );
+    event OnRemoveAdmin(address _address);
 
     //仅超级管理员可操作
     modifier onlyOwner() {
@@ -39,10 +40,16 @@ contract Team {
         _;
     }
 
-    //更新管理员成员
-    function updateAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
+    //添加管理员成员
+    function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
         admins[_address] = Admin(_isAdmin, _isDev, _name);        
-        emit OnUpdateAdmin(_address, _isAdmin, _isDev, _name);
+        emit OnAddAdmin(_address, _isAdmin, _isDev, _name);
+    }
+
+    //更新管理员成员
+    function removeAdmin(address _address) external onlyOwner() {
+        delete admins[_address];        
+        emit OnRemoveAdmin(_address);
     }
 
     //是否为超管

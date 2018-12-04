@@ -266,11 +266,11 @@ contract Works {
     }
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool) {
+    function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         bool finish = true; //收集完成标志
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
-            if(debris[_worksID][_debrisID].lastUnionID != _unionID) {
+            if(debris[_worksID][i].lastUnionID != _unionID) {
                 finish = false;
                 break;
             }
@@ -404,9 +404,9 @@ contract Works {
     //获取首发购买分配百分比分子 返回整型
     function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns (uint8) {
         require(_flag < 3 && _element < 3);
-        if(1 == _flag) {
+        if(0 == _flag) {
             return rules[_worksID].firstAllot[_element];
-        } else if(2 == _flag) {
+        } else if(1 == _flag) {
             return rules[_worksID].againAllot[_element];
         } else {
             return rules[_worksID].lastAllot[_element];

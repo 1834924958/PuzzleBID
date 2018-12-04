@@ -5,6 +5,10 @@
 ### 测试数据
 超级管理员地址：`0xca35b7d915458ef540ade6068dfe2f44e8fa733c`
 管理员地址：`0x14723a09acff6d2a60dcdf7aa4aff308fddc160c`
+艺术家：
+ArtistID：0xe28a246d965078e969553e85d38e4b28
+钱包地址：0xC463a4BF8A57725Ee9Ff23E096f6C395BdB07b73
+
 
 ---
 
