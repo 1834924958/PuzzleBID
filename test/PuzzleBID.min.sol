@@ -380,7 +380,11 @@ interface WorksInterface {
 
     //获取作品碎片全部信息
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256);
+        returns (uint256, address, address, bytes32, bytes32, uint256);
+
+    //获取作品规则全部信息
+    function getRule(bytes32 _worksID) external view 
+        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
 
     //是否存在作品 true为存在
     function hasWorks(bytes32 _worksID) external view returns (bool);
@@ -748,16 +752,27 @@ contract Works {
 
     //获取作品碎片全部信息
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256) {
+        returns (uint256, address, address, bytes32, bytes32, uint256) {
         return (
-            debris[_worksID][_debrisID].initPrice,
-            debris[_worksID][_debrisID].lastPrice,
             debris[_worksID][_debrisID].buyNum,
             debris[_worksID][_debrisID].firstBuyer,
             debris[_worksID][_debrisID].lastBuyer,
             debris[_worksID][_debrisID].firstUnionID,
             debris[_worksID][_debrisID].lastUnionID,
             debris[_worksID][_debrisID].lastTime
+        );
+    }
+
+    //获取作品规则全部信息
+    function getRule(bytes32 _worksID) external view 
+        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory) {
+        return (
+            rules[_worksID].increaseRatio,
+            rules[_worksID].discountGap,
+            rules[_worksID].discountRatio,
+            rules[_worksID].firstAllot,
+            rules[_worksID].againAllot,
+            rules[_worksID].lastAllot
         );
     }
 
@@ -1229,10 +1244,10 @@ interface PlayerInterface {
     function isLegalPlayer(bytes32 _unionID, address _address) external view returns (bool);
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _address, bytes32 _worksID, bytes32 _referrer) external returns (bool);
+    function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external returns (bool);
 
     //更新玩家最近使用的address
-    function updateLastAddress(bytes32 _unionID, address _sender) external;
+    function updateLastAddress(bytes32 _unionID, address payable _sender) external;
 
     //更新玩家对作品碎片的最后购买时间
     function updateLastTime(bytes32 _unionID, bytes32 _worksID) external;
@@ -1422,7 +1437,7 @@ contract Player {
     }
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _address, bytes32 _worksID, bytes32 _referrer) external returns (bool) {
+    function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external returns (bool) {
         require(_unionID != 0 && _address != address(0) && _worksID != bytes32(0));
 
         require (
@@ -1453,7 +1468,7 @@ contract Player {
     }
 
     //更新玩家最近使用的address
-    function updateLastAddress(bytes32 _unionID, address _sender) external {
+    function updateLastAddress(bytes32 _unionID, address payable _sender) external {
         if(playersByUnionId[_unionID].lastAddress != _sender) {
             playersByUnionId[_unionID].lastAddress = _sender;
             emit OnUpdateLastAddress(_unionID, _sender);

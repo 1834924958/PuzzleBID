@@ -165,7 +165,7 @@ contract Player {
     }
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address _address, bytes32 _worksID, bytes32 _referrer) external returns (bool) {
+    function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external returns (bool) {
         require(_unionID != 0 && _address != address(0) && _worksID != bytes32(0));
 
         require (
@@ -196,7 +196,7 @@ contract Player {
     }
 
     //更新玩家最近使用的address
-    function updateLastAddress(bytes32 _unionID, address _sender) external {
+    function updateLastAddress(bytes32 _unionID, address payable _sender) external {
         if(playersByUnionId[_unionID].lastAddress != _sender) {
             playersByUnionId[_unionID].lastAddress = _sender;
             emit OnUpdateLastAddress(_unionID, _sender);

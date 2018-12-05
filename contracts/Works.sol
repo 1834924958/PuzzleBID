@@ -242,10 +242,8 @@ contract Works {
 
     //获取作品碎片全部信息
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256) {
+        returns (uint256, address, address, bytes32, bytes32, uint256) {
         return (
-            debris[_worksID][_debrisID].initPrice,
-            debris[_worksID][_debrisID].lastPrice,
             debris[_worksID][_debrisID].buyNum,
             debris[_worksID][_debrisID].firstBuyer,
             debris[_worksID][_debrisID].lastBuyer,
@@ -253,6 +251,19 @@ contract Works {
             debris[_worksID][_debrisID].lastUnionID,
             debris[_worksID][_debrisID].lastTime
         );
+    }
+
+    //获取作品规则全部信息
+    function getRule(bytes32 _worksID) external view 
+        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory) {
+            return (
+                rules[_worksID].increaseRatio,
+                rules[_worksID].discountGap,
+                rules[_worksID].discountRatio,
+                rules[_worksID].firstAllot,
+                rules[_worksID].againAllot,
+                rules[_worksID].lastAllot
+            );
     }
 
     //是否存在作品 true为存在

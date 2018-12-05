@@ -208,64 +208,77 @@ hasWorks("0x0701e6555cbb36e24c3c1f32cbf89999") //false
 hasDebris("0x0701e6555cbb36e24c3c1f32cbf89ecf",0) //是否有这个碎片编号 false 碎片编号是从1开始的
 hasDebris("0x0701e6555cbb36e24c3c1f32cbf89ecf",6) //是否有这个碎片编号 true
 
+getWorks("0x0701e6555cbb36e24c3c1f32cbf89999") //查询作品全部信息
+getDebris("0x0701e6555cbb36e24c3c1f32cbf89999"， 1) //查询碎片1#的全部信息
+
 getAllot("0x0701e6555cbb36e24c3c1f32cbf89ecf",0) //查询某一阶段分红的数组参数 [80,2,18]
 getAllot("0x0701e6555cbb36e24c3c1f32cbf89ecf",0,0) //查询某一阶段分红的其中一个元素的分子值 80
 
 getArtistId("0x0701e6555cbb36e24c3c1f32cbf89ecf") //按作品ID查询艺术家ID 0xe28a246d965078e969553e85d38e4b28
-getDebrisNum("0x0701e6555cbb36e24c3c1f32cbf89ecf") //按作品ID查询碎片总数 6
-getFreezeGap("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品对玩家的冻结时间 120
-getPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品总价格 600000000000000
-getInitPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片初始价格 100000000000000
+getDebrisNum("0x0701e6555cbb36e24c3c1f32cbf89ecf") //按作品ID查询碎片总数 6个
+getFreezeGap("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品对玩家的冻结时间 120 s
+getPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品总价格 600000000000000 wei
+getInitPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片初始价格 100000000000000 wei
 getDebrisPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片实时价格，在没有交易时，等同于getInitPrice的返回结果 100000000000000 有BUG
-
-getDiscountHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片打折倒计时 254
-getFirstBuyLimit("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取首发购买上限 2
-updateLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1,"0x38363135323136363839353431000000","0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //更新作品碎片#1的最后购买者
-getLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取最后购买者钱包地址 0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E
 getLastPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片最后交易的价格
-getLastUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片最后交易的UnionID
-getProtectHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //有BUG
-getStartHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品游戏开始倒计时 有BUG
+
+getFirstBuyLimit("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取首发购买上限 2个
 updateFirstUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf","0x38363135323136363839353431000000") //更新作品首发购买者名单，如果UnionID重复会报错
 updateFirstUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf","0x38363133373731373339313039000000") //更新作品首发购买者名单
 getFirstUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取首发购买者名单 0x38363135323136363839353431000000,0x38363133373731373339313039000000
 updateFirstBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1,"0x38363135323136363839353431000000","0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //更新作品碎片#1的首发购买玩家的钱包地址和UnionID
+
 updateSecondUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf","0x38363133373731373339313039000000") //更新作品碎片的二次购买玩家名单
 getSecondUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取二次玩家名单
 
+updateDebris("0x0701e6555cbb36e24c3c1f32cbf89ecf",1,"0x38363135323136363839353431000000","0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //更新碎片部分信息（购买碎片后）
+
+updateLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1,"0x38363135323136363839353431000000","0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //更新作品碎片#1的最后购买者
+getLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取最后购买者钱包地址 0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E
+getLastUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片最后交易的UnionID
+
 isGameOver("0x0701e6555cbb36e24c3c1f32cbf89ecf") //游戏是否结束 false
 isProtect("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //碎片是否处于保护时间段
-isPublish("0x0701e6555cbb36e24c3c1f32cbf89ecf") //是否发布
 isSecond("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //碎片是否为二手交易
 isStart("0x0701e6555cbb36e24c3c1f32cbf89ecf") //游戏是否到了开始时间
 
-getPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品价格 600000000000000 wei
-getInitPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取碎片的初始价格 100000000000000 wei
 ```
 
 
 #### 5.4 开启作品游戏
+
 ```
-publish("0x0701e6555cbb36e24c3c1f32cbf89ecf",1543902723) //发布作品游戏
+publish("0x0701e6555cbb36e24c3c1f32cbf89ecf",1543998272) //发布作品游戏
+isPublish("0x0701e6555cbb36e24c3c1f32cbf89ecf") //是否发布
 ```
 
-#### 5.5 查询、更新作品对应的奖池累计
+#### 5.5 获取倒计时沙漏
+
+```
+getStartHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品游戏开始倒计时 有BUG
+getProtectHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //有BUG
+getDiscountHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片打折倒计时 254
+```
+
+#### 5.6 查询、更新作品对应的奖池累计
+
 ```
 updatePools("0x0701e6555cbb36e24c3c1f32cbf89ecf",100) //更新作品奖池
 getPools("0x0701e6555cbb36e24c3c1f32cbf89ecf") //查询作品奖池累计 100
 ```
 
-#### 5.6 结束游戏（或手工关闭）
+#### 5.7 正常结束游戏（或手工关闭）
+
 ```
 updateEndTime("0x0701e6555cbb36e24c3c1f32cbf89ecf") //游戏结束，更新结束时间
 ```
 
-#### 5.7 获取倒计时沙漏
+#### 5.8 非正常结束游戏（或手工关闭）
+
 ```
-//作品保护倒计时
-//作品开始倒计时
-//作品降价倒计时
+close("0x0701e6555cbb36e24c3c1f32cbf89ecf") //游戏结束，更新结束时间
 ```
+正常或非正常结束游戏，都不能继续玩该作品游戏
  
 ### 六、平台合约测试
 
