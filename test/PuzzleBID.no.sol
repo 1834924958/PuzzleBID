@@ -324,10 +324,10 @@ interface WorksInterface {
     function getWorks(bytes32 _worksID) external view returns (uint8, uint256, uint256, uint256, bool);
 
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, address, address, bytes32, bytes32, uint256) {
+        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256);
 
     function getRule(bytes32 _worksID) external view 
-        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
+        returns (uint8, uint256, uint256, uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
 
     function hasWorks(bytes32 _worksID) external view returns (bool);
 

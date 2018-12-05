@@ -49,6 +49,10 @@ interface WorksInterface {
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
         returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256);
 
+    //获取作品规则全部信息
+    function getRule(bytes32 _worksID) external view 
+        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
+
     //是否存在作品 true为存在
     function hasWorks(bytes32 _worksID) external view returns (bool);
 
