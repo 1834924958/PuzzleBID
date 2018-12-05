@@ -318,9 +318,18 @@ interface WorksInterface {
         external;
 
     function publish(bytes32 _worksID, uint256 _beginTime) external;
+
     function close(bytes32 _worksID) external;
+
+    function getWorks(bytes32 _worksID) external view returns (uint8, uint256, uint256, uint256, bool);
+
+    function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
+        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256);
+
     function hasWorks(bytes32 _worksID) external view returns (bool);
+
     function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool);
+
     function isPublish(bytes32 _worksID) external view returns (bool);
 
     function isStart(bytes32 _worksID) external view returns (bool);
@@ -603,6 +612,30 @@ contract Works {
         works[_worksID].isPublish = false;
     }
 
+    function getWorks(bytes32 _worksID) external view returns (uint8, uint256, uint256, uint256, bool) {
+        return (
+            works[_worksID].debrisNum,
+            works[_worksID].price,
+            works[_worksID].beginTime,
+            works[_worksID].endTime,
+            works[_worksID].isPublish
+        );
+    }
+
+    function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
+        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256) {
+        return (
+            debris[_worksID][_debrisID].initPrice,
+            debris[_worksID][_debrisID].lastPrice,
+            debris[_worksID][_debrisID].buyNum,
+            debris[_worksID][_debrisID].firstBuyer,
+            debris[_worksID][_debrisID].lastBuyer,
+            debris[_worksID][_debrisID].firstUnionID,
+            debris[_worksID][_debrisID].lastUnionID,
+            debris[_worksID][_debrisID].lastTime
+        );
+    }
+
     function hasWorks(bytes32 _worksID) external view returns (bool) {
         return works[_worksID].beginTime != 0;
     }
@@ -620,6 +653,9 @@ contract Works {
     }
 
     function isProtect(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+        if(debris[_worksID][_debrisID].lastTime == 0) {
+            return false;
+        }
         uint256 protectGap = rules[_worksID].protectGap;
         return debris[_worksID][_debrisID].lastTime.add(protectGap) < now ? false : true;
     }
@@ -767,20 +803,26 @@ contract Works {
     }
 
     function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
-        if(works[_worksID].beginTime.sub(now) > 0 ) {
+        if(works[_worksID].beginTime > 0 && works[_worksID].beginTime.sub(now) > 0 ) {
             return works[_worksID].beginTime.sub(now);
         }
         return 0;
     }
 
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
-        if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0) {
+        if(
+            debris[_worksID][_debrisID].lastTime > 0 && 
+            debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0
+        ) {
             return debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now);
         }
         return 0;
     }
 
     function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+        if(debris[_worksID][_debrisID].lastTime == 0) {
+            return 0;
+        }
         uint256 discountGap = rules[_worksID].discountGap;
         uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; 
         if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { 

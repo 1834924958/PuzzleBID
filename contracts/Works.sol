@@ -229,6 +229,32 @@ contract Works {
         works[_worksID].isPublish = false;
     }
 
+    //获取作品、规则全部信息
+    function getWorks(bytes32 _worksID) external view returns (uint8, uint256, uint256, uint256, bool) {
+        return (
+            works[_worksID].debrisNum,
+            works[_worksID].price,
+            works[_worksID].beginTime,
+            works[_worksID].endTime,
+            works[_worksID].isPublish
+        );
+    }
+
+    //获取作品碎片全部信息
+    function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
+        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256) {
+        return (
+            debris[_worksID][_debrisID].initPrice,
+            debris[_worksID][_debrisID].lastPrice,
+            debris[_worksID][_debrisID].buyNum,
+            debris[_worksID][_debrisID].firstBuyer,
+            debris[_worksID][_debrisID].lastBuyer,
+            debris[_worksID][_debrisID].firstUnionID,
+            debris[_worksID][_debrisID].lastUnionID,
+            debris[_worksID][_debrisID].lastTime
+        );
+    }
+
     //是否存在作品 true为存在
     function hasWorks(bytes32 _worksID) external view returns (bool) {
         return works[_worksID].beginTime != 0;
@@ -420,7 +446,7 @@ contract Works {
 
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256) {
-        if(works[_worksID].beginTime.sub(now) > 0 ) {
+        if(works[_worksID].beginTime > 0 && works[_worksID].beginTime.sub(now) > 0 ) {
             return works[_worksID].beginTime.sub(now);
         }
         return 0;
@@ -428,7 +454,10 @@ contract Works {
 
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
-        if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0) {
+        if(
+            debris[_worksID][_debrisID].lastTime > 0 && 
+            debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0
+        ) {
             return debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now);
         }
         return 0;
@@ -436,6 +465,9 @@ contract Works {
 
     //获取碎片降价倒计时 单位s 无限个倒计时段 过了第一个倒计时段 进入下一个倒计时段...
     function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
+        if(debris[_worksID][_debrisID].lastTime == 0) {
+            return 0;
+        }
         uint256 discountGap = rules[_worksID].discountGap;
         //过去多个时间段时，乘以折扣的n次方
         uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; //几个时间段

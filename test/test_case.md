@@ -216,17 +216,22 @@ getDebrisNum("0x0701e6555cbb36e24c3c1f32cbf89ecf") //按作品ID查询碎片总�
 getFreezeGap("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品对玩家的冻结时间 120
 getPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品总价格 600000000000000
 getInitPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片初始价格 100000000000000
-getDebrisPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片实时价格，在没有交易时，等同于getInitPrice的返回结果 100000000000000
+getDebrisPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片实时价格，在没有交易时，等同于getInitPrice的返回结果 100000000000000 有BUG
 
 getDiscountHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片打折倒计时 254
 getFirstBuyLimit("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取首发购买上限 2
-getLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取最后购买者钱包地址
+updateLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1,"0x38363135323136363839353431000000","0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //更新作品碎片#1的最后购买者
+getLastBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取最后购买者钱包地址 0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E
 getLastPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片最后交易的价格
 getLastUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片最后交易的UnionID
-
-
-
-
+getProtectHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //有BUG
+getStartHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品游戏开始倒计时 有BUG
+updateFirstUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf","0x38363135323136363839353431000000") //更新作品首发购买者名单，如果UnionID重复会报错
+updateFirstUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf","0x38363133373731373339313039000000") //更新作品首发购买者名单
+getFirstUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取首发购买者名单 0x38363135323136363839353431000000,0x38363133373731373339313039000000
+updateFirstBuyer("0x0701e6555cbb36e24c3c1f32cbf89ecf",1,"0x38363135323136363839353431000000","0xfaCd69A6df3265dDF3F60A868D3B0086feb1597E") //更新作品碎片#1的首发购买玩家的钱包地址和UnionID
+updateSecondUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf","0x38363133373731373339313039000000") //更新作品碎片的二次购买玩家名单
+getSecondUnionId("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取二次玩家名单
 
 isGameOver("0x0701e6555cbb36e24c3c1f32cbf89ecf") //游戏是否结束 false
 isProtect("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //碎片是否处于保护时间段
@@ -238,6 +243,7 @@ getPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品价格 600000000000
 getInitPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取碎片的初始价格 100000000000000 wei
 ```
 
+
 #### 5.4 开启作品游戏
 ```
 publish("0x0701e6555cbb36e24c3c1f32cbf89ecf",1543902723) //发布作品游戏
@@ -245,8 +251,8 @@ publish("0x0701e6555cbb36e24c3c1f32cbf89ecf",1543902723) //发布作品游戏
 
 #### 5.5 查询、更新作品对应的奖池累计
 ```
-updatePools("0x0701e6555cbb36e24c3c1f32cbf89ecf",123) //更新作品奖池
-getPools("0x0701e6555cbb36e24c3c1f32cbf89ecf") //查询作品奖池累计 123
+updatePools("0x0701e6555cbb36e24c3c1f32cbf89ecf",100) //更新作品奖池
+getPools("0x0701e6555cbb36e24c3c1f32cbf89ecf") //查询作品奖池累计 100
 ```
 
 #### 5.6 结束游戏（或手工关闭）
