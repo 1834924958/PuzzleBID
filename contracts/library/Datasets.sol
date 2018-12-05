@@ -12,7 +12,7 @@ library Datasets {
     struct Player {
         address[] ethAddress; //玩家address
         bytes32 referrer; //推荐人unionID
-        address lastAddress; //多个address时，最近使用的address
+        address payable lastAddress; //多个address时，最近使用的address
         uint256 time; //创建时间
     }
 

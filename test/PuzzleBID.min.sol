@@ -118,7 +118,7 @@ library Datasets {
     struct Player {
         address[] ethAddress; //玩家address
         bytes32 referrer; //推荐人unionID
-        address lastAddress; //多个address时，最近使用的address
+        address payable lastAddress; //多个address时，最近使用的address
         uint256 time; //创建时间
     }
 
@@ -325,7 +325,7 @@ contract Artist {
 
     //更新艺术家address
     function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
-        require(_address != address(0));
+        require(artists[_artistID] != address(0) && _address != address(0));
         artists[_artistID] = _address;
         emit OnUpdateAddress(_artistID, _address);
     }
@@ -745,7 +745,7 @@ contract Works {
 
     //作品游戏是否可以开玩 仅发布且到了开始时间才可以玩这个游戏
     function isStart(bytes32 _worksID) external view returns (bool) {
-        return works[_worksID].beginTime >= now;
+        return works[_worksID].beginTime <= now;
     }
 
     //作品碎片是否在保护期时间段内 true为被保护状态
@@ -842,7 +842,7 @@ contract Works {
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
         } else {
-            lastPrice = debris[_worksID][_debrisID].lastPrice; //碎片第一次被购买，不降不涨
+            lastPrice = debris[_worksID][_debrisID].initPrice; //碎片第一次被购买，不降不涨
         }
 
         return lastPrice;
@@ -1154,7 +1154,7 @@ interface PlayerInterface {
     function hasUnionId(bytes32 _unionID) external view returns (bool);
 
     //根据unionID查询玩家信息
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256);
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address payable, bytes32, uint256);
 
     //根据玩家address查询unionID
     function getUnionIdByAddress(address _address) external view returns (bytes32);
@@ -1172,7 +1172,7 @@ interface PlayerInterface {
     function getFirstAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家最近使用的address
-    function getLastAddress(bytes32 _unionID) external view returns (address);
+    function getLastAddress(bytes32 _unionID) external view returns (address payable);
 
     //获取玩家对作品的累计奖励
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
@@ -1310,7 +1310,7 @@ contract Player {
     }
 
     //根据unionID查询玩家信息
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256) {
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address payable, bytes32, uint256) {
         return (
             playersByUnionId[_unionID].lastAddress,
             playersByUnionId[_unionID].referrer, 
@@ -1345,7 +1345,7 @@ contract Player {
     }
 
     //获取玩家最近使用的address
-    function getLastAddress(bytes32 _unionID) external view returns (address) {
+    function getLastAddress(bytes32 _unionID) external view returns (address payable) {
         return playersByUnionId[_unionID].lastAddress;
     }
 
@@ -1616,7 +1616,7 @@ contract PuzzleBID {
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的18% 归奖池
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
 
-            works.getLastBuyer(_worksID, _debrisID).transfer(
+            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(
                 lastPrice.sub(overflow.mul(againAllot[0]) / 100)
                 .sub(lastPrice.mul(againAllot[1]) / 100)
                 .sub(overflow.mul(againAllot[2]) / 100)

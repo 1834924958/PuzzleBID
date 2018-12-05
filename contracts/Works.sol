@@ -246,7 +246,7 @@ contract Works {
 
     //作品游戏是否可以开玩 仅发布且到了开始时间才可以玩这个游戏
     function isStart(bytes32 _worksID) external view returns (bool) {
-        return works[_worksID].beginTime >= now;
+        return works[_worksID].beginTime <= now;
     }
 
     //作品碎片是否在保护期时间段内 true为被保护状态
@@ -343,7 +343,7 @@ contract Works {
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
         } else {
-            lastPrice = debris[_worksID][_debrisID].lastPrice; //碎片第一次被购买，不降不涨
+            lastPrice = debris[_worksID][_debrisID].initPrice; //碎片第一次被购买，不降不涨
         }
 
         return lastPrice;

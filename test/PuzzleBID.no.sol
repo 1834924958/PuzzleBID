@@ -112,7 +112,7 @@ library Datasets {
     struct Player {
         address[] ethAddress; 
         bytes32 referrer; 
-        address lastAddress; 
+        address payable lastAddress; 
         uint256 time;
     }
 
@@ -282,7 +282,7 @@ contract Artist {
     }
 
     function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
-        require(_address != address(0));
+        require(artists[_artistID] != address(0) && _address != address(0));
         artists[_artistID] = _address;
         emit OnUpdateAddress(_artistID, _address);
     }
@@ -616,7 +616,7 @@ contract Works {
     }
 
     function isStart(bytes32 _worksID) external view returns (bool) {
-        return works[_worksID].beginTime >= now;
+        return works[_worksID].beginTime <= now;
     }
 
     function isProtect(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
@@ -702,7 +702,7 @@ contract Works {
         } else if (debris[_worksID][_debrisID].buyNum > 0) { 
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
         } else {
-            lastPrice = debris[_worksID][_debrisID].lastPrice; 
+            lastPrice = debris[_worksID][_debrisID].initPrice; 
         }
 
         return lastPrice;
@@ -967,7 +967,7 @@ interface PlayerInterface {
 
     function hasUnionId(bytes32 _unionID) external view returns (bool);
 
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256);
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address payable, bytes32, uint256);
 
     function getUnionIdByAddress(address _address) external view returns (bytes32);
 
@@ -979,7 +979,7 @@ interface PlayerInterface {
 
     function getFirstAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
-    function getLastAddress(bytes32 _unionID) external view returns (address);
+    function getLastAddress(bytes32 _unionID) external view returns (address payable);
 
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
@@ -1096,7 +1096,7 @@ contract Player {
         return has;
     }
 
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256) {
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address payable, bytes32, uint256) {
         return (
             playersByUnionId[_unionID].lastAddress,
             playersByUnionId[_unionID].referrer, 
@@ -1125,7 +1125,7 @@ contract Player {
         return playerCount[_unionID][_worksID].firstAmount;
     }
 
-    function getLastAddress(bytes32 _unionID) external view returns (address) {
+    function getLastAddress(bytes32 _unionID) external view returns (address payable) {
         return playersByUnionId[_unionID].lastAddress;
     }
 
@@ -1367,7 +1367,7 @@ contract PuzzleBID {
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); 
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); 
 
-            works.getLastBuyer(_worksID, _debrisID).transfer(
+            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(
                 lastPrice.sub(overflow.mul(againAllot[0]) / 100)
                 .sub(lastPrice.mul(againAllot[1]) / 100)
                 .sub(overflow.mul(againAllot[2]) / 100)

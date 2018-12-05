@@ -130,7 +130,7 @@ contract Player {
     }
 
     //获取玩家最近使用的address
-    function getLastAddress(bytes32 _unionID) external view returns (address) {
+    function getLastAddress(bytes32 _unionID) external view returns (address payable) {
         return playersByUnionId[_unionID].lastAddress;
     }
 

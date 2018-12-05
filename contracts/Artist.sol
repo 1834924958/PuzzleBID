@@ -51,7 +51,7 @@ contract Artist {
 
     //更新艺术家address
     function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
-        require(_address != address(0));
+        require(artists[_artistID] != address(0) && _address != address(0));
         artists[_artistID] = _address;
         emit OnUpdateAddress(_artistID, _address);
     }

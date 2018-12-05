@@ -15,7 +15,7 @@ interface PlayerInterface {
     function hasUnionId(bytes32 _unionID) external view returns (bool);
 
     //根据unionID查询玩家信息
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256);
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address payable, bytes32, uint256);
 
     //根据玩家address查询unionID
     function getUnionIdByAddress(address _address) external view returns (bytes32);
@@ -33,7 +33,7 @@ interface PlayerInterface {
     function getFirstAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家最近使用的address
-    function getLastAddress(bytes32 _unionID) external view returns (address);
+    function getLastAddress(bytes32 _unionID) external view returns (address payable);
 
     //获取玩家对作品的累计奖励
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
