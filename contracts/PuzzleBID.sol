@@ -83,13 +83,13 @@ contract PuzzleBID {
     }    
 
     //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, _unionID); //静默注册
+        player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
 
@@ -110,7 +110,7 @@ contract PuzzleBID {
             firstPlay(_worksID, _debrisID, _unionID);       
         }
         //碎片如果被同一玩家收集完成，结束游戏
-        if(works.isFinish(_worksID, _debrisID, _unionID)) {
+        if(works.isFinish(_worksID, _unionID)) {
             works.updateEndTime(_worksID); //更新作品游戏结束时间
             finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品

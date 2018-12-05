@@ -196,7 +196,7 @@ contract Team {
         bool _isDev, 
         bytes32 _name
     );
-    event OnRemoveAdmin(address _address);
+    event OnRemoveAdmin(address indexed _address);
 
     //仅超级管理员可操作
     modifier onlyOwner() {
@@ -259,8 +259,8 @@ contract Artist {
         revert();
     }
 
-    event OnAdd(bytes32 _artistID, address _address);
-    event OnUpdateAddress(bytes32 _artistID, address _address);
+    event OnAdd(bytes32 _artistID, address indexed _address);
+    event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
     modifier onlyDev() {
         require(team.isDev(msg.sender));
@@ -983,7 +983,7 @@ interface PlayerInterface {
 
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
 
@@ -1043,7 +1043,7 @@ contract Player {
         bytes32 _referrer, 
         uint256 time
     );
-    event OnUpdateLastAddress(bytes32 _unionID, address _sender);
+    event OnUpdateLastAddress(bytes32 _unionID, address indexed _sender);
     event OnUpdateLastTime(bytes32 _unionID, bytes32 _worksID, uint256 _time);
     event OnUpdateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum);
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -1133,7 +1133,7 @@ contract Player {
         return reward[_unionID][_worksID];
     }
 
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
         if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
@@ -1298,13 +1298,13 @@ contract PuzzleBID {
         _;
     }    
 
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, _unionID); 
+        player.register(_unionID, msg.sender, _worksID, _referrer); 
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); 
 
@@ -1323,7 +1323,7 @@ contract PuzzleBID {
             firstPlay(_worksID, _debrisID, _unionID);       
         }
 
-        if(works.isFinish(_worksID, _debrisID, _unionID)) {
+        if(works.isFinish(_worksID, _unionID)) {
             works.updateEndTime(_worksID); 
             finishGame(_worksID);
             collectWorks(_worksID, _unionID); 

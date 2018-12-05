@@ -218,7 +218,7 @@ contract Team {
         bool _isDev, 
         bytes32 _name
     );
-    event OnRemoveAdmin(address _address);
+    event OnRemoveAdmin(address indexed _address);
 
     //仅超级管理员可操作
     modifier onlyOwner() {
@@ -297,8 +297,8 @@ contract Artist {
     }
 
     //事件
-    event OnAdd(bytes32 _artistID, address _address);
-    event OnUpdateAddress(bytes32 _artistID, address _address);
+    event OnAdd(bytes32 _artistID, address indexed _address);
+    event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
@@ -1178,7 +1178,7 @@ interface PlayerInterface {
     function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家账号冻结倒计时
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
@@ -1253,7 +1253,7 @@ contract Player {
         bytes32 _referrer, 
         uint256 time
     );
-    event OnUpdateLastAddress(bytes32 _unionID, address _sender);
+    event OnUpdateLastAddress(bytes32 _unionID, address indexed _sender);
     event OnUpdateLastTime(bytes32 _unionID, bytes32 _worksID, uint256 _time);
     event OnUpdateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum);
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -1355,7 +1355,7 @@ contract Player {
     }
 
     //获取玩家账号冻结倒计时
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
         if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
@@ -1539,13 +1539,13 @@ contract PuzzleBID {
     }    
 
     //开始游戏 游戏入口
-    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) 
+    function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
         isHuman()
         checkPlay(_worksID, _debrisID, _unionID)
         external
         payable
     {
-        player.register(_unionID, msg.sender, _worksID, _unionID); //静默注册
+        player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
 
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
 
@@ -1566,7 +1566,7 @@ contract PuzzleBID {
             firstPlay(_worksID, _debrisID, _unionID);       
         }
         //碎片如果被同一玩家收集完成，结束游戏
-        if(works.isFinish(_worksID, _debrisID, _unionID)) {
+        if(works.isFinish(_worksID, _unionID)) {
             works.updateEndTime(_worksID); //更新作品游戏结束时间
             finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品

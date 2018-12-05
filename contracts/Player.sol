@@ -38,7 +38,7 @@ contract Player {
         bytes32 _referrer, 
         uint256 time
     );
-    event OnUpdateLastAddress(bytes32 _unionID, address _sender);
+    event OnUpdateLastAddress(bytes32 _unionID, address indexed _sender);
     event OnUpdateLastTime(bytes32 _unionID, bytes32 _worksID, uint256 _time);
     event OnUpdateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum);
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
@@ -140,7 +140,7 @@ contract Player {
     }
 
     //获取玩家账号冻结倒计时
-    function getFreezeSeconds(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
         if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
