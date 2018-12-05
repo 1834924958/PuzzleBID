@@ -32,7 +32,7 @@ contract Team {
         bool _isDev, 
         bytes32 _name
     );
-    event OnRemoveAdmin(address _address);
+    event OnRemoveAdmin(address indexed _address);
 
     //仅超级管理员可操作
     modifier onlyOwner() {

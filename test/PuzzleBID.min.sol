@@ -218,7 +218,7 @@ contract Team {
         bool _isDev, 
         bytes32 _name
     );
-    event OnRemoveAdmin(address _address);
+    event OnRemoveAdmin(address indexed _address);
 
     //仅超级管理员可操作
     modifier onlyOwner() {
@@ -297,8 +297,8 @@ contract Artist {
     }
 
     //事件
-    event OnAdd(bytes32 _artistID, address _address);
-    event OnUpdateAddress(bytes32 _artistID, address _address);
+    event OnAdd(bytes32 _artistID, address indexed _address);
+    event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
@@ -1253,7 +1253,7 @@ contract Player {
         bytes32 _referrer, 
         uint256 time
     );
-    event OnUpdateLastAddress(bytes32 _unionID, address _sender);
+    event OnUpdateLastAddress(bytes32 _unionID, address indexed _sender);
     event OnUpdateLastTime(bytes32 _unionID, bytes32 _worksID, uint256 _time);
     event OnUpdateFirstBuyNum(bytes32 _unionID, bytes32 _worksID, uint256 _firstBuyNum);
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);

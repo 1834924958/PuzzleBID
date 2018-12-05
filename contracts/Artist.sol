@@ -23,8 +23,8 @@ contract Artist {
     }
 
     //事件
-    event OnAdd(bytes32 _artistID, address _address);
-    event OnUpdateAddress(bytes32 _artistID, address _address);
+    event OnAdd(bytes32 _artistID, address indexed _address);
+    event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
     //仅开发者、合约地址可操作
     modifier onlyDev() {
