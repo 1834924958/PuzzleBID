@@ -1429,7 +1429,7 @@ contract PuzzleBID {
             ); 
         } 
         else { 
-            works.getLastBuyer(_worksID, _debrisID).transfer(lastPrice);
+            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(lastPrice);
         }
 
     }

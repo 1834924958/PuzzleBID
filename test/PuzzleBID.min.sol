@@ -1681,7 +1681,7 @@ contract PuzzleBID {
         } 
         //无溢价，把此次降价后的ETH全额转给上一买家
         else { 
-            works.getLastBuyer(_worksID, _debrisID).transfer(lastPrice);
+            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(lastPrice);
         }
 
     }
