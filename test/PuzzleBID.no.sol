@@ -1436,7 +1436,7 @@ contract PuzzleBID {
 
     function finishGame(bytes32 _worksID) private {              
         uint8 lastAllot = works.getAllot(_worksID, 2, 0);
-        msg.sender.transfer(works.getPools(_worksID).mul(lastAllot / 100)); 
+        platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100));
         firstSend(_worksID); 
         secondSend(_worksID); 
     }

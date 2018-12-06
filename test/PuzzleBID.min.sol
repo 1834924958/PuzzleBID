@@ -1690,7 +1690,8 @@ contract PuzzleBID {
     function finishGame(bytes32 _worksID) private {              
         //收集碎片完成，按最后规则
         uint8 lastAllot = works.getAllot(_worksID, 2, 0);
-        msg.sender.transfer(works.getPools(_worksID).mul(lastAllot / 100)); //当前作品奖池的80% 最后一次购买者  
+        //当前作品奖池的80% 最后一次购买者
+        platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100)); //平台合约代为发放奖池中的ETH
         firstSend(_worksID); //首发玩家统计发放
         secondSend(_worksID); //后续玩家统计发放
     }
