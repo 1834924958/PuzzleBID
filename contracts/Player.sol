@@ -168,11 +168,14 @@ contract Player {
     function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external onlyDev() returns (bool) {
         require(_unionID != bytes32(0) && _address != address(0) && _worksID != bytes32(0));
 
-        require(this.hasAddress(_address) && playersByAddress[_address] == _unionID); //检查address和unionID是否为合法绑定关系 避免address被多个unionID绑定
-        
+        //检查address和unionID是否为合法绑定关系 避免address被多个unionID绑定
         if(this.hasAddress(_address)) {
-            return true;
-        } 
+            if(playersByAddress[_address] != _unionID) {
+                revert();
+            } else {
+                return true;
+            }
+        }
          
         playersByUnionId[_unionID].ethAddress.push(_address);
         if(_referrer != bytes32(0)) {

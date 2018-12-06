@@ -1214,11 +1214,13 @@ contract Player {
     function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external onlyDev() returns (bool) {
         require(_unionID != bytes32(0) && _address != address(0) && _worksID != bytes32(0));
 
-        require(this.hasAddress(_address) && playersByAddress[_address] == _unionID); 
-        
         if(this.hasAddress(_address)) {
-            return true;
-        } 
+            if(playersByAddress[_address] != _unionID) {
+                revert();
+            } else {
+                return true;
+            }
+        }
          
         playersByUnionId[_unionID].ethAddress.push(_address);
         if(_referrer != bytes32(0)) {
