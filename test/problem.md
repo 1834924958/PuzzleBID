@@ -41,3 +41,7 @@ function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns
 function getStartHourglass
 function getProtectHourglass
 function getFreezeHourglass
+
+12、修改第二个检查，条件设置不合理
+function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer)
+require(playersByAddress[_address] == _unionID);
