@@ -1211,7 +1211,7 @@ contract Player {
         return (this.hasUnionId(_unionID) || this.hasAddress(_address)) && playersByAddress[_address] == _unionID;
     }
 
-    function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external returns (bool) {
+    function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external onlyDev() returns (bool) {
         require(_unionID != bytes32(0) && _address != address(0) && _worksID != bytes32(0));
 
         if(this.hasAddress(_address)) {
@@ -1236,7 +1236,7 @@ contract Player {
         return true;
     }
 
-    function updateLastAddress(bytes32 _unionID, address payable _sender) external {
+    function updateLastAddress(bytes32 _unionID, address payable _sender) external onlyDev() {
         if(playersByUnionId[_unionID].lastAddress != _sender) {
             playersByUnionId[_unionID].lastAddress = _sender;
             emit OnUpdateLastAddress(_unionID, _sender);
