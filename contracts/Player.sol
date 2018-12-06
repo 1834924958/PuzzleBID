@@ -142,7 +142,7 @@ contract Player {
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
-        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
+        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap) > now) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
         }
         return 0;

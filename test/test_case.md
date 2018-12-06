@@ -219,7 +219,7 @@ getDebrisNum("0x0701e6555cbb36e24c3c1f32cbf89ecf") //按作品ID查询碎片总�
 getFreezeGap("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品对玩家的冻结时间 120 s
 getPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品总价格 600000000000000 wei
 getInitPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片初始价格 100000000000000 wei
-getDebrisPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片实时价格，在没有交易时，等同于getInitPrice的返回结果 100000000000000 有BUG
+getDebrisPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片实时价格，在没有交易时，等同于getInitPrice的返回结果 100000000000000
 getLastPrice("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片最后交易的价格
 
 getFirstBuyLimit("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取首发购买上限 2个
@@ -255,8 +255,8 @@ isPublish("0x0701e6555cbb36e24c3c1f32cbf89ecf") //是否发布
 #### 5.5 获取倒计时沙漏
 
 ```
-getStartHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品游戏开始倒计时 有BUG
-getProtectHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //有BUG
+getStartHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf") //获取作品游戏开始倒计时 
+getProtectHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1)
 getDiscountHourglass("0x0701e6555cbb36e24c3c1f32cbf89ecf",1) //获取作品碎片打折倒计时 254
 ```
 

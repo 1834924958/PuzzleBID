@@ -37,6 +37,7 @@ function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (boo
 function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
 第一个分支里，lastPrice修改成debris[_worksID][_debrisID].lastPrice.mul
 
-11、开始倒计时在过了时间段后，不是返回0
-
-12、保护倒计时在过了时间段后，没有返回当前最新的时间段倒计时
+11、开始倒计时、保护倒计时、玩家冻结倒计时在过了时间段后，不是返回0
+function getStartHourglass
+function getProtectHourglass
+function getFreezeHourglass

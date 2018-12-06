@@ -816,7 +816,7 @@ contract Works {
     }
 
     function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
-        if(works[_worksID].beginTime > 0 && works[_worksID].beginTime.sub(now) > 0 ) {
+        if(works[_worksID].beginTime > 0 && works[_worksID].beginTime > now ) {
             return works[_worksID].beginTime.sub(now);
         }
         return 0;
@@ -825,7 +825,7 @@ contract Works {
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
         if(
             debris[_worksID][_debrisID].lastTime > 0 && 
-            debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now) > 0
+            debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap) > now
         ) {
             return debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap).sub(now);
         }
