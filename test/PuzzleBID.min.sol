@@ -1721,7 +1721,7 @@ contract PuzzleBID {
         uint8 i;
         bytes32[] memory tmpSecondUnionId = works.getSecondUnionId(_worksID); //二次购买玩家名单
         address tmpAddress; //玩家最近使用的address
-        uint256 tmpAmount; //首发玩家应得分红
+        uint256 tmpAmount; //二次玩家应得分红
         uint8 lastAllot = works.getAllot(_worksID, 2, 2);
         for(i=0; i<tmpSecondUnionId.length; i++) {
             tmpAddress = player.getLastAddress(tmpSecondUnionId[i]);

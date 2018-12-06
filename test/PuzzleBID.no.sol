@@ -1468,7 +1468,6 @@ contract PuzzleBID {
         for(i=0; i<tmpSecondUnionId.length; i++) {
             tmpAddress = player.getLastAddress(tmpSecondUnionId[i]);
             tmpAmount = player.getSecondAmount(tmpSecondUnionId[i], _worksID);
-
             tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
             platform.transferTo(tmpAddress, tmpAmount); 
         }
