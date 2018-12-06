@@ -654,7 +654,7 @@ contract Works {
     }
 
     function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
-        return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
+        return _debrisID > 1 && _debrisID <= works[_worksID].debrisNum;
     }
 
     function isPublish(bytes32 _worksID) external view returns (bool) {
@@ -746,7 +746,7 @@ contract Works {
             if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { 
                 n = n.add(1);
             }
-            lastPrice = lastPrice.mul((discountRatio / 100).pwr(n)); 
+            lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); 
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { 
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);

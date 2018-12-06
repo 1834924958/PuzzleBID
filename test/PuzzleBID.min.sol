@@ -783,7 +783,7 @@ contract Works {
 
     //是否存在碎片 true为存在
     function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
-        return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
+        return _debrisID > 1 && _debrisID <= works[_worksID].debrisNum;
     }
 
     //作品游戏是否发布 
@@ -888,7 +888,7 @@ contract Works {
             if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { //有余数时多计1
                 n = n.add(1);
             }
-            lastPrice = lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 
+            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100); //n次方 
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);

@@ -28,3 +28,15 @@ function getStartHourglass(bytes32 _worksID) external view returns (uint256) {
 
 8、增加条件判断：最后交易时间为0时，保护倒计时无意义
 function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
+
+9、碎片最小数修改成大于1
+function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+        return _debrisID > 1 && _debrisID <= works[_worksID].debrisNum;
+
+10、在碎片被首发购买后，获取碎片实时价格为0，重大错误
+function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+第一个分支里，lastPrice修改成debris[_worksID][_debrisID].lastPrice.mul
+
+11、开始倒计时在过了时间段后，不是返回0
+
+12、保护倒计时在过了时间段后，没有返回当前最新的时间段倒计时
