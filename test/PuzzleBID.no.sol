@@ -189,7 +189,6 @@ contract Team {
 
     }
 
-    //事件
     event OnAddAdmin(
         address indexed _address, 
         bool _isAdmin, 
@@ -198,19 +197,16 @@ contract Team {
     );
     event OnRemoveAdmin(address indexed _address);
 
-    //仅超级管理员可操作
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    //添加管理员成员
     function addAdmin(address _address, bool _isAdmin, bool _isDev, bytes32 _name) external onlyOwner() {
         admins[_address] = Admin(_isAdmin, _isDev, _name);        
         emit OnAddAdmin(_address, _isAdmin, _isDev, _name);
     }
 
-    //更新管理员成员
     function removeAdmin(address _address) external onlyOwner() {
         delete admins[_address];        
         emit OnRemoveAdmin(_address);
@@ -608,7 +604,7 @@ contract Works {
         if(_beginTime > 0 && _beginTime > now) {
             works[_worksID].beginTime = _beginTime;
         }
-        works[_worksID].isPublish = true; //开启这个游戏
+        works[_worksID].isPublish = true;
     }
 
     function close(bytes32 _worksID) external onlyAdmin() {
