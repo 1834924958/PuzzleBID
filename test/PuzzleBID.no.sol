@@ -537,7 +537,7 @@ contract Works {
     }
 
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
-        uint256 initPrice = _price / _debrisNum;
+        uint256 initPrice = (_price / _debrisNum).mul(1 wei);
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
@@ -650,7 +650,7 @@ contract Works {
     }
 
     function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
-        return _debrisID > 1 && _debrisID <= works[_worksID].debrisNum;
+        return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
     }
 
     function isPublish(bytes32 _worksID) external view returns (bool) {

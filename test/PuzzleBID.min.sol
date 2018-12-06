@@ -660,7 +660,7 @@ contract Works {
 
     //初始化作品碎片 碎片编号从1开始
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
-        uint256 initPrice = _price / _debrisNum;
+        uint256 initPrice = (_price / _debrisNum).mul(1 wei);
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
@@ -783,7 +783,7 @@ contract Works {
 
     //是否存在碎片 true为存在
     function hasDebris(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
-        return _debrisID > 1 && _debrisID <= works[_worksID].debrisNum;
+        return _debrisID > 0 && _debrisID <= works[_worksID].debrisNum;
     }
 
     //作品游戏是否发布 
