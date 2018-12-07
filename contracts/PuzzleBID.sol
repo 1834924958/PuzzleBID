@@ -105,8 +105,8 @@ contract PuzzleBID {
             //碎片如果是被玩家再次购买，按再次规则
             secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
         } else { 
-            //更新成二手
-
+            //更新碎片被购买次数
+            
             //碎片如果是被玩家第一次购买，按首发规则
             firstPlay(_worksID, _debrisID, _unionID);       
         }
