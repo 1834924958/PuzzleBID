@@ -68,16 +68,15 @@ contract PuzzleBID {
         //检查该作品碎片能不能被买
         require(works.hasWorks(_worksID)); //检查该作品游戏是否存在
         require(works.hasDebris(_worksID, _debrisID)); //检查该作品碎片是否存在
-        require(works.isGameOver(_worksID)); //检查游戏是否已结束
+        require(works.isGameOver(_worksID) == false); //检查游戏是否已结束
         require(works.isPublish(_worksID) && works.isStart(_worksID)); //检查该作品游戏是否发布并开始
-        require(works.isProtect(_worksID, _debrisID)); //检查该作品碎片是否在30分钟保护期内
+        require(works.isProtect(_worksID, _debrisID) == false); //检查该作品碎片是否在30分钟保护期内
         
         //检查玩家能不能买该作品碎片 
-        require(player.isFreeze(_unionID, _worksID)); //检查同一作品同一玩家是否超过5分钟冻结期
-        require(
-            (player.getFirstBuyNum(_unionID, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
-            works.isSecond(_worksID, _debrisID)
-        ); //检查是否达到首发购买上限、该作品碎片是否为二手交易        
+        require(player.isFreeze(_unionID, _worksID) == false); //检查同一作品同一玩家是否超过5分钟冻结期
+        if(player.getFirstBuyNum(_unionID, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) {
+            require(works.isSecond(_worksID, _debrisID));
+        } //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
         _;
     }    

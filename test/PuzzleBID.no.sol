@@ -1335,16 +1335,15 @@ contract PuzzleBID {
 
         require(works.hasWorks(_worksID)); 
         require(works.hasDebris(_worksID, _debrisID)); 
-        require(works.isGameOver(_worksID)); 
-        require(works.isPublish(_worksID) && works.isStart(_worksID)); 
-        require(works.isProtect(_worksID, _debrisID)); 
-        
-        require(player.isFreeze(_unionID, _worksID)); 
-        require(
-            (player.getFirstBuyNum(_unionID, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) && 
-            works.isSecond(_worksID, _debrisID)
-        );       
-        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); 
+        require(works.isGameOver(_worksID) == false);
+        require(works.isPublish(_worksID) && works.isStart(_worksID));
+        require(works.isProtect(_worksID, _debrisID) == false);
+         
+        require(player.isFreeze(_unionID, _worksID) == false); 
+        if(player.getFirstBuyNum(_unionID, _worksID).add(1) > works.getFirstBuyLimit(_worksID)) {
+            require(works.isSecond(_worksID, _debrisID));
+        }      
+        require(msg.value >= works.getDebrisPrice(_worksID, _debrisID));
         _;
     }    
 
