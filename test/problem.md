@@ -45,3 +45,9 @@ function getFreezeHourglass
 12、修改第二个检查，条件设置不合理
 function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer)
 require(playersByAddress[_address] == _unionID);
+
+13、主合约中，重复更新了碎片的最后购买玩家 secondPlay
+去除了updateLastBuyer()函数
+
+14、主合约中，在判断是否二次购买前更新了碎片被购买的次数，有误 
+改在了判断之后更新次数

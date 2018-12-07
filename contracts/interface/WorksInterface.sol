@@ -143,8 +143,8 @@ interface WorksInterface {
     //更新作品碎片的首发购买者
     function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
 
-    //更新作品碎片的最后购买者
-    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
+    //更新作品碎片被购买的次数
+    function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external;
 
     //更新作品碎片游戏结束时间
     function updateEndTime(bytes32 _worksID) external;

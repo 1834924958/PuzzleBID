@@ -55,12 +55,7 @@ contract Works {
         bytes32 _unionID, 
         address indexed _sender
     );
-    event OnUpdateLastBuyer(
-        bytes32 _worksID, 
-        uint8 _debrisID, 
-        bytes32 _unionID, 
-        address indexed _sender
-    );
+    event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
     event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
     event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
@@ -373,11 +368,18 @@ contract Works {
         if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountGap) < now) { //降价
 
             //过去多个时间段时，乘以折扣的n次方
-            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; //几个时间段
-            if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { //有余数时多计1
+            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; 
+            if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { 
                 n = n.add(1);
             }
-            lastPrice = lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 
+            //lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 = 0
+            for(uint256 i=0; i<n; i++) {
+                if(0 == i) {
+                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio) / 100;
+                } else {
+                    lastPrice = lastPrice.mul(discountRatio) / 100;
+                }
+            } 
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
@@ -507,11 +509,10 @@ contract Works {
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
     }
 
-    //更新作品碎片的最后购买者
-    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address payable _sender) external onlyDev() {
-        debris[_worksID][_debrisID].lastBuyer = _sender;
-        debris[_worksID][_debrisID].lastUnionID = _unionID;
-        emit OnUpdateLastBuyer(_worksID, _debrisID, _unionID, _sender);
+    //更新作品碎片被购买的次数
+    function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external onlyDev() {
+        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
+        emit OnUpdateBuyNum(_worksID, _debrisID);
     }
 
     //更新作品碎片游戏结束时间

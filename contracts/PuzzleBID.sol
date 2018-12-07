@@ -106,7 +106,7 @@ contract PuzzleBID {
             secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
         } else { 
             //更新碎片被购买次数
-            
+            works.updateBuyNum(_worksID, _debrisID);
             //碎片如果是被玩家第一次购买，按首发规则
             firstPlay(_worksID, _debrisID, _unionID);       
         }

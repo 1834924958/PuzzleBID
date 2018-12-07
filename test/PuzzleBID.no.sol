@@ -385,7 +385,7 @@ interface WorksInterface {
 
     function updateFirstBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
 
-    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address _sender) external;
+    function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external;
 
     function updateEndTime(bytes32 _worksID) external;
 
@@ -453,12 +453,7 @@ contract Works {
         bytes32 _unionID, 
         address indexed _sender
     );
-    event OnUpdateLastBuyer(
-        bytes32 _worksID, 
-        uint8 _debrisID, 
-        bytes32 _unionID, 
-        address indexed _sender
-    );
+    event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
     event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
     event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
@@ -744,7 +739,13 @@ contract Works {
             if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { 
                 n = n.add(1);
             }
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); 
+            for(uint256 i=0; i<n; i++) {
+                if(0 == i) {
+                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio) / 100;
+                } else {
+                    lastPrice = lastPrice.mul(discountRatio) / 100;
+                }
+            }
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { 
             lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
@@ -846,7 +847,6 @@ contract Works {
         debris[_worksID][_debrisID].lastPrice = this.getDebrisPrice(_worksID, _debrisID);
         debris[_worksID][_debrisID].lastUnionID = _unionID; 
         debris[_worksID][_debrisID].lastBuyer = _sender; 
-        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); 
         debris[_worksID][_debrisID].lastTime = now; 
         emit OnUpdateDebris(_worksID, _debrisID, _unionID, _sender);
     }
@@ -857,10 +857,9 @@ contract Works {
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
     }
 
-    function updateLastBuyer(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, address payable _sender) external onlyDev() {
-        debris[_worksID][_debrisID].lastBuyer = _sender;
-        debris[_worksID][_debrisID].lastUnionID = _unionID;
-        emit OnUpdateLastBuyer(_worksID, _debrisID, _unionID, _sender);
+    function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external onlyDev() {
+        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1);
+        emit OnUpdateBuyNum(_worksID, _debrisID);
     }
 
     function updateEndTime(bytes32 _worksID) external onlyDev() {
@@ -1369,8 +1368,8 @@ contract PuzzleBID {
         
         if(works.isSecond(_worksID, _debrisID)) {
             secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
-        } else { 
-            
+        } else {
+            works.updateBuyNum(_worksID, _debrisID);
             firstPlay(_worksID, _debrisID, _unionID);       
         }
 
