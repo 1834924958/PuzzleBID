@@ -1395,13 +1395,9 @@ contract PuzzleBID {
         works.updatePools(_worksID, msg.value.mul(firstAllot[2]) / 100); 
         platform.deposit.value(msg.value.mul(firstAllot[2]) / 100)(_worksID); 
 
-
-    
     }
 
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
-
-        works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender);
 
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
             works.updateSecondUnionId(_worksID, _unionID);

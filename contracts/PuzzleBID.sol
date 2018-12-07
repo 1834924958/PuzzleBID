@@ -105,6 +105,8 @@ contract PuzzleBID {
             //碎片如果是被玩家再次购买，按再次规则
             secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
         } else { 
+            //更新成二手
+
             //碎片如果是被玩家第一次购买，按首发规则
             firstPlay(_worksID, _debrisID, _unionID);       
         }
@@ -132,14 +134,10 @@ contract PuzzleBID {
         works.updatePools(_worksID, msg.value.mul(firstAllot[2]) / 100); //销售价的18% 归奖池
         platform.deposit.value(msg.value.mul(firstAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
 
-
-    
     }
 
     //二次购买
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
-
-        works.updateLastBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片的最后购买者
 
         //更新当前作品的再次购买者名单
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
@@ -157,7 +155,8 @@ contract PuzzleBID {
             artist.getAddress(works.getArtistId(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
             platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); //总价的2% 归平台
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的18% 归奖池
-            platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //平台合约代为保管奖池ETH
+            platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //溢价的10% 平台合约代为保管奖池ETH
+
             player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(
                 lastPrice.sub(overflow.mul(againAllot[0]) / 100)
                 .sub(lastPrice.mul(againAllot[1]) / 100)
@@ -175,8 +174,7 @@ contract PuzzleBID {
     function finishGame(bytes32 _worksID) private {              
         //收集碎片完成，按最后规则
         uint8 lastAllot = works.getAllot(_worksID, 2, 0);
-        //当前作品奖池的80% 最后一次购买者
-        platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100)); //平台合约代为发放奖池中的ETH
+        platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100)); //当前作品奖池的80% 最后一次购买者 平台合约代为发放奖池中的ETH
         firstSend(_worksID); //首发玩家统计发放
         secondSend(_worksID); //后续玩家统计发放
     }
