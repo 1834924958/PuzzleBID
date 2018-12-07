@@ -601,7 +601,9 @@ contract Works {
 
     function publish(bytes32 _worksID, uint256 _beginTime) external onlyAdmin() {
         require(works[_worksID].beginTime != 0 && works[_worksID].isPublish == false);
-        if(_beginTime > 0 && _beginTime > now) {
+        require(this.getAllot(_worksID, 0, 0) != 0);
+        if(_beginTime > 0) {
+            require(_beginTime > now);
             works[_worksID].beginTime = _beginTime;
         }
         works[_worksID].isPublish = true;

@@ -728,7 +728,9 @@ contract Works {
     //发布作品游戏 才能开始玩这个游戏 仅管理员可操作
     function publish(bytes32 _worksID, uint256 _beginTime) external onlyAdmin() {
         require(works[_worksID].beginTime != 0 && works[_worksID].isPublish == false);
-        if(_beginTime > 0 && _beginTime > now) {
+        require(this.getAllot(_worksID, 0, 0) != 0); //检查游戏规则，以免遗忘后开启游戏
+        if(_beginTime > 0) {
+            require(_beginTime > now);
             works[_worksID].beginTime = _beginTime;
         }
         works[_worksID].isPublish = true; //开启这个游戏
