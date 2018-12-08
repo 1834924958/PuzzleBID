@@ -126,3 +126,19 @@ platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100));
 platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot) / 100);
 ```
 
+类似地还有两处：
+
+```
+function firstSend(bytes32 _worksID) private {
+tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / works.getPrice(_worksID));
+修改成：
+tmpAmount = works.getPools(_worksID).mul(lastAllot).mul(tmpAmount) / 100 / works.getPrice(_worksID);
+```
+
+```
+function secondSend(bytes32 _worksID) private {
+tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
+修改成：
+tmpAmount = works.getPools(_worksID).mul(lastAllot).mul(tmpAmount) / 100 / (platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
+```
+

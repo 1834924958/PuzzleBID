@@ -1711,7 +1711,7 @@ contract PuzzleBID {
             tmpAddress = player.getLastAddress(tmpFirstUnionId[i]);
             tmpAmount = player.getFirstAmount(tmpFirstUnionId[i], _worksID); //玩家首发投入累计
             //应得分红 = 作品对应的奖池 * 10% * (玩家首发投入累计 / 作品初始价格即首发总投入)
-            tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / works.getPrice(_worksID));
+            tmpAmount = works.getPools(_worksID).mul(lastAllot).mul(tmpAmount) / 100 / works.getPrice(_worksID);
             platform.transferTo(tmpAddress, tmpAmount); //平台合约代为发放奖池中的ETH
         }
     }
@@ -1728,7 +1728,7 @@ contract PuzzleBID {
             tmpAmount = player.getSecondAmount(tmpSecondUnionId[i], _worksID); //玩家二次投入累计
             //应得分红 = 作品对应的奖池 * 10% * (玩家二次投入累计 / 作品二次总投入)
             //作品二次总投入 = 作品的总交易额 - 作品初始价格即首发总投入
-            tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
+            tmpAmount = works.getPools(_worksID).mul(lastAllot).mul(tmpAmount) / 100 / (platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
             platform.transferTo(tmpAddress, tmpAmount); //平台合约代为发放奖池中的ETH
         }
     }
