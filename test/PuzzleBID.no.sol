@@ -533,6 +533,7 @@ contract Works {
 
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
         uint256 initPrice = (_price / _debrisNum).mul(1 wei);
+        require(initPrice > 0);
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
@@ -735,8 +736,8 @@ contract Works {
 
         if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountGap) < now) { 
 
-            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; 
-            if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { 
+            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime.add(discountGap))) / discountGap; 
+            if((now.sub(debris[_worksID][_debrisID].lastTime.add(discountGap))) % discountGap > 0) { 
                 n = n.add(1);
             }
             for(uint256 i=0; i<n; i++) {
@@ -748,7 +749,7 @@ contract Works {
             }
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { 
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
+            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio) / 100;
         } else {
             lastPrice = debris[_worksID][_debrisID].initPrice; 
         }
@@ -1427,7 +1428,7 @@ contract PuzzleBID {
 
     function finishGame(bytes32 _worksID) private {              
         uint8 lastAllot = works.getAllot(_worksID, 2, 0);
-        platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100));
+        platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot) / 100);
         firstSend(_worksID); 
         secondSend(_worksID); 
     }

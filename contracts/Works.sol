@@ -146,6 +146,7 @@ contract Works {
     //初始化作品碎片 碎片编号从1开始
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
         uint256 initPrice = (_price / _debrisNum).mul(1 wei);
+        require(initPrice > 0);
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
@@ -368,8 +369,8 @@ contract Works {
         if(debris[_worksID][_debrisID].buyNum > 0 && debris[_worksID][_debrisID].lastTime.add(discountGap) < now) { //降价
 
             //过去多个时间段时，乘以折扣的n次方
-            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap; 
-            if((now.sub(debris[_worksID][_debrisID].lastTime)) % discountGap > 0) { 
+            uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime.add(discountGap))) / discountGap; 
+            if((now.sub(debris[_worksID][_debrisID].lastTime.add(discountGap))) % discountGap > 0) { 
                 n = n.add(1);
             }
             //lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 = 0
@@ -379,10 +380,10 @@ contract Works {
                 } else {
                     lastPrice = lastPrice.mul(discountRatio) / 100;
                 }
-            } 
+            }
 
         } else if (debris[_worksID][_debrisID].buyNum > 0) { //涨价
-            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
+            lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio) / 100;
         } else {
             lastPrice = debris[_worksID][_debrisID].initPrice; //碎片第一次被购买，不降不涨
         }

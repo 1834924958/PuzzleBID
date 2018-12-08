@@ -51,3 +51,25 @@ require(playersByAddress[_address] == _unionID);
 
 14、主合约中，在判断是否二次购买前更新了碎片被购买的次数，有误 
 改在了判断之后更新次数
+
+15、碎片实时价格：在过了降价期后，计算价格为0
+发现n次方运算时，底数不能是0.几
+lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); 
+修改成了for循环
+
+16、碎片实时价格：在过了降价期后，降价的价格不准确
+多算了一个降价期，即多乘了个95%
+uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / discountGap;
+修改成：
+uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime.add(discountGap))) / discountGap;
+
+17、碎片实时价格：被第二次购买时，在涨价时间段内没有涨价
+lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio / 100);
+修改成
+lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio) / 100;
+
+18、函数中的乘除有问题：乘以一个分数时，要先乘以分子，而不是乘以（分子/分母）
+function finishGame()
+platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100));
+修改成
+platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot) / 100);
