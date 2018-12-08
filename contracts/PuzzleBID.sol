@@ -119,7 +119,7 @@ contract PuzzleBID {
 
     }
 
-    //首发购买
+    //碎片被首发购买
     function firstPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) private {
                 
         works.updateFirstBuyer(_worksID, _debrisID, _unionID, msg.sender); //更新当前作品碎片首发购买名单       
@@ -136,7 +136,7 @@ contract PuzzleBID {
 
     }
 
-    //二次购买
+    //碎片被二次购买
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
 
         //更新当前作品的再次购买者名单
