@@ -1,6 +1,8 @@
+
 ### 自测发现的问题
 
 1、作品碎片_element分支数字错误
+
 ```
 function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element)
 ```
@@ -123,3 +125,4 @@ platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot / 100));
 修改成
 platform.transferTo(msg.sender, works.getPools(_worksID).mul(lastAllot) / 100);
 ```
+
