@@ -142,3 +142,9 @@ tmpAmount = works.getPools(_worksID).mul(lastAllot / 100).mul(tmpAmount / platfo
 tmpAmount = works.getPools(_worksID).mul(lastAllot).mul(tmpAmount) / 100 / (platform.getTurnover(_worksID).sub(works.getPrice(_worksID)));
 ```
 
+19、碎片价格为小数的时候直接舍去了，导致碎片初始价格不准确
+```
+function addWorks()
+加入条件_price % _debrisNum == 0 
+保证价格大于0，且能整除碎片数
+```

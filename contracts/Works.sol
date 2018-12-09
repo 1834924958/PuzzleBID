@@ -117,7 +117,7 @@ contract Works {
     {
         require(
             _debrisNum >= 2 && _debrisNum < 256 && //碎片数2~255
-            _price > 0 && //价格必须大于0
+            _price > 0 && _price % _debrisNum == 0 && //价格必须大于0，且应该能整除碎片数
             _beginTime > 0 && _beginTime > now //开始时间必须大于0和现在时间
         ); 
 
@@ -144,9 +144,8 @@ contract Works {
     }
 
     //初始化作品碎片 碎片编号从1开始
-    function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
-        uint256 initPrice = (_price / _debrisNum).mul(1 wei);
-        require(initPrice > 0);
+    function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {
+        uint256 initPrice = (_price / _debrisNum).mul(1 wei);        
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;

@@ -509,7 +509,7 @@ contract Works {
     {
         require(
             _debrisNum >= 2 && _debrisNum < 256 && 
-            _price > 0 && 
+            _price > 0 && _price % _debrisNum == 0 &&
             _beginTime > 0 && _beginTime > now 
         ); 
 
@@ -537,7 +537,6 @@ contract Works {
 
     function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {      
         uint256 initPrice = (_price / _debrisNum).mul(1 wei);
-        require(initPrice > 0);
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
