@@ -375,7 +375,7 @@ contract Works {
             //lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 = 0
             for(uint256 i=0; i<n; i++) {
                 if(0 == i) {
-                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio) / 100;
+                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio).mul(discountRatio) / 10000; //1210需求修改：降前先涨110%
                 } else {
                     lastPrice = lastPrice.mul(discountRatio) / 100;
                 }

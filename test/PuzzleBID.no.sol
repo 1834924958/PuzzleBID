@@ -741,7 +741,7 @@ contract Works {
             }
             for(uint256 i=0; i<n; i++) {
                 if(0 == i) {
-                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(discountRatio) / 100;
+                    lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio).mul(discountRatio) / 10000; 
                 } else {
                     lastPrice = lastPrice.mul(discountRatio) / 100;
                 }
