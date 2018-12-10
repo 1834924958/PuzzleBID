@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+
 /**
  * @title -FoMo-3D v0.7.1
  * ┌┬┐┌─┐┌─┐┌┬┐   ╦╦ ╦╔═╗╔╦╗  ┌─┐┬─┐┌─┐┌─┐┌─┐┌┐┌┌┬┐┌─┐
@@ -57,143 +58,43 @@ pragma solidity ^0.4.24;
 //     _    _  _ _|_ _  .
 //    (/_\/(/_| | | _\  .
 //==============================================================================
-contract F3Devents {
-    // fired whenever a player registers a name
-    event onNewName
-    (
-        uint256 indexed playerID,
-        address indexed playerAddress,
-        bytes32 indexed playerName,
-        bool isNewPlayer,
-        uint256 affiliateID,
-        address affiliateAddress,
-        bytes32 affiliateName,
-        uint256 amountPaid,
-        uint256 timeStamp
-    );
-    
-    // fired at end of buy or reload
-    event onEndTx
-    (
-        uint256 compressedData,     
-        uint256 compressedIDs,      
-        bytes32 playerName,
-        address playerAddress,
-        uint256 ethIn,
-        uint256 keysBought,
-        address winnerAddr,
-        bytes32 winnerName,
-        uint256 amountWon,
-        uint256 newPot,
-        uint256 P3DAmount,
-        uint256 genAmount,
-        uint256 potAmount,
-        uint256 airDropPot
-    );
-    
-	// fired whenever theres a withdraw
-    event onWithdraw
-    (
-        uint256 indexed playerID,
-        address playerAddress,
-        bytes32 playerName,
-        uint256 ethOut,
-        uint256 timeStamp
-    );
-    
-    // fired whenever a withdraw forces end round to be ran
-    event onWithdrawAndDistribute
-    (
-        address playerAddress,
-        bytes32 playerName,
-        uint256 ethOut,
-        uint256 compressedData,
-        uint256 compressedIDs,
-        address winnerAddr,
-        bytes32 winnerName,
-        uint256 amountWon,
-        uint256 newPot,
-        uint256 P3DAmount,
-        uint256 genAmount
-    );
-    
-    // (fomo3d long only) fired whenever a player tries a buy after round timer 
-    // hit zero, and causes end round to be ran.
-    event onBuyAndDistribute
-    (
-        address playerAddress,
-        bytes32 playerName,
-        uint256 ethIn,
-        uint256 compressedData,
-        uint256 compressedIDs,
-        address winnerAddr,
-        bytes32 winnerName,
-        uint256 amountWon,
-        uint256 newPot,
-        uint256 P3DAmount,
-        uint256 genAmount
-    );
-    
-    // (fomo3d long only) fired whenever a player tries a reload after round timer 
-    // hit zero, and causes end round to be ran.
-    event onReLoadAndDistribute
-    (
-        address playerAddress,
-        bytes32 playerName,
-        uint256 compressedData,
-        uint256 compressedIDs,
-        address winnerAddr,
-        bytes32 winnerName,
-        uint256 amountWon,
-        uint256 newPot,
-        uint256 P3DAmount,
-        uint256 genAmount
-    );
-    
-    // fired whenever an affiliate is paid
-    event onAffiliatePayout
-    (
-        uint256 indexed affiliateID,
-        address affiliateAddress,
-        bytes32 affiliateName,
-        uint256 indexed roundID,
-        uint256 indexed buyerID,
-        uint256 amount,
-        uint256 timeStamp
-    );
-    
-    // received pot swap deposit
-    event onPotSwapDeposit
-    (
-        uint256 roundID,
-        uint256 amountAddedToPot
-    );
-}
 
-//==============================================================================
-//   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
-//  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
-//====================================|=========================================
+import "./interface/DiviesInterface.sol";
+import "./interface/otherFoMo3D.sol";
+import "./interface/JIincForwarderInterface.sol";
+import "./interface/PlayerBookInterface.sol";
+import "./interface/F3DexternalSettingsInterface.sol";
+import "./interface/HourglassInterface.sol";
 
-contract modularLong is F3Devents {}
+import "./library/SafeMath.sol";
+import "./library/UintCompressor.sol";
+import "./library/NameFilter.sol";
+import "./library/UintCompressor.sol";
+import "./library/F3DKeysCalcLong.sol";
+import "./library/F3Ddatasets.sol";
+
+
+import "./modularLong.sol";
 
 contract FoMo3Dlong is modularLong {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
 	
-	otherFoMo3D private otherF3D_;
-    DiviesInterface constant private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
-    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
-    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
+    otherFoMo3D private otherF3D_;
+
+    //TODO:
+    DiviesInterface constant private Divies = DiviesInterface(0xB9e141de534217A343162fCa66C95C76E19d8F8c);
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x508D1c04cd185E693d22125f3Cc6DC81F7Ce9477);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xe3a37c8504176E5e802252523E78D2e226C51F3f);
+    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x4602060100fF264041702DE4E61A3653E5eBCC37);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     string constant public name = "FoMo3D Long Official";
     string constant public symbol = "F3D";
-	uint256 private rndExtra_ = extSettings.getLongExtra();     // length of the very first ICO 
+    uint256 private rndExtra_ = extSettings.getLongExtra();     // length of the very first ICO 
     uint256 private rndGap_ = extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
@@ -219,7 +120,7 @@ contract FoMo3Dlong is modularLong {
     mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
 //****************
-// TEAM FEE DATA 
+// TEAM FEE DATA , Team的费用分配数据
 //****************
     mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
     mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
@@ -250,7 +151,7 @@ contract FoMo3Dlong is modularLong {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-	}
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -269,6 +170,8 @@ contract FoMo3Dlong is modularLong {
      */
     modifier isHuman() {
         address _addr = msg.sender;
+        require (_addr == tx.origin);
+        
         uint256 _codeLength;
         
         assembly {_codeLength := extcodesize(_addr)}
@@ -280,9 +183,24 @@ contract FoMo3Dlong is modularLong {
      * @dev sets boundaries for incoming tx 
      */
     modifier isWithinLimits(uint256 _eth) {
-        require(_eth >= 000000001000000000, "pocket lint: not a valid currency");
-        require(_eth <= 100000, "no vitalik, no");
+        require(_eth >= 1000000000, "pocket lint: not a valid currency");
+        require(_eth <= 100000000000000000000000, "no vitalik, no");
         _;    
+    }
+
+    /**
+     * 
+     */
+    modifier onlyDevs() {
+        //TODO:
+        require(
+            msg.sender == 0x00B04d6D08748B073E4D827A7DA515Cb13921c0c ||
+            msg.sender == 0x00D8E8CCb4A29625D299798036825f3fa349f2b4 ||
+            msg.sender == 0x00E878b353127CF93BfC864422222785A27E290a ||
+            msg.sender == 0x0020116131498D968DeBCF75E5A11F77e7e1CadE,
+            "only team just can activate"
+        );
+        _;
     }
     
 //==============================================================================
@@ -1617,18 +1535,9 @@ contract FoMo3Dlong is modularLong {
      * have time to set things up on the web end                            **/
     bool public activated_ = false;
     function activate()
+        onlyDevs()
         public
     {
-        // only team just can activate 
-        require(
-            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
-            msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
-            msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
-            msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-			msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
-            "only team just can activate"
-        );
-
 		// make sure that its been linked.
         require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
         
@@ -1644,399 +1553,13 @@ contract FoMo3Dlong is modularLong {
         round_[1].end = now + rndInit_ + rndExtra_;
     }
     function setOtherFomo(address _otherF3D)
+        onlyDevs()
         public
     {
-        // only team just can activate 
-        require(
-            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
-            msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
-            msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
-            msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-			msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
-            "only team just can activate"
-        );
-
         // make sure that it HASNT yet been linked.
         require(address(otherF3D_) == address(0), "silly dev, you already did that");
         
         // set up other fomo3d (fast or long) for pot swap
         otherF3D_ = otherFoMo3D(_otherF3D);
-    }
-}
-
-//==============================================================================
-//   __|_ _    __|_ _  .
-//  _\ | | |_|(_ | _\  .
-//==============================================================================
-library F3Ddatasets {
-    //compressedData key
-    // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
-        // 0 - new player (bool)
-        // 1 - joined round (bool)
-        // 2 - new  leader (bool)
-        // 3-5 - air drop tracker (uint 0-999)
-        // 6-16 - round end time
-        // 17 - winnerTeam
-        // 18 - 28 timestamp 
-        // 29 - team
-        // 30 - 0 = reinvest (round), 1 = buy (round), 2 = buy (ico), 3 = reinvest (ico)
-        // 31 - airdrop happened bool
-        // 32 - airdrop tier 
-        // 33 - airdrop amount won
-    //compressedIDs key
-    // [77-52][51-26][25-0]
-        // 0-25 - pID 
-        // 26-51 - winPID
-        // 52-77 - rID
-    struct EventReturns {
-        uint256 compressedData;
-        uint256 compressedIDs;
-        address winnerAddr;         // winner address
-        bytes32 winnerName;         // winner name
-        uint256 amountWon;          // amount won
-        uint256 newPot;             // amount in new pot
-        uint256 P3DAmount;          // amount distributed to p3d
-        uint256 genAmount;          // amount distributed to gen
-        uint256 potAmount;          // amount added to pot
-    }
-    struct Player {
-        address addr;   // player address
-        bytes32 name;   // player name
-        uint256 win;    // winnings vault
-        uint256 gen;    // general vault
-        uint256 aff;    // affiliate vault
-        uint256 lrnd;   // last round played
-        uint256 laff;   // last affiliate id used
-    }
-    struct PlayerRounds {
-        uint256 eth;    // eth player has added to round (used for eth limiter)
-        uint256 keys;   // keys
-        uint256 mask;   // player mask 
-        uint256 ico;    // ICO phase investment
-    }
-    struct Round {
-        uint256 plyr;   // pID of player in lead
-        uint256 team;   // tID of team in lead
-        uint256 end;    // time ends/ended
-        bool ended;     // has round end function been ran
-        uint256 strt;   // time round started
-        uint256 keys;   // keys
-        uint256 eth;    // total eth in
-        uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
-        uint256 mask;   // global mask
-        uint256 ico;    // total eth sent in during ICO phase
-        uint256 icoGen; // total eth for gen during ICO phase
-        uint256 icoAvg; // average key price for ICO phase
-    }
-    struct TeamFee {
-        uint256 gen;    // % of buy in thats paid to key holders of current round
-        uint256 p3d;    // % of buy in thats paid to p3d holders
-    }
-    struct PotSplit {
-        uint256 gen;    // % of pot thats paid to key holders of current round
-        uint256 p3d;    // % of pot thats paid to p3d holders
-    }
-}
-
-//==============================================================================
-//  |  _      _ _ | _  .
-//  |<(/_\/  (_(_||(_  .
-//=======/======================================================================
-library F3DKeysCalcLong {
-    using SafeMath for *;
-    /**
-     * @dev calculates number of keys received given X eth 
-     * @param _curEth current amount of eth in contract 
-     * @param _newEth eth being spent
-     * @return amount of ticket purchased
-     */
-    function keysRec(uint256 _curEth, uint256 _newEth)
-        internal
-        pure
-        returns (uint256)
-    {
-        return(keys((_curEth).add(_newEth)).sub(keys(_curEth)));
-    }
-    
-    /**
-     * @dev calculates amount of eth received if you sold X keys 
-     * @param _curKeys current amount of keys that exist 
-     * @param _sellKeys amount of keys you wish to sell
-     * @return amount of eth received
-     */
-    function ethRec(uint256 _curKeys, uint256 _sellKeys)
-        internal
-        pure
-        returns (uint256)
-    {
-        return((eth(_curKeys)).sub(eth(_curKeys.sub(_sellKeys))));
-    }
-
-    /**
-     * @dev calculates how many keys would exist with given an amount of eth
-     * @param _eth eth "in contract"
-     * @return number of keys that would exist
-     */
-    function keys(uint256 _eth) 
-        internal
-        pure
-        returns(uint256)
-    {
-        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
-    }
-    
-    /**
-     * @dev calculates how much eth would be in contract given a number of keys
-     * @param _keys number of keys "in contract" 
-     * @return eth that would exists
-     */
-    function eth(uint256 _keys) 
-        internal
-        pure
-        returns(uint256)  
-    {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
-    }
-}
-
-//==============================================================================
-//  . _ _|_ _  _ |` _  _ _  _  .
-//  || | | (/_| ~|~(_|(_(/__\  .
-//==============================================================================
-interface otherFoMo3D {
-    function potSwap() external payable;
-}
-
-interface F3DexternalSettingsInterface {
-    function getFastGap() external returns(uint256);
-    function getLongGap() external returns(uint256);
-    function getFastExtra() external returns(uint256);
-    function getLongExtra() external returns(uint256);
-}
-
-interface DiviesInterface {
-    function deposit() external payable;
-}
-
-interface JIincForwarderInterface {
-    function deposit() external payable returns(bool);
-    function status() external view returns(address, address, bool);
-    function startMigration(address _newCorpBank) external returns(bool);
-    function cancelMigration() external returns(bool);
-    function finishMigration() external returns(bool);
-    function setup(address _firstCorpBank) external;
-}
-
-interface PlayerBookInterface {
-    function getPlayerID(address _addr) external returns (uint256);
-    function getPlayerName(uint256 _pID) external view returns (bytes32);
-    function getPlayerLAff(uint256 _pID) external view returns (uint256);
-    function getPlayerAddr(uint256 _pID) external view returns (address);
-    function getNameFee() external view returns (uint256);
-    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all) external payable returns(bool, uint256);
-    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all) external payable returns(bool, uint256);
-    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
-}
-
-/**
-* @title -Name Filter- v0.1.9
-* ┌┬┐┌─┐┌─┐┌┬┐   ╦╦ ╦╔═╗╔╦╗  ┌─┐┬─┐┌─┐┌─┐┌─┐┌┐┌┌┬┐┌─┐
-*  │ ├┤ ├─┤│││   ║║ ║╚═╗ ║   ├─┘├┬┘├┤ └─┐├┤ │││ │ └─┐
-*  ┴ └─┘┴ ┴┴ ┴  ╚╝╚═╝╚═╝ ╩   ┴  ┴└─└─┘└─┘└─┘┘└┘ ┴ └─┘
-*                                  _____                      _____
-*                                 (, /     /)       /) /)    (, /      /)          /)
-*          ┌─┐                      /   _ (/_      // //       /  _   // _   __  _(/
-*          ├─┤                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
-*          ┴ ┴                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)™ 
-*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
-* ┌─┐┬─┐┌─┐┌┬┐┬ ┬┌─┐┌┬┐                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ├─┘├┬┘│ │ │││ ││   │                      (__ /              .-/  © Jekyll Island Inc. 2018
-* ┴  ┴└─└─┘─┴┘└─┘└─┘ ┴                                        (_/
-*              _       __    _      ____      ____  _   _    _____  ____  ___  
-*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
-*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
-*
-* ╔═╗┌─┐┌┐┌┌┬┐┬─┐┌─┐┌─┐┌┬┐  ╔═╗┌─┐┌┬┐┌─┐ ┌──────────┐
-* ║  │ ││││ │ ├┬┘├─┤│   │   ║  │ │ ││├┤  │ Inventor │
-* ╚═╝└─┘┘└┘ ┴ ┴└─┴ ┴└─┘ ┴   ╚═╝└─┘─┴┘└─┘ └──────────┘
-*/
-
-library NameFilter {
-    /**
-     * @dev filters name strings
-     * -converts uppercase to lower case.  
-     * -makes sure it does not start/end with a space
-     * -makes sure it does not contain multiple spaces in a row
-     * -cannot be only numbers
-     * -cannot start with 0x 
-     * -restricts characters to A-Z, a-z, 0-9, and space.
-     * @return reprocessed string in bytes32 format
-     */
-    function nameFilter(string _input)
-        internal
-        pure
-        returns(bytes32)
-    {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-        
-        //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
-        if (_temp[0] == 0x30)
-        {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-        
-        // create a bool to track if we have a non number character
-        bool _hasNonNumber;
-        
-        // convert & check
-        for (uint256 i = 0; i < _length; i++)
-        {
-            // if its uppercase A-Z
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
-            {
-                // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
-                
-                // we have a non number
-                if (_hasNonNumber == false)
-                    _hasNonNumber = true;
-            } else {
-                require
-                (
-                    // require character is a space
-                    _temp[i] == 0x20 || 
-                    // OR lowercase a-z
-                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
-                // make sure theres not 2x spaces in a row
-                if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-                
-                // see if we have a character other than a number
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
-                    _hasNonNumber = true;    
-            }
-        }
-        
-        require(_hasNonNumber == true, "string cannot be only numbers");
-        
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-        return (_ret);
-    }
-}
-
-/**
- * @title SafeMath v0.1.9
- * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
- * - added sqrt
- * - added sq
- * - added pwr 
- * - changed asserts to requires with error log outputs
- * - removed div, its useless
- */
-library SafeMath {
-    
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) 
-        internal 
-        pure 
-        returns (uint256 c) 
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256) 
-    {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c) 
-    {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-    
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y) 
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y) 
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
-    }
-    
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (mul(x,x));
-    }
-    
-    /**
-     * @dev x to the power of y 
-     */
-    function pwr(uint256 x, uint256 y)
-        internal 
-        pure 
-        returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else 
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
     }
 }
