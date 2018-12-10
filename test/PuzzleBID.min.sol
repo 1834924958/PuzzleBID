@@ -300,9 +300,9 @@ contract Artist {
     event OnAdd(bytes32 _artistID, address indexed _address);
     event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
-    //仅开发者、合约地址可操作
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
+    //仅管理员可操作
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
         _;
     }
 
@@ -312,7 +312,7 @@ contract Artist {
     }
 
     //添加艺术家
-    function add(bytes32 _artistID, address payable _address) external onlyDev() {
+    function add(bytes32 _artistID, address payable _address) external onlyAdmin() {
         require(this.hasArtist(_artistID) == false);
         artists[_artistID] = _address;
         emit OnAdd(_artistID, _address);
@@ -324,7 +324,7 @@ contract Artist {
     }
 
     //更新艺术家address
-    function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
+    function updateAddress(bytes32 _artistID, address payable _address) external onlyAdmin() {
         require(artists[_artistID] != address(0) && _address != address(0));
         artists[_artistID] = _address;
         emit OnUpdateAddress(_artistID, _address);
@@ -463,6 +463,9 @@ interface WorksInterface {
 
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
+
+    //获取作品碎片游戏开始倒计时 单位s
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256)
 
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -635,7 +638,7 @@ contract Works {
             _worksID, 
             _artistID, 
             _debrisNum, 
-            _price, 
+            _price.mul(1 wei), 
             _beginTime, 
             0,
             false
@@ -903,6 +906,10 @@ contract Works {
         return lastPrice;
     }
 
+    function getDebrisStatus() {
+
+    }
+
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
         return debris[_worksID][_debrisID].initPrice;
@@ -978,6 +985,11 @@ contract Works {
             return works[_worksID].beginTime.sub(now);
         }
         return 0;
+    }
+
+    //获取作品碎片游戏开始倒计时 单位s
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256) {
+        return (works[_worksID].beginTime, now);
     }
 
     //获取碎片保护期倒计时 单位s
@@ -1239,6 +1251,9 @@ interface PlayerInterface {
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
+    //获取玩家账号冻结开始时间、冻结时长、当前时间
+    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256)
+
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
 
@@ -1416,10 +1431,16 @@ contract Player {
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
-        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
+        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap) > now) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
         }
         return 0;
+    }
+
+    //获取玩家账号冻结开始时间、冻结时长、当前时间
+    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
+        uint256 freezeGap = works.getFreezeGap(_worksID);        
+        return (playerCount[_unionID][_worksID].lastTime, freezeGap, now);
     }
 
     //获取我的藏品列表

@@ -258,8 +258,8 @@ contract Artist {
     event OnAdd(bytes32 _artistID, address indexed _address);
     event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
         _;
     }
 
@@ -267,7 +267,7 @@ contract Artist {
         return artists[_artistID];
     }
    
-    function add(bytes32 _artistID, address payable _address) external onlyDev() {
+    function add(bytes32 _artistID, address payable _address) external onlyAdmin() {
         require(this.hasArtist(_artistID) == false);
         artists[_artistID] = _address;
         emit OnAdd(_artistID, _address);
@@ -277,7 +277,7 @@ contract Artist {
         return artists[_artistID] != address(0);
     }
 
-    function updateAddress(bytes32 _artistID, address payable _address) external onlyDev() {
+    function updateAddress(bytes32 _artistID, address payable _address) external onlyAdmin() {
         require(artists[_artistID] != address(0) && _address != address(0));
         artists[_artistID] = _address;
         emit OnUpdateAddress(_artistID, _address);
@@ -376,6 +376,8 @@ interface WorksInterface {
     function getPools(bytes32 _worksID) external view returns (uint256);
 
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
+
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256)
 
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
@@ -513,7 +515,7 @@ contract Works {
             _worksID, 
             _artistID, 
             _debrisNum, 
-            _price, 
+            _price.mul(1 wei),
             _beginTime, 
             0,
             false
@@ -821,6 +823,10 @@ contract Works {
         return 0;
     }
 
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256) {
+        return (works[_worksID].beginTime, now);
+    }
+
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
         if(
             debris[_worksID][_debrisID].lastTime > 0 && 
@@ -1037,6 +1043,8 @@ interface PlayerInterface {
 
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
+    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256)
+
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
 
     function isLegalPlayer(bytes32 _unionID, address _address) external view returns (bool);
@@ -1188,10 +1196,15 @@ contract Player {
 
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
-        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now) > 0) {
+        if(playerCount[_unionID][_worksID].lastTime.add(freezeGap) > now) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
         }
         return 0;
+    }
+
+    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
+        uint256 freezeGap = works.getFreezeGap(_worksID);        
+        return (playerCount[_unionID][_worksID].lastTime, freezeGap, now);
     }
 
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256) {

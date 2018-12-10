@@ -285,6 +285,9 @@ contract Works {
 
     //作品碎片是否在保护期时间段内 true为被保护状态
     function isProtect(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
+        if(debris[_worksID][_debrisID].lastTime == 0) {
+            return false;
+        }
         uint256 protectGap = rules[_worksID].protectGap;
         return debris[_worksID][_debrisID].lastTime.add(protectGap) < now ? false : true;
     }
@@ -390,6 +393,15 @@ contract Works {
         return lastPrice;
     }
 
+    function getDebrisInfo(bytes32 _worksID, uint8 _debrisID) external view returns  {
+        
+        for(uint256 i=0; i<works[_worksID].debrisNum; i++) {
+            res[_debris].push(1);
+            res[_debris].push(2);
+            res[_debris].push(3);
+        }
+    }
+
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         return debris[_worksID][_debrisID].initPrice;
@@ -467,6 +479,11 @@ contract Works {
         return 0;
     }
 
+    //获取作品碎片游戏开始倒计时 单位s
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256) {
+        return (works[_worksID].beginTime, now);
+    }
+
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         if(
@@ -497,7 +514,6 @@ contract Works {
         debris[_worksID][_debrisID].lastPrice = this.getDebrisPrice(_worksID, _debrisID);
         debris[_worksID][_debrisID].lastUnionID = _unionID; //更新归属
         debris[_worksID][_debrisID].lastBuyer = _sender; //更新归属
-        debris[_worksID][_debrisID].buyNum = debris[_worksID][_debrisID].buyNum.add(1); //更新碎片被购买次数
         debris[_worksID][_debrisID].lastTime = now; //更新最后被交易时间
         emit OnUpdateDebris(_worksID, _debrisID, _unionID, _sender);
     }
