@@ -111,7 +111,7 @@
                 "type": "uint256"
             }
         ],
-        "name": "OnUpdateReward",
+        "name": "OnUpdateRewardAmount",
         "type": "event"
     },
     {
@@ -368,7 +368,7 @@
                 "type": "uint256"
             }
         ],
-        "name": "updateReward",
+        "name": "updateRewardAmount",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
@@ -609,7 +609,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "getReward",
+        "name": "getRewardAmount",
         "outputs": [
             {
                 "name": "",

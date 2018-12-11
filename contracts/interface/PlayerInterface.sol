@@ -36,7 +36,7 @@ interface PlayerInterface {
     function getLastAddress(bytes32 _unionID) external view returns (address payable);
 
     //获取玩家对作品的累计奖励
-    function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
+    function getRewardAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
@@ -69,7 +69,7 @@ interface PlayerInterface {
     function updateFirstAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
     //更新玩家获得作品的累计奖励
-    function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
+    function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
     //更新我的藏品列表 记录完成游戏时的address
     function updateMyWorks(

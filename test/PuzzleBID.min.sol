@@ -182,6 +182,7 @@ library Datasets {
         uint256 firstBuyNum; //同一作品同一玩家，首发购买碎片数小计
         uint256 firstAmount; //同一作品同一玩家，首发购买总计金额
         uint256 secondAmount; //同一作品同一玩家，二次购买总计金额
+        uint256 rewardAmount; //同一作品同一玩家，奖励总计金额
     }
 
 }
@@ -408,7 +409,7 @@ interface WorksInterface {
     function isGameOver(bytes32 _worksID) external view returns (bool);
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool);
+    function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //是否存在首发购买者名单中
     function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
@@ -427,6 +428,10 @@ interface WorksInterface {
 
     //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
+
+    //返回碎片状态信息 专供游戏主页
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view 
+        returns (uint256, uint256, uint256, uint256, uint8, uint256, bytes32);
 
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -696,7 +701,8 @@ contract Works {
             _protectGap > 0 && //作品保护时间必须大于0
             _increaseRatio > 0 && //作品涨价百分比分子必须大于0
             _discountGap > 0 && //作品降价时间必须大于0
-            _discountRatio > 0 //作品降价百分比分子必须大于0
+            _discountRatio > 0 && //作品降价百分比分子必须大于0
+            _discountGap > _protectGap //作品降价时长必须大于作品保护时长
         );
 
         require(
@@ -816,7 +822,7 @@ contract Works {
     }
     
     //作品碎片是否收集完成
-    function isFinish(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) external view returns (bool) {
+    function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         bool finish = true; //收集完成标志
         uint8 i = 1;
         while(i <= works[_worksID].debrisNum) {
@@ -906,8 +912,33 @@ contract Works {
         return lastPrice;
     }
 
-    function getDebrisStatus() {
+    //返回碎片状态信息 专供游戏主页
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[5] memory, bytes32)  {
+        uint256 gap = 0;
+        uint256 status = 0; //碎片状态：0首发购买中，1保护中，2降价中
 
+        if(this.isProtect(_worksID, _debrisID)) { //保护中
+            gap = rules[_worksID].protectGap;
+            status = 1;
+        } else { //降价中
+
+            if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].discountGap) > now) {
+                gap = rules[_worksID].discountGap; //在第一个降价期
+            } else {
+                uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / rules[_worksID].discountGap; 
+                if((now.sub(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].discountGap))) % rules[_worksID].discountGap > 0) { 
+                    n = n.add(1);
+                }
+                gap = rules[_worksID].discountGap.mul(n); //无限降价期时 n倍间隔时长
+            }
+            status = 2;
+
+        }
+        uint256 price = this.getDebrisPrice(_worksID, _debrisID);
+        bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
+        uint256[5] memory info = [status, debris[_worksID][_debrisID].lastTime, gap, now, price];
+        //返回：碎片状态，最后交易时间戳，时间间隔，最新时间戳，当前价格，被交易次数，碎片归属
+        return (info, lastUnionID);
     }
 
     //获取碎片的初始价格
@@ -1246,7 +1277,7 @@ interface PlayerInterface {
     function getLastAddress(bytes32 _unionID) external view returns (address payable);
 
     //获取玩家对作品的累计奖励
-    function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
+    function getRewardAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
@@ -1279,7 +1310,7 @@ interface PlayerInterface {
     function updateFirstAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
     //更新玩家获得作品的累计奖励
-    function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
+    function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
     //更新我的藏品列表 记录完成游戏时的address
     function updateMyWorks(
@@ -1333,7 +1364,7 @@ contract Player {
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateFirstAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
-    event OnUpdateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
+    event OnUpdateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateMyWorks(
         bytes32 _unionID, 
         address indexed _address, 
@@ -1355,7 +1386,6 @@ contract Player {
     bytes32[] private playersUnionIdSets; //检索辅助 玩家unionID集 查询unionID是否已存在
 
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
-    mapping(bytes32 => mapping(bytes32 => uint256)) private reward; //TODO 玩家获得作品的累计奖励 (unionID => (worksID => amount))
 
     mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks)
 
@@ -1424,8 +1454,8 @@ contract Player {
     }
 
     //获取玩家对作品的累计奖励
-    function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-        return reward[_unionID][_worksID];
+    function getRewardAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+        return playerCount[_unionID][_worksID].rewardAmount;
     }
 
     //获取玩家账号冻结倒计时
@@ -1483,7 +1513,7 @@ contract Player {
 
         playerAddressSets.push(_address);
         playersUnionIdSets.push(_unionID);
-        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0); //初始化玩家单元统计数据
+        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
 
         emit OnRegister(_address, _unionID, _referrer, now);
 
@@ -1523,10 +1553,10 @@ contract Player {
     }
 
     //更新玩家获得作品的累计奖励
-    function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-        reward[_unionID][_worksID] = reward[_unionID][_worksID].add(_amount);
-        emit OnUpdateReward(_unionID, _worksID, _amount);
-    }   
+    function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
+        playerCount[_unionID][_worksID].rewardAmount = playerCount[_unionID][_worksID].rewardAmount.add(_amount);
+        emit OnUpdateRewardAmount(_unionID, _worksID, _amount);
+    }    
 
     //更新我的藏品列表 记录完成游戏时的address
     function updateMyWorks(

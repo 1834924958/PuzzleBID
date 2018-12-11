@@ -1,5 +1,6 @@
 
-### Works合约ABI：
+### 
+Works合约ABI：
 
 ```
 [
@@ -398,11 +399,6 @@
         "type": "function"
     },
     {
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "fallback"
-    },
-    {
         "inputs": [
             {
                 "name": "_teamAddress",
@@ -416,6 +412,11 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
     },
     {
         "constant": false,
@@ -481,17 +482,13 @@
             {
                 "name": "_flag",
                 "type": "uint8"
-            },
-            {
-                "name": "_element",
-                "type": "uint8"
             }
         ],
         "name": "getAllot",
         "outputs": [
             {
                 "name": "",
-                "type": "uint8"
+                "type": "uint8[3]"
             }
         ],
         "payable": false,
@@ -508,13 +505,17 @@
             {
                 "name": "_flag",
                 "type": "uint8"
+            },
+            {
+                "name": "_element",
+                "type": "uint8"
             }
         ],
         "name": "getAllot",
         "outputs": [
             {
                 "name": "",
-                "type": "uint8[3]"
+                "type": "uint8"
             }
         ],
         "payable": false,
@@ -619,6 +620,33 @@
             {
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "name": "_debrisID",
+                "type": "uint8"
+            }
+        ],
+        "name": "getDebrisStatus",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256[5]"
+            },
+            {
+                "name": "",
+                "type": "bytes32"
             }
         ],
         "payable": false,

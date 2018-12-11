@@ -167,6 +167,7 @@ library Datasets {
         uint256 firstBuyNum; 
         uint256 firstAmount; 
         uint256 secondAmount; 
+        uint256 rewardAmount;
     }
 
 }
@@ -352,6 +353,9 @@ interface WorksInterface {
     function getPrice(bytes32 _worksID) external view returns (uint256);
 
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
+
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view 
+        returns (uint256, uint256, uint256, uint256, uint8, uint256, bytes32);
 
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
@@ -570,7 +574,8 @@ contract Works {
             _protectGap > 0 &&
             _increaseRatio > 0 && 
             _discountGap > 0 &&
-            _discountRatio > 0 
+            _discountRatio > 0 &&
+            _discountGap > _protectGap
         );
 
         require(
@@ -756,6 +761,33 @@ contract Works {
         }
 
         return lastPrice;
+    }
+
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[5] memory, bytes32)  {
+        uint256 gap = 0;
+        uint256 status = 0; 
+
+        if(this.isProtect(_worksID, _debrisID)) {
+            gap = rules[_worksID].protectGap;
+            status = 1;
+        } else { 
+
+            if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].discountGap) > now) {
+                gap = rules[_worksID].discountGap; 
+            } else {
+                uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / rules[_worksID].discountGap; 
+                if((now.sub(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].discountGap))) % rules[_worksID].discountGap > 0) { 
+                    n = n.add(1);
+                }
+                gap = rules[_worksID].discountGap.mul(n); 
+            }
+            status = 2;
+
+        }
+        uint256 price = this.getDebrisPrice(_worksID, _debrisID);
+        bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
+        uint256[5] memory info = [status, debris[_worksID][_debrisID].lastTime, gap, now, price];
+        return (info, lastUnionID);
     }
 
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
@@ -1039,7 +1071,7 @@ interface PlayerInterface {
 
     function getLastAddress(bytes32 _unionID) external view returns (address payable);
 
-    function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
+    function getRewardAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
@@ -1061,7 +1093,7 @@ interface PlayerInterface {
 
     function updateFirstAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
-    function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
+    function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external;
 
     function updateMyWorks(
         bytes32 _unionID, 
@@ -1110,7 +1142,7 @@ contract Player {
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateFirstAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
-    event OnUpdateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
+    event OnUpdateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateMyWorks(
         bytes32 _unionID, 
         address indexed _address, 
@@ -1130,8 +1162,7 @@ contract Player {
     address[] private playerAddressSets; 
     bytes32[] private playersUnionIdSets; 
 
-    mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; 
-    mapping(bytes32 => mapping(bytes32 => uint256)) private reward; //TODO
+    mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount;
 
     mapping(bytes32 => Datasets.MyWorks) myworks; 
 
@@ -1190,8 +1221,8 @@ contract Player {
         return playersByUnionId[_unionID].lastAddress;
     }
 
-    function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-        return reward[_unionID][_worksID];
+    function getRewardAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+        return playerCount[_unionID][_worksID].rewardAmount;
     }
 
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
@@ -1243,7 +1274,7 @@ contract Player {
 
         playerAddressSets.push(_address);
         playersUnionIdSets.push(_unionID);
-        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0); 
+        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); 
 
         emit OnRegister(_address, _unionID, _referrer, now);
 
@@ -1277,10 +1308,10 @@ contract Player {
         emit OnUpdateFirstAmount(_unionID, _worksID, _amount);
     }
 
-    function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-        reward[_unionID][_worksID] = reward[_unionID][_worksID].add(_amount);
-        emit OnUpdateReward(_unionID, _worksID, _amount);
-    }   
+    function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
+        playerCount[_unionID][_worksID].rewardAmount = playerCount[_unionID][_worksID].rewardAmount.add(_amount);
+        emit OnUpdateRewardAmount(_unionID, _worksID, _amount);
+    }    
 
     function updateMyWorks(
         bytes32 _unionID, 

@@ -183,7 +183,8 @@ contract Works {
             _protectGap > 0 && //作品保护时间必须大于0
             _increaseRatio > 0 && //作品涨价百分比分子必须大于0
             _discountGap > 0 && //作品降价时间必须大于0
-            _discountRatio > 0 //作品降价百分比分子必须大于0
+            _discountRatio > 0 && //作品降价百分比分子必须大于0
+            _discountGap > _protectGap //作品降价时长必须大于作品保护时长
         );
 
         require(
@@ -393,22 +394,33 @@ contract Works {
         return lastPrice;
     }
 
-    function getDebrisDetail(bytes32 _worksID, uint8 _debrisID) external view returns ()  {
-        //状态时间戳
-        uint256 stateTimestamp;
-        uint256 gap;
-        uint256 price = this.getDebrisPrice(bytes32 _worksID, uint8 _debrisID);
-        uint256 status;
-        uint256 buyNum;
-        bytes32 lastUnionID;
+    //返回碎片状态信息 专供游戏主页
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[5] memory, bytes32)  {
+        uint256 gap = 0;
+        uint256 status = 0; //碎片状态：0首发购买中，1保护中，2降价中
 
+        if(this.isProtect(_worksID, _debrisID)) { //保护中
+            gap = rules[_worksID].protectGap;
+            status = 1;
+        } else { //降价中
 
-        debris[_worksID][_debrisID].lastTime;
+            if(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].discountGap) > now) {
+                gap = rules[_worksID].discountGap; //在第一个降价期
+            } else {
+                uint256 n = (now.sub(debris[_worksID][_debrisID].lastTime)) / rules[_worksID].discountGap; 
+                if((now.sub(debris[_worksID][_debrisID].lastTime.add(rules[_worksID].discountGap))) % rules[_worksID].discountGap > 0) { 
+                    n = n.add(1);
+                }
+                gap = rules[_worksID].discountGap.mul(n); //无限降价期时 n倍间隔时长
+            }
+            status = 2;
 
-
-        //时间戳，时间间隔，最新时间戳，当前价格，状态 ，被交易次数，碎片归属
-        return (stateTimestamp, gap, now, price, status, buyNum, lastUnionID);
-
+        }
+        uint256 price = this.getDebrisPrice(_worksID, _debrisID);
+        bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
+        uint256[5] memory info = [status, debris[_worksID][_debrisID].lastTime, gap, now, price];
+        //返回：碎片状态，最后交易时间戳，时间间隔，最新时间戳，当前价格，被交易次数，碎片归属
+        return (info, lastUnionID);
     }
 
     //获取碎片的初始价格

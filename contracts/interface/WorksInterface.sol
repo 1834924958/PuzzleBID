@@ -95,6 +95,10 @@ interface WorksInterface {
     //获取碎片的实时价格 有可能为0
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
+    //返回碎片状态信息 专供游戏主页
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view 
+        returns (uint256, uint256, uint256, uint256, uint8, uint256, bytes32);
+
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 

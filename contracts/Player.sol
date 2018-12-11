@@ -44,7 +44,7 @@ contract Player {
     event OnUpdateSecondAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateFirstAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateReinvest(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
-    event OnUpdateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
+    event OnUpdateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount);
     event OnUpdateMyWorks(
         bytes32 _unionID, 
         address indexed _address, 
@@ -66,8 +66,7 @@ contract Player {
     bytes32[] private playersUnionIdSets; //检索辅助 玩家unionID集 查询unionID是否已存在
 
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
-    mapping(bytes32 => mapping(bytes32 => uint256)) private reward; //TODO 玩家获得作品的累计奖励 (unionID => (worksID => amount))
-
+    
     mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks)
 
     //是否存在这个address   address存在则被认为是老用户
@@ -135,8 +134,8 @@ contract Player {
     }
 
     //获取玩家对作品的累计奖励
-    function getReward(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
-        return reward[_unionID][_worksID];
+    function getRewardAmount(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
+        return playerCount[_unionID][_worksID].rewardAmount;
     }
 
     //获取玩家账号冻结倒计时
@@ -152,6 +151,14 @@ contract Player {
     function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);        
         return (playerCount[_unionID][_worksID].lastTime, freezeGap, now);
+    }
+
+    //获取我的累计投入、累计奖励、收集完成将获得金额
+    function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
+        this.getFirstAmount(_unionID, _worksID).add(this.getSecondAmount(_unionID, _worksID));
+        this.getRewardAmount(_unionID, _worksID);
+        0
+
     }
 
     //获取我的藏品列表
@@ -194,7 +201,7 @@ contract Player {
 
         playerAddressSets.push(_address);
         playersUnionIdSets.push(_unionID);
-        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0); //初始化玩家单元统计数据
+        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
 
         emit OnRegister(_address, _unionID, _referrer, now);
 
@@ -234,9 +241,9 @@ contract Player {
     }
 
     //更新玩家获得作品的累计奖励
-    function updateReward(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
-        reward[_unionID][_worksID] = reward[_unionID][_worksID].add(_amount);
-        emit OnUpdateReward(_unionID, _worksID, _amount);
+    function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
+        playerCount[_unionID][_worksID].rewardAmount = playerCount[_unionID][_worksID].rewardAmount.add(_amount);
+        emit OnUpdateRewardAmount(_unionID, _worksID, _amount);
     }   
 
     //更新我的藏品列表 记录完成游戏时的address
