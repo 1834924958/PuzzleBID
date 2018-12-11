@@ -393,13 +393,22 @@ contract Works {
         return lastPrice;
     }
 
-    function getDebrisInfo(bytes32 _worksID, uint8 _debrisID) external view returns  {
-        
-        for(uint256 i=0; i<works[_worksID].debrisNum; i++) {
-            res[_debris].push(1);
-            res[_debris].push(2);
-            res[_debris].push(3);
-        }
+    function getDebrisDetail(bytes32 _worksID, uint8 _debrisID) external view returns ()  {
+        //状态时间戳
+        uint256 stateTimestamp;
+        uint256 gap;
+        uint256 price = this.getDebrisPrice(bytes32 _worksID, uint8 _debrisID);
+        uint256 status;
+        uint256 buyNum;
+        bytes32 lastUnionID;
+
+
+        debris[_worksID][_debrisID].lastTime;
+
+
+        //时间戳，时间间隔，最新时间戳，当前价格，状态 ，被交易次数，碎片归属
+        return (stateTimestamp, gap, now, price, status, buyNum, lastUnionID);
+
     }
 
     //获取碎片的初始价格
