@@ -131,6 +131,9 @@ interface WorksInterface {
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
+    //获取作品碎片游戏开始倒计时 单位s
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256);
+
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 

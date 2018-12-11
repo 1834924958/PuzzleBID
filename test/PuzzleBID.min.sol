@@ -465,7 +465,7 @@ interface WorksInterface {
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
     //获取作品碎片游戏开始倒计时 单位s
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256)
+    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256);
 
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -1252,7 +1252,7 @@ interface PlayerInterface {
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取玩家账号冻结开始时间、冻结时长、当前时间
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256)
+    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
