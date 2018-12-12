@@ -918,7 +918,9 @@ contract Works {
         uint256 gap = 0;
         uint256 status = 0; //碎片状态：0首发购买中，1保护中，2降价中
 
-        if(this.isProtect(_worksID, _debrisID)) { //保护中
+        if(0 == debris[_worksID][_debrisID].buyNum) { //首发购买中
+
+        } else if(this.isProtect(_worksID, _debrisID)) { //保护中
             gap = rules[_worksID].protectGap;
             status = 1;
         } else { //降价中

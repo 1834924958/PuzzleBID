@@ -766,9 +766,11 @@ contract Works {
 
     function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32)  {
         uint256 gap = 0;
-        uint256 status = 0; 
+        uint256 status = 0;
 
-        if(this.isProtect(_worksID, _debrisID)) {
+        if(0 == debris[_worksID][_debrisID].buyNum) { 
+
+        } else if(this.isProtect(_worksID, _debrisID)) { 
             gap = rules[_worksID].protectGap;
             status = 1;
         } else { 
