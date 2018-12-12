@@ -159,6 +159,11 @@ contract Player {
         this.getRewardAmount(_unionID, _worksID);
         0
 
+
+    }
+
+    function getMyStatus() {
+
     }
 
     //获取我的藏品列表
@@ -200,9 +205,12 @@ contract Player {
         playersByAddress[_address] = _unionID;
 
         playerAddressSets.push(_address);
-        playersUnionIdSets.push(_unionID);
-        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
-
+        
+        if(this.hasUnionId(_unionID) == false) {
+            playersUnionIdSets.push(_unionID);
+            playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
+        }
+        
         emit OnRegister(_address, _unionID, _referrer, now);
 
         return true;

@@ -52,6 +52,153 @@ Works合约ABI：
         "type": "function"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_value",
+                "type": "uint256"
+            }
+        ],
+        "name": "OnUpdatePools",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_unionID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_time",
+                "type": "uint256"
+            }
+        ],
+        "name": "OnFinish",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_artistID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisNum",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "_price",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "name": "_beginTime",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "name": "_isPublish",
+                "type": "bool"
+            }
+        ],
+        "name": "OnAddWorks",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisID",
+                "type": "uint8"
+            }
+        ],
+        "name": "OnUpdateBuyNum",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisID",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "_unionID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "name": "_sender",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpdateFirstBuyer",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisID",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "_unionID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "name": "_sender",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpdateDebris",
+        "type": "event"
+    },
+    {
         "constant": false,
         "inputs": [
             {
@@ -64,6 +211,45 @@ Works合约ABI：
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisNum",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "_initPrice",
+                "type": "uint256"
+            }
+        ],
+        "name": "OnInitDebris",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_unionID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "OnUpdateFirstUnionId",
+        "type": "event"
     },
     {
         "constant": false,
@@ -110,6 +296,24 @@ Works合约ABI：
             }
         ],
         "name": "configRule",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "name": "_unionID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "finish",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
@@ -178,201 +382,6 @@ Works合约ABI：
         "type": "function"
     },
     {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_debrisID",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "name": "_unionID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": true,
-                "name": "_sender",
-                "type": "address"
-            }
-        ],
-        "name": "OnUpdateDebris",
-        "type": "event"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_worksID",
-                "type": "bytes32"
-            }
-        ],
-        "name": "updateEndTime",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_debrisNum",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "name": "_initPrice",
-                "type": "uint256"
-            }
-        ],
-        "name": "OnInitDebris",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_unionID",
-                "type": "bytes32"
-            }
-        ],
-        "name": "OnUpdateFirstUnionId",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_value",
-                "type": "uint256"
-            }
-        ],
-        "name": "OnUpdatePools",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_artistID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_debrisNum",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "name": "_price",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "name": "_beginTime",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "name": "_isPublish",
-                "type": "bool"
-            }
-        ],
-        "name": "OnAddWorks",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_time",
-                "type": "uint256"
-            }
-        ],
-        "name": "OnUpdateEndTime",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_debrisID",
-                "type": "uint8"
-            }
-        ],
-        "name": "OnUpdateBuyNum",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_debrisID",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "name": "_unionID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": true,
-                "name": "_sender",
-                "type": "address"
-            }
-        ],
-        "name": "OnUpdateFirstBuyer",
-        "type": "event"
-    },
-    {
         "constant": false,
         "inputs": [
             {
@@ -399,6 +408,11 @@ Works合约ABI：
         "type": "function"
     },
     {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
+    },
+    {
         "inputs": [
             {
                 "name": "_teamAddress",
@@ -412,11 +426,6 @@ Works合约ABI：
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "constructor"
-    },
-    {
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "fallback"
     },
     {
         "constant": false,
@@ -482,13 +491,17 @@ Works合约ABI：
             {
                 "name": "_flag",
                 "type": "uint8"
+            },
+            {
+                "name": "_element",
+                "type": "uint8"
             }
         ],
         "name": "getAllot",
         "outputs": [
             {
                 "name": "",
-                "type": "uint8[3]"
+                "type": "uint8"
             }
         ],
         "payable": false,
@@ -505,17 +518,13 @@ Works合约ABI：
             {
                 "name": "_flag",
                 "type": "uint8"
-            },
-            {
-                "name": "_element",
-                "type": "uint8"
             }
         ],
         "name": "getAllot",
         "outputs": [
             {
                 "name": "",
-                "type": "uint8"
+                "type": "uint8[3]"
             }
         ],
         "payable": false,
@@ -642,7 +651,15 @@ Works合约ABI：
         "outputs": [
             {
                 "name": "",
-                "type": "uint256[5]"
+                "type": "uint256[4]"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
             },
             {
                 "name": "",
@@ -971,29 +988,6 @@ Works合约ABI：
                 "type": "bytes32"
             }
         ],
-        "name": "getStartTimestamp",
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256"
-            },
-            {
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "_worksID",
-                "type": "bytes32"
-            }
-        ],
         "name": "getWorks",
         "outputs": [
             {
@@ -1015,6 +1009,37 @@ Works合约ABI：
             {
                 "name": "",
                 "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getWorksStatus",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "bytes32"
             }
         ],
         "payable": false,

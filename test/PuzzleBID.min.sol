@@ -140,6 +140,7 @@ library Datasets {
         uint256 beginTime; //作品游戏开始时间
         uint256 endTime; //作品游戏结束时间
         bool isPublish; //作品游戏发布开关 true为开启
+        bytes32 lastUnionID; //最后结束游戏玩家ID
     }
 
     //碎片结构
@@ -430,8 +431,7 @@ interface WorksInterface {
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //返回碎片状态信息 专供游戏主页
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, uint256, uint8, uint256, bytes32);
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32);
 
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -469,8 +469,8 @@ interface WorksInterface {
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
-    //获取作品碎片游戏开始倒计时 单位s
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256);
+    //获取作品状态 用于判断是否开始、开始倒计时、是否结束、结束后作品最终归属谁
+    function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32);
 
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -487,8 +487,8 @@ interface WorksInterface {
     //更新作品碎片被购买的次数
     function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external;
 
-    //更新作品碎片游戏结束时间
-    function updateEndTime(bytes32 _worksID) external;
+    //更新作品碎片游戏结束时间、游戏完成者
+    function finish(bytes32 _worksID, bytes32 _unionID) external;
 
     //更新作品奖池累计
     function updatePools(bytes32 _worksID, uint256 _value) external;
@@ -574,7 +574,7 @@ contract Works {
         address indexed _sender
     );
     event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
-    event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
+    event OnFinish(bytes32 _worksID, bytes32 _unionID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
     event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
     event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
@@ -646,7 +646,8 @@ contract Works {
             _price.mul(1 wei), 
             _beginTime, 
             0,
-            false
+            false,
+            bytes32(0)
         );  //添加作品
 
         emit OnAddWorks(
@@ -913,7 +914,7 @@ contract Works {
     }
 
     //返回碎片状态信息 专供游戏主页
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[5] memory, bytes32)  {
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32)  {
         uint256 gap = 0;
         uint256 status = 0; //碎片状态：0首发购买中，1保护中，2降价中
 
@@ -936,9 +937,9 @@ contract Works {
         }
         uint256 price = this.getDebrisPrice(_worksID, _debrisID);
         bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
-        uint256[5] memory info = [status, debris[_worksID][_debrisID].lastTime, gap, now, price];
-        //返回：碎片状态，最后交易时间戳，时间间隔，最新时间戳，当前价格，被交易次数，碎片归属
-        return (info, lastUnionID);
+        uint256[4] memory state = [status, debris[_worksID][_debrisID].lastTime, gap, now];
+        //返回：[碎片状态，最后交易时间戳，时间间隔，最新时间戳]，当前价格，被交易次数，碎片归属
+        return (state, price, debris[_worksID][_debrisID].buyNum, lastUnionID);
     }
 
     //获取碎片的初始价格
@@ -1018,9 +1019,9 @@ contract Works {
         return 0;
     }
 
-    //获取作品碎片游戏开始倒计时 单位s
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256) {
-        return (works[_worksID].beginTime, now);
+    //获取作品状态 用于判断是否开始、开始倒计时、是否结束、结束后作品最终归属谁
+    function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32) {
+        return (works[_worksID].beginTime, works[_worksID].endTime, now, works[_worksID].lastUnionID);
     }
 
     //获取碎片保护期倒计时 单位s
@@ -1070,10 +1071,11 @@ contract Works {
         emit OnUpdateBuyNum(_worksID, _debrisID);
     }
 
-    //更新作品碎片游戏结束时间
-    function updateEndTime(bytes32 _worksID) external onlyDev() {
+    //更新作品碎片游戏结束时间、游戏完成者
+    function finish(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         works[_worksID].endTime = now;
-        emit OnUpdateEndTime(_worksID, now);
+        works[_worksID].lastUnionID = _unionID;
+        emit OnFinish(_worksID, _unionID, now);
     }
 
     //更新作品奖池累计
@@ -1512,8 +1514,10 @@ contract Player {
         playersByAddress[_address] = _unionID;
 
         playerAddressSets.push(_address);
-        playersUnionIdSets.push(_unionID);
-        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
+        if(this.hasUnionId(_unionID) == false) {
+            playersUnionIdSets.push(_unionID);
+            playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
+        }
 
         emit OnRegister(_address, _unionID, _referrer, now);
 
@@ -1656,7 +1660,9 @@ contract PuzzleBID {
     {
         player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
 
-        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格  
+
+        bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID  
 
         works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、被购买次数
 
@@ -1669,7 +1675,7 @@ contract PuzzleBID {
         //分红业务
         if(works.isSecond(_worksID, _debrisID)) { 
             //碎片如果是被玩家再次购买，按再次规则
-            secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
+            secondPlay(_worksID, _debrisID, _unionID, lastUnionID, lastPrice);            
         } else { 
             //更新碎片被购买次数
             works.updateBuyNum(_worksID, _debrisID);
@@ -1678,7 +1684,7 @@ contract PuzzleBID {
         }
         //碎片如果被同一玩家收集完成，结束游戏
         if(works.isFinish(_worksID, _unionID)) {
-            works.updateEndTime(_worksID); //更新作品游戏结束时间
+            works.finish(_worksID, _unionID); //更新作品游戏结束时间
             finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品
         }
@@ -1703,7 +1709,7 @@ contract PuzzleBID {
     }
 
     //碎片被二次购买
-    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
+    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _oldUnionID, uint256 _oldPrice) private {
 
         //更新当前作品的再次购买者名单
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
@@ -1731,7 +1737,7 @@ contract PuzzleBID {
         } 
         //无溢价，把此次降价后的ETH全额转给上一买家
         else { 
-            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(lastPrice);
+            player.getLastAddress(_oldUnionID).transfer(lastPrice);
         }
 
     }

@@ -56,7 +56,7 @@ contract Works {
         address indexed _sender
     );
     event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
-    event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
+    event OnFinish(bytes32 _worksID, bytes32 _unionID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
     event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
     event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
@@ -128,7 +128,8 @@ contract Works {
             _price.mul(1 wei), 
             _beginTime, 
             0,
-            false
+            false,
+            bytes32(0)
         );  //添加作品
 
         emit OnAddWorks(
@@ -395,7 +396,7 @@ contract Works {
     }
 
     //返回碎片状态信息 专供游戏主页
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[5] memory, bytes32)  {
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32)  {
         uint256 gap = 0;
         uint256 status = 0; //碎片状态：0首发购买中，1保护中，2降价中
 
@@ -418,9 +419,9 @@ contract Works {
         }
         uint256 price = this.getDebrisPrice(_worksID, _debrisID);
         bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
-        uint256[5] memory info = [status, debris[_worksID][_debrisID].lastTime, gap, now, price];
-        //返回：碎片状态，最后交易时间戳，时间间隔，最新时间戳，当前价格，被交易次数，碎片归属
-        return (info, lastUnionID);
+        uint256[4] memory state = [status, debris[_worksID][_debrisID].lastTime, gap, now];
+        //返回：[碎片状态，最后交易时间戳，时间间隔，最新时间戳]，当前价格，被交易次数，碎片归属
+        return (state, price, debris[_worksID][_debrisID].buyNum, lastUnionID);
     }
 
     //获取碎片的初始价格
@@ -500,9 +501,9 @@ contract Works {
         return 0;
     }
 
-    //获取作品碎片游戏开始倒计时 单位s
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256) {
-        return (works[_worksID].beginTime, now);
+    //获取作品状态 用于判断是否开始、开始倒计时、是否结束、结束后作品最终归属谁
+    function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32) {
+        return (works[_worksID].beginTime, works[_worksID].endTime, now, works[_worksID].lastUnionID);
     }
 
     //获取碎片保护期倒计时 单位s
@@ -552,10 +553,11 @@ contract Works {
         emit OnUpdateBuyNum(_worksID, _debrisID);
     }
 
-    //更新作品碎片游戏结束时间
-    function updateEndTime(bytes32 _worksID) external onlyDev() {
+    //更新作品碎片游戏结束时间、游戏完成者
+    function finish(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         works[_worksID].endTime = now;
-        emit OnUpdateEndTime(_worksID, now);
+        works[_worksID].lastUnionID = _unionID;
+        emit OnFinish(_worksID, _unionID, now);
     }
 
     //更新作品奖池累计

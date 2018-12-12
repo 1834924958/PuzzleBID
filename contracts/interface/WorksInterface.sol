@@ -96,8 +96,7 @@ interface WorksInterface {
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //返回碎片状态信息 专供游戏主页
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, uint256, uint8, uint256, bytes32);
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32);
 
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -135,8 +134,8 @@ interface WorksInterface {
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
-    //获取作品碎片游戏开始倒计时 单位s
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256);
+    //获取作品状态 用于判断是否开始、开始倒计时、是否结束、结束后作品最终归属谁
+    function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32);
 
     //获取碎片保护期倒计时 单位s
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -153,8 +152,8 @@ interface WorksInterface {
     //更新作品碎片被购买的次数
     function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external;
 
-    //更新作品碎片游戏结束时间
-    function updateEndTime(bytes32 _worksID) external;
+    //更新作品碎片游戏结束时间、游戏完成者
+    function finish(bytes32 _worksID, bytes32 _unionID) external;
 
     //更新作品奖池累计
     function updatePools(bytes32 _worksID, uint256 _value) external;

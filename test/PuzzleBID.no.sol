@@ -133,6 +133,7 @@ library Datasets {
         uint256 beginTime; 
         uint256 endTime;
         bool isPublish; 
+        bytes32 lastUnionID;
     }
 
     struct Debris {
@@ -354,8 +355,7 @@ interface WorksInterface {
 
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, uint256, uint8, uint256, bytes32);
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, bytes32);
 
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
@@ -381,7 +381,7 @@ interface WorksInterface {
 
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256);
+    function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32);
 
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
@@ -393,7 +393,7 @@ interface WorksInterface {
 
     function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external;
 
-    function updateEndTime(bytes32 _worksID) external;
+    function finish(bytes32 _worksID, bytes32 _unionID) external;
 
     function updatePools(bytes32 _worksID, uint256 _value) external;
 
@@ -460,7 +460,7 @@ contract Works {
         address indexed _sender
     );
     event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
-    event OnUpdateEndTime(bytes32 _worksID, uint256 _time);
+    event OnFinish(bytes32 _worksID, bytes32 _unionID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
     event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
     event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
@@ -522,7 +522,8 @@ contract Works {
             _price.mul(1 wei),
             _beginTime, 
             0,
-            false
+            false,
+            bytes32(0)
         ); 
 
         emit OnAddWorks(
@@ -763,7 +764,7 @@ contract Works {
         return lastPrice;
     }
 
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[5] memory, bytes32)  {
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32)  {
         uint256 gap = 0;
         uint256 status = 0; 
 
@@ -786,8 +787,8 @@ contract Works {
         }
         uint256 price = this.getDebrisPrice(_worksID, _debrisID);
         bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
-        uint256[5] memory info = [status, debris[_worksID][_debrisID].lastTime, gap, now, price];
-        return (info, lastUnionID);
+        uint256[4] memory state = [status, debris[_worksID][_debrisID].lastTime, gap, now];
+        return (state, price, debris[_worksID][_debrisID].buyNum, lastUnionID);
     }
 
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
@@ -855,8 +856,8 @@ contract Works {
         return 0;
     }
 
-    function getStartTimestamp(bytes32 _worksID) external view returns (uint256, uint256) {
-        return (works[_worksID].beginTime, now);
+    function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32) {
+        return (works[_worksID].beginTime, works[_worksID].endTime, now, works[_worksID].lastUnionID);
     }
 
     function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
@@ -900,9 +901,10 @@ contract Works {
         emit OnUpdateBuyNum(_worksID, _debrisID);
     }
 
-    function updateEndTime(bytes32 _worksID) external onlyDev() {
+    function finish(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         works[_worksID].endTime = now;
-        emit OnUpdateEndTime(_worksID, now);
+        works[_worksID].lastUnionID = _unionID;
+        emit OnFinish(_worksID, _unionID, now);
     }
 
     function updatePools(bytes32 _worksID, uint256 _value) external onlyDev() {
@@ -1273,8 +1275,10 @@ contract Player {
         playersByAddress[_address] = _unionID;
 
         playerAddressSets.push(_address);
-        playersUnionIdSets.push(_unionID);
-        playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); 
+        if(this.hasUnionId(_unionID) == false) {
+            playersUnionIdSets.push(_unionID);
+            playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0);
+        }
 
         emit OnRegister(_address, _unionID, _referrer, now);
 
@@ -1400,7 +1404,9 @@ contract PuzzleBID {
     {
         player.register(_unionID, msg.sender, _worksID, _referrer); 
 
-        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); 
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);
+
+        bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID);
 
         works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); 
 
@@ -1411,14 +1417,14 @@ contract PuzzleBID {
         platform.updateAllTurnover(msg.value); 
         
         if(works.isSecond(_worksID, _debrisID)) {
-            secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
+            secondPlay(_worksID, _debrisID, _unionID, lastUnionID, lastPrice);            
         } else {
             works.updateBuyNum(_worksID, _debrisID);
             firstPlay(_worksID, _debrisID, _unionID);       
         }
 
         if(works.isFinish(_worksID, _unionID)) {
-            works.updateEndTime(_worksID); 
+            works.finish(_worksID, _unionID); 
             finishGame(_worksID);
             collectWorks(_worksID, _unionID); 
         }
@@ -1440,7 +1446,7 @@ contract PuzzleBID {
 
     }
 
-    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
+    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _oldUnionID, uint256 _oldPrice) private {
 
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
             works.updateSecondUnionId(_worksID, _unionID);
@@ -1464,7 +1470,7 @@ contract PuzzleBID {
             ); 
         } 
         else { 
-            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(lastPrice);
+            player.getLastAddress(_oldUnionID).transfer(lastPrice);
         }
 
     }

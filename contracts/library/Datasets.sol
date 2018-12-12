@@ -34,6 +34,7 @@ library Datasets {
         uint256 beginTime; //作品游戏开始时间
         uint256 endTime; //作品游戏结束时间
         bool isPublish; //作品游戏发布开关 true为开启
+        bytes32 lastUnionID; //最后结束游戏玩家ID
     }
 
     //碎片结构

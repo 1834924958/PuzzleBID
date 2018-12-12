@@ -90,7 +90,9 @@ contract PuzzleBID {
     {
         player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
 
-        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格    
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格   
+
+        bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID 
 
         works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、被购买次数
 
@@ -103,7 +105,7 @@ contract PuzzleBID {
         //分红业务
         if(works.isSecond(_worksID, _debrisID)) { 
             //碎片如果是被玩家再次购买，按再次规则
-            secondPlay(_worksID, _debrisID, _unionID, lastPrice);            
+            secondPlay(_worksID, _debrisID, _unionID, lastUnionID, lastPrice);            
         } else { 
             //更新碎片被购买次数
             works.updateBuyNum(_worksID, _debrisID);
@@ -112,7 +114,7 @@ contract PuzzleBID {
         }
         //碎片如果被同一玩家收集完成，结束游戏
         if(works.isFinish(_worksID, _unionID)) {
-            works.updateEndTime(_worksID); //更新作品游戏结束时间
+            works.finish(_worksID, _unionID); //更新作品游戏结束时间、游戏完成者
             finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品
         }
@@ -137,7 +139,7 @@ contract PuzzleBID {
     }
 
     //碎片被二次购买
-    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, uint256 _oldPrice) private {
+    function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _oldUnionID, uint256 _oldPrice) private {
 
         //更新当前作品的再次购买者名单
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
@@ -165,7 +167,7 @@ contract PuzzleBID {
         } 
         //无溢价，把此次降价后的ETH全额转给上一买家
         else { 
-            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(lastPrice);
+            player.getLastAddress(_oldUnionID).transfer(lastPrice);
         }
 
     }

@@ -148,3 +148,11 @@ function addWorks()
 加入条件_price % _debrisNum == 0 
 保证价格大于0，且能整除碎片数
 ```
+
+20、PuzzleBID合约中，lastUnionID先更新再去获取上一家，逻辑错误
+已经增加:
+bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID 
+
+21、Works结构体增加了lastUnionID，初始化相应增加一个参数，在游戏结束时，将updateEndTime修改成了finish，更新结束时间和最后玩家ID
+
+22、玩家注册时BUG
