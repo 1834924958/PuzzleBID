@@ -375,21 +375,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "name": "_teamAddress",
-                "type": "address"
-            },
-            {
-                "name": "_worksAddress",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
         "constant": false,
         "inputs": [
             {
@@ -415,6 +400,21 @@
         "payable": true,
         "stateMutability": "payable",
         "type": "fallback"
+    },
+    {
+        "inputs": [
+            {
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "name": "_worksAddress",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
     },
     {
         "constant": true,
@@ -491,37 +491,6 @@
             {
                 "name": "_unionID",
                 "type": "bytes32"
-            },
-            {
-                "name": "_worksID",
-                "type": "bytes32"
-            }
-        ],
-        "name": "getFreezeTimestamp",
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256"
-            },
-            {
-                "name": "",
-                "type": "uint256"
-            },
-            {
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "_unionID",
-                "type": "bytes32"
             }
         ],
         "name": "getInfoByUnionId",
@@ -556,6 +525,76 @@
             {
                 "name": "",
                 "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "_unionID",
+                "type": "bytes32"
+            },
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getMyReport",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "_unionID",
+                "type": "bytes32"
+            },
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getMyStatus",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256"
             }
         ],
         "payable": false,

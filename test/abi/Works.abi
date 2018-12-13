@@ -52,21 +52,18 @@ Works合约ABI：
         "type": "function"
     },
     {
-        "anonymous": false,
+        "constant": false,
         "inputs": [
             {
-                "indexed": false,
                 "name": "_worksID",
                 "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_value",
-                "type": "uint256"
             }
         ],
-        "name": "OnUpdatePools",
-        "type": "event"
+        "name": "close",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "anonymous": false,
@@ -91,41 +88,54 @@ Works合约ABI：
         "type": "event"
     },
     {
-        "anonymous": false,
+        "constant": false,
         "inputs": [
             {
-                "indexed": false,
                 "name": "_worksID",
                 "type": "bytes32"
             },
             {
-                "indexed": false,
-                "name": "_artistID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_debrisNum",
+                "name": "_firstBuyLimit",
                 "type": "uint8"
             },
             {
-                "indexed": false,
-                "name": "_price",
+                "name": "_freezeGap",
                 "type": "uint256"
             },
             {
-                "indexed": false,
-                "name": "_beginTime",
+                "name": "_protectGap",
                 "type": "uint256"
             },
             {
-                "indexed": false,
-                "name": "_isPublish",
-                "type": "bool"
+                "name": "_increaseRatio",
+                "type": "uint256"
+            },
+            {
+                "name": "_discountGap",
+                "type": "uint256"
+            },
+            {
+                "name": "_discountRatio",
+                "type": "uint256"
+            },
+            {
+                "name": "_firstAllot",
+                "type": "uint8[3]"
+            },
+            {
+                "name": "_againAllot",
+                "type": "uint8[3]"
+            },
+            {
+                "name": "_lastAllot",
+                "type": "uint8[3]"
             }
         ],
-        "name": "OnAddWorks",
-        "type": "event"
+        "name": "configRule",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "anonymous": false,
@@ -199,18 +209,21 @@ Works合约ABI：
         "type": "event"
     },
     {
-        "constant": false,
+        "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
                 "name": "_worksID",
                 "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_value",
+                "type": "uint256"
             }
         ],
-        "name": "close",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
+        "name": "OnUpdatePools",
+        "type": "event"
     },
     {
         "anonymous": false,
@@ -244,62 +257,49 @@ Works合约ABI：
             },
             {
                 "indexed": false,
+                "name": "_artistID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisNum",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "_price",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "name": "_beginTime",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "name": "_isPublish",
+                "type": "bool"
+            }
+        ],
+        "name": "OnAddWorks",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
                 "name": "_unionID",
                 "type": "bytes32"
             }
         ],
         "name": "OnUpdateFirstUnionId",
         "type": "event"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "name": "_firstBuyLimit",
-                "type": "uint8"
-            },
-            {
-                "name": "_freezeGap",
-                "type": "uint256"
-            },
-            {
-                "name": "_protectGap",
-                "type": "uint256"
-            },
-            {
-                "name": "_increaseRatio",
-                "type": "uint256"
-            },
-            {
-                "name": "_discountGap",
-                "type": "uint256"
-            },
-            {
-                "name": "_discountRatio",
-                "type": "uint256"
-            },
-            {
-                "name": "_firstAllot",
-                "type": "uint8[3]"
-            },
-            {
-                "name": "_againAllot",
-                "type": "uint8[3]"
-            },
-            {
-                "name": "_lastAllot",
-                "type": "uint8[3]"
-            }
-        ],
-        "name": "configRule",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
     },
     {
         "constant": false,
@@ -408,26 +408,6 @@ Works合约ABI：
         "type": "function"
     },
     {
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "fallback"
-    },
-    {
-        "inputs": [
-            {
-                "name": "_teamAddress",
-                "type": "address"
-            },
-            {
-                "name": "_artistAddress",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
         "constant": false,
         "inputs": [
             {
@@ -464,6 +444,26 @@ Works合约ABI：
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "name": "_artistAddress",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
+    },
+    {
         "constant": false,
         "inputs": [
             {
@@ -491,17 +491,13 @@ Works合约ABI：
             {
                 "name": "_flag",
                 "type": "uint8"
-            },
-            {
-                "name": "_element",
-                "type": "uint8"
             }
         ],
         "name": "getAllot",
         "outputs": [
             {
                 "name": "",
-                "type": "uint8"
+                "type": "uint8[3]"
             }
         ],
         "payable": false,
@@ -518,13 +514,17 @@ Works合约ABI：
             {
                 "name": "_flag",
                 "type": "uint8"
+            },
+            {
+                "name": "_element",
+                "type": "uint8"
             }
         ],
         "name": "getAllot",
         "outputs": [
             {
                 "name": "",
-                "type": "uint8[3]"
+                "type": "uint8"
             }
         ],
         "payable": false,
@@ -855,6 +855,33 @@ Works合约ABI：
             {
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getPoolsAllot",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "name": "",
+                "type": "uint256[3]"
+            },
+            {
+                "name": "",
+                "type": "uint8[3]"
             }
         ],
         "payable": false,
