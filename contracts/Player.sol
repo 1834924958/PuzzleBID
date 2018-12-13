@@ -161,7 +161,7 @@ contract Player {
     }
 
     //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
-    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256) {
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256) {
         return (
             playerCount[_unionID][_worksID].lastTime, 
             works.getFreezeGap(_worksID), 

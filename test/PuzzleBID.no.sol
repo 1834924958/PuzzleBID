@@ -379,7 +379,7 @@ interface WorksInterface {
 
     function getPools(bytes32 _worksID) external view returns (uint256);
 
-    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory);
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint8[3] memory);
 
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
@@ -849,10 +849,10 @@ contract Works {
         return pools[_worksID];
     }
 
-    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint8[3] memory) {
         require(works[_worksID].endTime != 0); 
 
-        uint256[3] memory lastAllot = this.getAllot(_worksID, 2); 
+        uint8[3] memory lastAllot = this.getAllot(_worksID, 2); 
         uint256 finishAccount = pools[_worksID].mul(lastAllot[0]) / 100; 
         uint256 firstAccount = pools[_worksID].mul(lastAllot[1]) / 100;
         uint256 allAccount = pools[_worksID].mul(lastAllot[2]) / 100;
@@ -1092,7 +1092,7 @@ interface PlayerInterface {
 
     function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
 
-    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256);
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256);
 
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
 
@@ -1262,7 +1262,7 @@ contract Player {
         return (currInput, currOutput, currFinishReward);
     }
 
-    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256) {
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256) {
         return (
             playerCount[_unionID][_worksID].lastTime, 
             works.getFreezeGap(_worksID), 

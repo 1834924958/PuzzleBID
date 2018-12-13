@@ -467,7 +467,7 @@ interface WorksInterface {
     function getPools(bytes32 _worksID) external view returns (uint256);
 
     //获取作品奖池分配数据 供游戏结束后前端展示
-    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory);
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint8[3] memory);
 
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
@@ -1013,10 +1013,10 @@ contract Works {
     }
 
     //获取作品奖池分配数据 供游戏结束后前端展示
-    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint8[3] memory) {
         require(works[_worksID].endTime != 0); //需要游戏结束后才能统计
 
-        uint256[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
+        uint8[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
         uint256 finishAccount = pools[_worksID].mul(lastAllot[0]) / 100; //作品完成者
         uint256 firstAccount = pools[_worksID].mul(lastAllot[1]) / 100; //首发购买者
         uint256 allAccount = pools[_worksID].mul(lastAllot[2]) / 100; //二次购买者
@@ -1300,7 +1300,7 @@ interface PlayerInterface {
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
     //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
-    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256);
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256);
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
@@ -1498,7 +1498,7 @@ contract Player {
     }
 
     //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
-    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256) {
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256) {
         return (
             playerCount[_unionID][_worksID].lastTime, 
             works.getFreezeGap(_worksID), 

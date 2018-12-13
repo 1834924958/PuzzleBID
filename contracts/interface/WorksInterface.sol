@@ -124,7 +124,7 @@ interface WorksInterface {
     function getPools(bytes32 _worksID) external view returns (uint256);
 
     //获取作品奖池分配数据 供游戏结束后前端展示
-    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory);
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint8[3] memory);
 
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
