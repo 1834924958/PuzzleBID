@@ -1,10 +1,3 @@
-pragma solidity ^0.5.0;
-
-import "./library/SafeMath.sol"; //导入安全运算库
-import "./library/Datasets.sol"; //导入公共结构库
-import "./interface/TeamInterface.sol"; //导入管理员团队合约接口
-import "./interface/WorksInterface.sol"; //导入作品碎片合约接口
-
 /**
  * @title PuzzleBID Game 玩家合约
  * @dev http://www.puzzlebid.com/
@@ -94,7 +87,7 @@ contract Player {
     }
 
     //根据unionID查询玩家信息
-    function getInfoByUnionId(bytes32 _unionID) external view returns (address, bytes32, uint256) {
+    function getInfoByUnionId(bytes32 _unionID) external view returns (address payable, bytes32, uint256) {
         return (
             playersByUnionId[_unionID].lastAddress,
             playersByUnionId[_unionID].referrer, 

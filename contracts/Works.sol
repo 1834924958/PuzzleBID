@@ -287,7 +287,7 @@ contract Works {
 
     //作品碎片是否在保护期时间段内 true为被保护状态
     function isProtect(bytes32 _worksID, uint8 _debrisID) external view returns (bool) {
-        if(debris[_worksID][_debrisID].lastTime == 0) {
+        if(debris[_worksID][_debrisID].lastTime == 0) { //在游戏刚开始时作品应该不处于保护时间期
             return false;
         }
         uint256 protectGap = rules[_worksID].protectGap;
@@ -437,7 +437,7 @@ contract Works {
     }
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address payable) {
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address) {
         return debris[_worksID][_debrisID].lastBuyer;
     }
 

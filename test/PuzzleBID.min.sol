@@ -386,7 +386,7 @@ interface WorksInterface {
 
     //获取作品规则全部信息
     function getRule(bytes32 _worksID) external view 
-        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
+        returns (uint8, uint256, uint256, uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
 
     //是否存在作品 true为存在
     function hasWorks(bytes32 _worksID) external view returns (bool);
@@ -431,7 +431,7 @@ interface WorksInterface {
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //返回碎片状态信息 专供游戏主页
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32);
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, bytes32);
 
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
@@ -1296,7 +1296,7 @@ interface PlayerInterface {
     function isLegalPlayer(bytes32 _unionID, address _address) external view returns (bool);
 
     //注册玩家 静默
-    function register(bytes32 _unionID, address payable _address, bytes32 _worksID, bytes32 _referrer) external returns (bool);
+    function register(bytes32 _unionID, address _address, bytes32 _worksID, bytes32 _referrer) external returns (bool);
 
     //更新玩家最近使用的address
     function updateLastAddress(bytes32 _unionID, address payable _sender) external;
