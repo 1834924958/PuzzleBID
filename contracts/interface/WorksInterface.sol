@@ -1,11 +1,3 @@
-pragma solidity ^0.5.0;
-
-/**
- * @title PuzzleBID Game 作品碎片合约接口
- * @dev http://www.puzzlebid.com/
- * @author PuzzleBID Game Team 
- * @dev Simon<vsiryxm@163.com>
- */
 interface WorksInterface {
 
     //添加一个作品游戏 仅管理员可操作
@@ -47,11 +39,11 @@ interface WorksInterface {
 
     //获取作品碎片全部信息
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256);
+        returns (uint256, address, address, bytes32, bytes32, uint256);
 
     //获取作品规则全部信息
     function getRule(bytes32 _worksID) external view 
-        returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
+        returns (uint8, uint256, uint256, uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
 
     //是否存在作品 true为存在
     function hasWorks(bytes32 _worksID) external view returns (bool);
@@ -96,7 +88,7 @@ interface WorksInterface {
     function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
 
     //返回碎片状态信息 专供游戏主页
-    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, uint256, bytes32);
+    function getDebrisStatus(bytes32 _worksID, uint8 _debrisID) external view returns (uint256[4] memory, uint256, bytes32);
 
     //获取碎片的初始价格
     function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256);
