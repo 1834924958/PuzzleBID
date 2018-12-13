@@ -379,6 +379,8 @@ interface WorksInterface {
 
     function getPools(bytes32 _worksID) external view returns (uint256);
 
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory);
+
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
     function getWorksStatus(bytes32 _worksID) external view returns (uint256, uint256, uint256, bytes32);
@@ -596,10 +598,6 @@ contract Works {
             _againAllot,
             _lastAllot
         );
-
-        rules[_worksID].firstAllot = _firstAllot;
-        rules[_worksID].againAllot = _againAllot;
-        rules[_worksID].lastAllot = _lastAllot;
     }
 
     function publish(bytes32 _worksID, uint256 _beginTime) external onlyAdmin() {
@@ -788,7 +786,7 @@ contract Works {
 
         }
         uint256 price = this.getDebrisPrice(_worksID, _debrisID);
-        bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
+        bytes32 lastUnionID = debris[_worksID][_debrisID].lastUnionID;
         uint256[4] memory state = [status, debris[_worksID][_debrisID].lastTime, gap, now];
         return (state, price, debris[_worksID][_debrisID].buyNum, lastUnionID);
     }
@@ -851,6 +849,18 @@ contract Works {
         return pools[_worksID];
     }
 
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
+        require(works[_worksID].endTime != 0); 
+
+        uint256[3] memory lastAllot = this.getAllot(_worksID, 2); 
+        uint256 finishAccount = pools[_worksID].mul(lastAllot[0]) / 100; 
+        uint256 firstAccount = pools[_worksID].mul(lastAllot[1]) / 100;
+        uint256 allAccount = pools[_worksID].mul(lastAllot[2]) / 100;
+        uint256[3] memory account = [finishAccount, firstAccount, allAccount];   
+
+        return (pools[_worksID], account, lastAllot);
+    }
+
     function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
         if(works[_worksID].beginTime > 0 && works[_worksID].beginTime > now ) {
             return works[_worksID].beginTime.sub(now);
@@ -896,6 +906,7 @@ contract Works {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
+        this.updateFirstUnionId(_worksID, _unionID);
     }
 
     function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external onlyDev() {
@@ -1079,7 +1090,9 @@ interface PlayerInterface {
 
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
+    function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
+
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256);
 
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
 
@@ -1237,9 +1250,26 @@ contract Player {
         return 0;
     }
 
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
-        uint256 freezeGap = works.getFreezeGap(_worksID);        
-        return (playerCount[_unionID][_worksID].lastTime, freezeGap, now);
+    function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
+        uint256 currInput = 0; 
+        uint256 currOutput = 0;      
+        uint256 currFinishReward = 0; 
+        uint8 lastAllot = works.getAllot(_worksID, 2, 0); 
+
+        currInput = this.getFirstAmount(_unionID, _worksID).add(this.getSecondAmount(_unionID, _worksID));
+        currOutput = this.getRewardAmount(_unionID, _worksID);         
+        currFinishReward = this.getRewardAmount(_unionID, _worksID).add(works.getPools(_worksID).mul(lastAllot) / 100);
+        return (currInput, currOutput, currFinishReward);
+    }
+
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256) {
+        return (
+            playerCount[_unionID][_worksID].lastTime, 
+            works.getFreezeGap(_worksID), 
+            now, 
+            playerCount[_unionID][_worksID].firstBuyNum,
+            works.getFirstBuyLimit(_worksID)
+        );
     }
 
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256) {
@@ -1456,7 +1486,7 @@ contract PuzzleBID {
 
         player.updateSecondAmount(_unionID, _worksID, msg.value);
              
-        uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);        
         if(lastPrice > _oldPrice) { 
             uint8[3] memory againAllot = works.getAllot(_worksID, 1);
             uint256 overflow = lastPrice.sub(_oldPrice); 

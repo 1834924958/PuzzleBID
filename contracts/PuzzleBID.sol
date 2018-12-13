@@ -149,7 +149,7 @@ contract PuzzleBID {
         //更新同一作品同一玩家的再次购买投入
         player.updateSecondAmount(_unionID, _worksID, msg.value);
              
-        uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);        
         //有溢价才分红
         if(lastPrice > _oldPrice) { 
             uint8[3] memory againAllot = works.getAllot(_worksID, 1);

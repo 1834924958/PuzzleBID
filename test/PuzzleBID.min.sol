@@ -466,6 +466,9 @@ interface WorksInterface {
     //获取作品奖池累计
     function getPools(bytes32 _worksID) external view returns (uint256);
 
+    //获取作品奖池分配数据 供游戏结束后前端展示
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory);
+
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256);
 
@@ -724,10 +727,6 @@ contract Works {
             _lastAllot
         );
 
-        rules[_worksID].firstAllot = _firstAllot;
-        rules[_worksID].againAllot = _againAllot;
-        rules[_worksID].lastAllot = _lastAllot;
-
     }
 
     //发布作品游戏 才能开始玩这个游戏 仅管理员可操作
@@ -938,7 +937,7 @@ contract Works {
 
         }
         uint256 price = this.getDebrisPrice(_worksID, _debrisID);
-        bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
+        bytes32 lastUnionID = debris[_worksID][_debrisID].lastUnionID;
         uint256[4] memory state = [status, debris[_worksID][_debrisID].lastTime, gap, now];
         //返回：[碎片状态，最后交易时间戳，时间间隔，最新时间戳]，当前价格，被交易次数，碎片归属
         return (state, price, debris[_worksID][_debrisID].buyNum, lastUnionID);
@@ -1013,6 +1012,19 @@ contract Works {
         return pools[_worksID];
     }
 
+    //获取作品奖池分配数据 供游戏结束后前端展示
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
+        require(works[_worksID].endTime != 0); //需要游戏结束后才能统计
+
+        uint256[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
+        uint256 finishAccount = pools[_worksID].mul(lastAllot[0]) / 100; //作品完成者
+        uint256 firstAccount = pools[_worksID].mul(lastAllot[1]) / 100; //首发购买者
+        uint256 allAccount = pools[_worksID].mul(lastAllot[2]) / 100; //二次购买者
+        uint256[3] memory account = [finishAccount, firstAccount, allAccount];   
+
+        return (pools[_worksID], account, lastAllot);
+    }
+
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
         if(works[_worksID].beginTime > 0 && works[_worksID].beginTime > now ) {
@@ -1065,6 +1077,7 @@ contract Works {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
+        this.updateFirstUnionId(_worksID, _unionID);
     }
 
     //更新作品碎片被购买的次数
@@ -1286,8 +1299,8 @@ interface PlayerInterface {
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
-    //获取玩家账号冻结开始时间、冻结时长、当前时间
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
+    //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256);
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
@@ -1471,10 +1484,28 @@ contract Player {
         return 0;
     }
 
-    //获取玩家账号冻结开始时间、冻结时长、当前时间
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
-        uint256 freezeGap = works.getFreezeGap(_worksID);        
-        return (playerCount[_unionID][_worksID].lastTime, freezeGap, now);
+    //获取我的累计投入、累计奖励、收集完成将获得金额
+    function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
+        uint256 currInput = 0; //当前累计投入
+        uint256 currOutput = 0; //当前累计奖励       
+        uint256 currFinishReward = 0; //按当前累计投入，最终完成游戏可获得奖池中的80%
+        uint8 lastAllot = works.getAllot(_worksID, 2, 0); //游戏结束时最后分配80%归游戏完成者
+
+        currInput = this.getFirstAmount(_unionID, _worksID).add(this.getSecondAmount(_unionID, _worksID));
+        currOutput = this.getRewardAmount(_unionID, _worksID);         
+        currFinishReward = this.getRewardAmount(_unionID, _worksID).add(works.getPools(_worksID).mul(lastAllot) / 100);
+        return (currInput, currOutput, currFinishReward);
+    }
+
+    //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256) {
+        return (
+            playerCount[_unionID][_worksID].lastTime, 
+            works.getFreezeGap(_worksID), 
+            now, 
+            playerCount[_unionID][_worksID].firstBuyNum,
+            works.getFirstBuyLimit(_worksID)
+        );
     }
 
     //获取我的藏品列表
@@ -1721,7 +1752,7 @@ contract PuzzleBID {
         //更新同一作品同一玩家的再次购买投入
         player.updateSecondAmount(_unionID, _worksID, msg.value);
              
-        uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);        
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);    
         //有溢价才分红
         if(lastPrice > _oldPrice) { 
             uint8[3] memory againAllot = works.getAllot(_worksID, 1);

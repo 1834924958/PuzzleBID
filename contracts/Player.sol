@@ -147,23 +147,28 @@ contract Player {
         return 0;
     }
 
-    //获取玩家账号冻结开始时间、冻结时长、当前时间
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
-        uint256 freezeGap = works.getFreezeGap(_worksID);        
-        return (playerCount[_unionID][_worksID].lastTime, freezeGap, now);
-    }
-
     //获取我的累计投入、累计奖励、收集完成将获得金额
     function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256) {
-        this.getFirstAmount(_unionID, _worksID).add(this.getSecondAmount(_unionID, _worksID));
-        this.getRewardAmount(_unionID, _worksID);
-        0
+        uint256 currInput = 0; //当前累计投入
+        uint256 currOutput = 0; //当前累计奖励       
+        uint256 currFinishReward = 0; //按当前累计投入，最终完成游戏可获得奖池中的80%
+        uint8 lastAllot = works.getAllot(_worksID, 2, 0); //游戏结束时最后分配80%归游戏完成者
 
-
+        currInput = this.getFirstAmount(_unionID, _worksID).add(this.getSecondAmount(_unionID, _worksID));
+        currOutput = this.getRewardAmount(_unionID, _worksID);         
+        currFinishReward = this.getRewardAmount(_unionID, _worksID).add(works.getPools(_worksID).mul(lastAllot) / 100);
+        return (currInput, currOutput, currFinishReward);
     }
 
-    function getMyStatus() {
-
+    //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256) {
+        return (
+            playerCount[_unionID][_worksID].lastTime, 
+            works.getFreezeGap(_worksID), 
+            now, 
+            playerCount[_unionID][_worksID].firstBuyNum,
+            works.getFirstBuyLimit(_worksID)
+        );
     }
 
     //获取我的藏品列表

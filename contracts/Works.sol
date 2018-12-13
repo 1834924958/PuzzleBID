@@ -18,6 +18,7 @@ contract Works {
 
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
     ArtistInterface private artist; //实例化艺术家合约
+    PlatformInterface private platform; //实例化平台合约
 
     constructor(address _teamAddress, address _artistAddress) public {
         team = TeamInterface(_teamAddress);
@@ -205,10 +206,6 @@ contract Works {
             _againAllot,
             _lastAllot
         );
-
-        rules[_worksID].firstAllot = _firstAllot;
-        rules[_worksID].againAllot = _againAllot;
-        rules[_worksID].lastAllot = _lastAllot;
 
     }
 
@@ -420,7 +417,7 @@ contract Works {
 
         }
         uint256 price = this.getDebrisPrice(_worksID, _debrisID);
-        bytes32 lastUnionID = bytes32(debris[_worksID][_debrisID].lastUnionID);
+        bytes32 lastUnionID = debris[_worksID][_debrisID].lastUnionID;
         uint256[4] memory state = [status, debris[_worksID][_debrisID].lastTime, gap, now];
         //返回：[碎片状态，最后交易时间戳，时间间隔，最新时间戳]，当前价格，被交易次数，碎片归属
         return (state, price, debris[_worksID][_debrisID].buyNum, lastUnionID);
@@ -495,6 +492,19 @@ contract Works {
         return pools[_worksID];
     }
 
+    //获取作品奖池分配数据 供游戏结束后前端展示
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
+        require(works[_worksID].endTime != 0); //需要游戏结束后才能统计
+
+        uint256[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
+        uint256 finishAccount = pools[_worksID].mul(lastAllot[0]) / 100; //作品完成者
+        uint256 firstAccount = pools[_worksID].mul(lastAllot[1]) / 100; //首发购买者
+        uint256 allAccount = pools[_worksID].mul(lastAllot[2]) / 100; //二次购买者
+        uint256[3] memory account = [finishAccount, firstAccount, allAccount];   
+
+        return (pools[_worksID], account, lastAllot);
+    }
+
     //获取作品碎片游戏开始倒计时 单位s
     function getStartHourglass(bytes32 _worksID) external view returns (uint256) {
         if(works[_worksID].beginTime > 0 && works[_worksID].beginTime > now ) {
@@ -547,6 +557,7 @@ contract Works {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
+        this.updateFirstUnionId(_worksID, _unionID);
     }
 
     //更新作品碎片被购买的次数

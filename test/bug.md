@@ -156,3 +156,19 @@ bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片�
 21、Works结构体增加了lastUnionID，初始化相应增加一个参数，在游戏结束时，将updateEndTime修改成了finish，更新结束时间和最后玩家ID
 
 22、玩家注册时BUG
+
+23、二次购买时获取碎片实时价格修改成最后成交价格，因为前面程序已经更新了碎片的成交价
+
+```
+function secondPlay
+uint256 lastPrice = works.getDebrisPrice(_worksID, _debrisID);  
+修改成
+uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);
+```  
+
+24、首发购买碎片时，只更新了碎片上的最后玩家，没有更新首发购买名单
+
+```
+在下面函数function updateFirstBuyer()中，加入了this.updateFirstUnionId(_worksID, _unionID);
+```
+

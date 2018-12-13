@@ -41,8 +41,8 @@ interface PlayerInterface {
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
 
-    //获取玩家账号冻结开始时间、冻结时长、当前时间
-    function getFreezeTimestamp(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
+    //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
+    function getMyStatus(bytes32 _unionID, bytes32 _worksID) external returns (uint256, uint256, uint256, uint256, uint256);
 
     //获取我的藏品列表
     function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
