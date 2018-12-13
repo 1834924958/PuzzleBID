@@ -1,3 +1,10 @@
+pragma solidity ^0.5.0;
+
+import "./library/SafeMath.sol"; 
+import "./library/Datasets.sol"; 
+import "./interface/TeamInterface.sol"; 
+import "./interface/WorksInterface.sol";
+
 /**
  * @title PuzzleBID Game 玩家合约
  * @dev http://www.puzzlebid.com/
