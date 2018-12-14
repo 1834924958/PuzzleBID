@@ -1762,7 +1762,7 @@ contract PuzzleBID {
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的18% 归奖池
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //溢价的10% 平台合约代为保管奖池ETH
 
-            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(
+            player.getLastAddress(_oldUnionID).transfer(
                 lastPrice.sub(overflow.mul(againAllot[0]) / 100)
                 .sub(lastPrice.mul(againAllot[1]) / 100)
                 .sub(overflow.mul(againAllot[2]) / 100)

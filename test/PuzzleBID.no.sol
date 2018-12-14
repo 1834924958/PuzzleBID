@@ -1495,7 +1495,7 @@ contract PuzzleBID {
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); 
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); 
 
-            player.getLastAddress(works.getLastUnionId(_worksID, _debrisID)).transfer(
+            player.getLastAddress(_oldUnionID).transfer(
                 lastPrice.sub(overflow.mul(againAllot[0]) / 100)
                 .sub(lastPrice.mul(againAllot[1]) / 100)
                 .sub(overflow.mul(againAllot[2]) / 100)

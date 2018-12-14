@@ -94,7 +94,7 @@ contract PuzzleBID {
 
         bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID 
 
-        works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、被购买次数
+        works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、最后交易时间
 
         player.updateLastTime(_unionID, _worksID); //更新玩家在一个作品中的最后购买碎片时间
         
