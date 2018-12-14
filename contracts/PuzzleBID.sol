@@ -148,20 +148,22 @@ contract PuzzleBID {
 
         //更新同一作品同一玩家的再次购买投入
         player.updateSecondAmount(_unionID, _worksID, msg.value);
-             
-        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);        
+
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); 
+        uint256 commission = lastPrice.mul(againAllot[1]) / 100;
+        platform.getFoundAddress().transfer(commission); //总价的2% 归平台
+
+        lastPrice = lastPrice.sub(commission); //扣除2%，再看是否有溢价
+
         //有溢价才分红
         if(lastPrice > _oldPrice) { 
             uint8[3] memory againAllot = works.getAllot(_worksID, 1);
             uint256 overflow = lastPrice.sub(_oldPrice); //计算溢价
             artist.getAddress(works.getArtistId(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
-            platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); //总价的2% 归平台
-            works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的18% 归奖池
+            works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的65% 归奖池
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //溢价的10% 平台合约代为保管奖池ETH
-
             player.getLastAddress(_oldUnionID).transfer(
-                lastPrice.sub(overflow.mul(againAllot[0]) / 100)
-                .sub(lastPrice.mul(againAllot[1]) / 100)
+                lastPrice.sub(overflow.mul(againAllot[0]) / 100)                
                 .sub(overflow.mul(againAllot[2]) / 100)
             ); //剩余部分归上一买家
         } 

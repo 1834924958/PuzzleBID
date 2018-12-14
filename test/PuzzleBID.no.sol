@@ -1485,23 +1485,24 @@ contract PuzzleBID {
         }
 
         player.updateSecondAmount(_unionID, _worksID, msg.value);
-             
-        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID);        
+
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); 
+        uint256 commission = lastPrice.mul(againAllot[1]) / 100;
+        platform.getFoundAddress().transfer(commission); 
+
+        lastPrice = lastPrice.sub(commission); 
+
         if(lastPrice > _oldPrice) { 
             uint8[3] memory againAllot = works.getAllot(_worksID, 1);
             uint256 overflow = lastPrice.sub(_oldPrice); 
             artist.getAddress(works.getArtistId(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); 
-            platform.getFoundAddress().transfer(lastPrice.mul(againAllot[1]) / 100); 
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); 
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); 
-
             player.getLastAddress(_oldUnionID).transfer(
-                lastPrice.sub(overflow.mul(againAllot[0]) / 100)
-                .sub(lastPrice.mul(againAllot[1]) / 100)
+                lastPrice.sub(overflow.mul(againAllot[0]) / 100)                
                 .sub(overflow.mul(againAllot[2]) / 100)
             ); 
-        } 
-        else { 
+        } else { 
             player.getLastAddress(_oldUnionID).transfer(lastPrice);
         }
 
