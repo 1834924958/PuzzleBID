@@ -1486,14 +1486,14 @@ contract PuzzleBID {
 
         player.updateSecondAmount(_unionID, _worksID, msg.value);
 
+        uint8[3] memory againAllot = works.getAllot(_worksID, 1);
         uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); 
         uint256 commission = lastPrice.mul(againAllot[1]) / 100;
         platform.getFoundAddress().transfer(commission); 
 
         lastPrice = lastPrice.sub(commission); 
 
-        if(lastPrice > _oldPrice) { 
-            uint8[3] memory againAllot = works.getAllot(_worksID, 1);
+        if(lastPrice > _oldPrice) {
             uint256 overflow = lastPrice.sub(_oldPrice); 
             artist.getAddress(works.getArtistId(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); 
             works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); 
