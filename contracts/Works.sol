@@ -191,7 +191,7 @@ contract Works {
 
         require(
             _firstAllot[0] > 0 && _firstAllot[1] > 0 && _firstAllot[2] > 0 && //% 首发购买分配百分比 顺序对应：艺术家80、平台2、奖池18
-            _againAllot[0] > 0 && _againAllot[1] > 0 && _againAllot[2] > 0 && //% 再次购买分配百分比 顺序对应：艺术家10（溢价部分）、平台2（总价）、奖池65（溢价部分）
+            _againAllot[0] > 0 && _againAllot[1] > 0 && _againAllot[2] > 0 && //% 再次购买分配百分比 顺序对应：艺术家10（溢价部分）、平台2（总价）、奖池65（溢价部分）、剩余归上一玩家
             _lastAllot[0] > 0 && _lastAllot[1] > 0 && _lastAllot[2] > 0 //% 完成购买分配百分比 顺序对应：游戏完成者80、首发购买者10、后续其他购买者10
         ); //分配规则 百分比分子必须大于0
 
