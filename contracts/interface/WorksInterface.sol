@@ -34,14 +34,14 @@ interface WorksInterface {
     //关闭一个作品游戏 紧急情况关闭
     function close(bytes32 _worksID) external;
 
-    //获取作品、规则全部信息
+    //获取作品基本信息
     function getWorks(bytes32 _worksID) external view returns (uint8, uint256, uint256, uint256, bool);
 
-    //获取作品碎片全部信息
+    //获取作品碎片交易信息
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
         returns (uint256, address, address, bytes32, bytes32, uint256);
 
-    //获取作品规则全部信息
+    //获取作品规则信息
     function getRule(bytes32 _worksID) external view 
         returns (uint8, uint256, uint256, uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
 

@@ -160,7 +160,7 @@ contract PuzzleBID {
         if(lastPrice > _oldPrice) {
             uint256 overflow = lastPrice.sub(_oldPrice); //计算溢价
             artist.getAddress(works.getArtistId(_worksID)).transfer(overflow.mul(againAllot[0]) / 100); //溢价的10% 归艺术家
-            works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的65% 归奖池
+            works.updatePools(_worksID, overflow.mul(againAllot[2]) / 100); //溢价的10% 归奖池
             platform.deposit.value(overflow.mul(againAllot[2]) / 100)(_worksID); //溢价的10% 平台合约代为保管奖池ETH
             player.getLastAddress(_oldUnionID).transfer(
                 lastPrice.sub(overflow.mul(againAllot[0]) / 100)                
