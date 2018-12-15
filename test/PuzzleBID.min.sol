@@ -497,10 +497,10 @@ interface WorksInterface {
     function updatePools(bytes32 _worksID, uint256 _value) external;
 
     //更新作品的首发购买者名单
-    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external;
+    function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external;
 
     //更新作品的二次购买者名单
-    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external;
+    function updateSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external;
 
  }
  
@@ -579,8 +579,8 @@ contract Works {
     event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
     event OnFinish(bytes32 _worksID, bytes32 _unionID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
-    event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
-    event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
+    event OnUpdateFirstUnionIds(bytes32 _worksID, bytes32 _unionID);
+    event OnUpdateSecondUnionIds(bytes32 _worksID, bytes32 _unionID);
 
     //定义作品碎片结构Works，见library/Datasets.sol
     //定义作品游戏规则结构Rule，见library/Datasets.sol
@@ -894,7 +894,6 @@ contract Works {
             if((now.sub(debris[_worksID][_debrisID].lastTime.add(discountGap))) % discountGap > 0) { 
                 n = n.add(1);
             }
-            //lastPrice = debris[_worksID][_debrisID].lastPrice.mul((discountRatio / 100).pwr(n)); //n次方 = 0
             for(uint256 i=0; i<n; i++) {
                 if(0 == i) {
                     lastPrice = debris[_worksID][_debrisID].lastPrice.mul(increaseRatio).mul(discountRatio) / 10000; //1210需求修改：降前先涨110%
@@ -1077,7 +1076,7 @@ contract Works {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
-        this.updateFirstUnionId(_worksID, _unionID);
+        this.updateFirstUnionIds(_worksID, _unionID);
     }
 
     //更新作品碎片被购买的次数
@@ -1100,7 +1099,7 @@ contract Works {
     }
 
     //更新作品的首发购买者名单
-    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
+    function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         if(this.hasFirstUnionId(_worksID, _unionID) == false) {
             firstUnionID[_worksID].push(_unionID);
             emit OnUpdateFirstUnionId(_worksID, _unionID);
@@ -1108,10 +1107,10 @@ contract Works {
     }
 
     //更新作品的二次购买者名单
-    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
+    function updateSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         if(this.hasSecondUnionId(_worksID, _unionID) == false) {
             secondUnionID[_worksID].push(_unionID);
-            emit OnUpdateSecondUnionId(_worksID, _unionID);
+            emit OnUpdateSecondUnionIds(_worksID, _unionID);
         }
     }
 
@@ -1697,7 +1696,7 @@ contract PuzzleBID {
 
         bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID  
 
-        works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、被购买次数
+        works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、最后被交易时间
 
         player.updateLastTime(_unionID, _worksID); //更新玩家在一个作品中的最后购买碎片时间
         
@@ -1746,7 +1745,7 @@ contract PuzzleBID {
 
         //更新当前作品的再次购买者名单
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
-            works.updateSecondUnionId(_worksID, _unionID);
+            works.updateSecondUnionIds(_worksID, _unionID);
         }
 
         //更新同一作品同一玩家的再次购买投入

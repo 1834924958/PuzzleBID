@@ -399,9 +399,9 @@ interface WorksInterface {
 
     function updatePools(bytes32 _worksID, uint256 _value) external;
 
-    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external;
+    function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external;
 
-    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external;
+    function updateSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external;
 
  }
  
@@ -464,8 +464,8 @@ contract Works {
     event OnUpdateBuyNum(bytes32 _worksID, uint8 _debrisID);
     event OnFinish(bytes32 _worksID, bytes32 _unionID, uint256 _time);
     event OnUpdatePools(bytes32 _worksID, uint256 _value);
-    event OnUpdateFirstUnionId(bytes32 _worksID, bytes32 _unionID);
-    event OnUpdateSecondUnionId(bytes32 _worksID, bytes32 _unionID);
+    event OnUpdateFirstUnionIds(bytes32 _worksID, bytes32 _unionID);
+    event OnUpdateSecondUnionIds(bytes32 _worksID, bytes32 _unionID);
 
     mapping(bytes32 => Datasets.Works) private works; 
     mapping(bytes32 => Datasets.Rule) private rules; 
@@ -906,7 +906,7 @@ contract Works {
         debris[_worksID][_debrisID].firstBuyer = _sender;
         debris[_worksID][_debrisID].firstUnionID = _unionID;
         emit OnUpdateFirstBuyer(_worksID, _debrisID, _unionID, _sender);
-        this.updateFirstUnionId(_worksID, _unionID);
+        this.updateFirstUnionIds(_worksID, _unionID);
     }
 
     function updateBuyNum(bytes32 _worksID, uint8 _debrisID) external onlyDev() {
@@ -925,17 +925,17 @@ contract Works {
         emit OnUpdatePools(_worksID, _value);
     }
 
-    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
+    function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         if(this.hasFirstUnionId(_worksID, _unionID) == false) {
             firstUnionID[_worksID].push(_unionID);
-            emit OnUpdateFirstUnionId(_worksID, _unionID);
+            emit OnUpdateFirstUnionIds(_worksID, _unionID);
         }
     }
 
-    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
+    function updateSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         if(this.hasSecondUnionId(_worksID, _unionID) == false) {
             secondUnionID[_worksID].push(_unionID);
-            emit OnUpdateSecondUnionId(_worksID, _unionID);
+            emit OnUpdateSecondUnionIds(_worksID, _unionID);
         }
     }
 
@@ -1481,7 +1481,7 @@ contract PuzzleBID {
     function secondPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _oldUnionID, uint256 _oldPrice) private {
 
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
-            works.updateSecondUnionId(_worksID, _unionID);
+            works.updateSecondUnionIds(_worksID, _unionID);
         }
 
         player.updateSecondAmount(_unionID, _worksID, msg.value);

@@ -143,7 +143,7 @@ contract PuzzleBID {
 
         //更新当前作品的再次购买者名单
         if(0 == player.getSecondAmount(_unionID, _worksID)) {
-            works.updateSecondUnionId(_worksID, _unionID);
+            works.updateSecondUnionIds(_worksID, _unionID);
         }
 
         //更新同一作品同一玩家的再次购买投入

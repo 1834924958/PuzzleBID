@@ -154,9 +154,9 @@ interface WorksInterface {
     function updatePools(bytes32 _worksID, uint256 _value) external;
 
     //更新作品的首发购买者名单
-    function updateFirstUnionId(bytes32 _worksID, bytes32 _unionID) external;
+    function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external;
 
     //更新作品的二次购买者名单
-    function updateSecondUnionId(bytes32 _worksID, bytes32 _unionID) external;
+    function updateSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external;
 
  }
