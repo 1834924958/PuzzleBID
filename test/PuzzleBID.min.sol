@@ -1302,7 +1302,7 @@ interface PlayerInterface {
     function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256);
 
     //获取我的藏品列表
-    function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
+    function getMyWorks(bytes32 _unionID, bytes32 _worksID) external view returns (address, bytes32, uint256, uint256, uint256);
 
     //是否为合法绑定关系的玩家 避免address被多个unionID绑定 true为合法
     function isLegalPlayer(bytes32 _unionID, address _address) external view returns (bool);
@@ -1403,7 +1403,7 @@ contract Player {
 
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
 
-    mapping(bytes32 => Datasets.MyWorks) myworks; //我的藏品 (unionID => Datasets.MyWorks)
+    mapping(bytes32 => mapping(bytes32 => Datasets.MyWorks)) myworks; //我的藏品 (unionID => (worksID => Datasets.MyWorks))
 
     //是否存在这个address   address存在则被认为是老用户
     function hasAddress(address _address) external view returns (bool) {
@@ -1508,13 +1508,13 @@ contract Player {
     }
 
     //获取我的藏品列表
-    function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256) {
+    function getMyWorks(bytes32 _unionID, bytes32 _worksID) external view returns (address, bytes32, uint256, uint256, uint256) {
         return (
-            myworks[_unionID].ethAddress,
-            myworks[_unionID].worksID,
-            myworks[_unionID].totalInput,
-            myworks[_unionID].totalOutput,
-            myworks[_unionID].time
+            myworks[_unionID][_worksID].ethAddress,
+            myworks[_unionID][_worksID].worksID,
+            myworks[_unionID][_worksID].totalInput,
+            myworks[_unionID][_worksID].totalOutput,
+            myworks[_unionID][_worksID].time
         );
     }
 
@@ -1602,7 +1602,7 @@ contract Player {
         uint256 _totalInput, 
         uint256 _totalOutput
     ) external onlyDev() {
-        myworks[_unionID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput, now);
+        myworks[_unionID][_worksID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput, now);
         emit OnUpdateMyWorks(_unionID, _address, _worksID, _totalInput, _totalOutput, now);
     }
 

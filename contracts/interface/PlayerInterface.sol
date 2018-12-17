@@ -45,7 +45,7 @@ interface PlayerInterface {
     function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256);
 
     //获取我的藏品列表
-    function getMyWorks(bytes32 _unionID) external view returns (address, bytes32, uint256, uint256, uint256);
+    function getMyWorks(bytes32 _unionID, bytes32 _worksID) external view returns (address, bytes32, uint256, uint256, uint256);
 
     //是否为合法绑定关系的玩家 避免address被多个unionID绑定 true为合法
     function isLegalPlayer(bytes32 _unionID, address _address) external view returns (bool);
