@@ -1663,8 +1663,8 @@ contract PuzzleBID {
 
     //游戏前检查
     modifier checkPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) {
-        //检查支付，最小0.000000001ETH，最大100000ETH
-        require(msg.value >= 1000000000);
+        //检查支付，最小值大于0，最大100000ETH
+        require(msg.value > 0);
         require(msg.value <= 100000000000000000000000);
 
         //检查该作品碎片能不能被买

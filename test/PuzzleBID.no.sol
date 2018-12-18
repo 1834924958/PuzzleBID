@@ -1411,7 +1411,7 @@ contract PuzzleBID {
     }
 
     modifier checkPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) {
-        require(msg.value >= 1000000000);
+        require(msg.value > 0);
         require(msg.value <= 100000000000000000000000);
 
         require(works.hasWorks(_worksID)); 
