@@ -214,6 +214,7 @@ https://ropsten.etherscan.io/tx/0xec402b1f3826e23a449cc818721885dd087519b5b6c627
 交易地址：
 https://ropsten.etherscan.io/tx/0xf6ad7219e7977b6693eb6786943eaaa3922f2fb32419902889ca7f9339303e0c
 
+---
 
 丁恒  
 
@@ -283,6 +284,7 @@ https://ropsten.etherscan.io/tx/0x284d73a4926b64c7de7bca9123f446adbb26080683d00c
 交易地址：
 https://ropsten.etherscan.io/tx/0x87c662d93816e5784eed56b77e1c191e49c62e4d9e2a6e0dee1d2ce18fb0dd6f
 
+---
 
 #### 6.6、欧阳抢1#碎片
 
