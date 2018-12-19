@@ -1,3 +1,11 @@
+pragma solidity ^0.5.0;
+
+/**
+ * @title PuzzleBID Game 管理员团队合约接口
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
+ */
 interface WorksInterface {
 
     //添加一个作品游戏 仅管理员可操作
