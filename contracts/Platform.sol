@@ -13,8 +13,10 @@ contract Platform {
 
     using SafeMath for *;
 
+    uint256 allTurnover; //平台总交易额
+    mapping(bytes32 => uint256) turnover; //作品的交易额 (worksID => amount)
     address payable private foundAddress; //基金会address
-    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
+    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量    
 
     constructor(address payable _foundAddress, address _teamAddress) public {
         require(
@@ -31,17 +33,12 @@ contract Platform {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress);
     event OnDeposit(bytes32 _worksID, address indexed _address, uint256 _amount); //作品ID，操作的合约地址，存进来的ETH数量
     event OnUpdateTurnover(bytes32 _worksID, uint256 _amount);
     event OnUpdateAllTurnover(uint256 _amount);
     event OnUpdateFoundAddress(address indexed _sender, address indexed _address);
     event OnTransferTo(address indexed _receiver, uint256 _amount);
-
-    //仅开发者、合约地址可操作
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
-        _;
-    }
 
     //仅管理员可操作
     modifier onlyAdmin() {
@@ -49,8 +46,18 @@ contract Platform {
         _;
     }
 
-    uint256 allTurnover; //平台总交易额
-    mapping(bytes32 => uint256) turnover; //作品的交易额 (worksID => amount)
+    //仅开发者、合约地址可操作
+    modifier onlyDev() {
+        require(team.isDev(msg.sender));
+        _;
+    }  
+
+    //更新升级
+    function upgrade(address _teamAddress) external onlyAdmin() {
+        require(_teamAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        emit OnUpgrade(address _teamAddress);
+    }
 
     //获取平台总交易额
     function getAllTurnover() external view returns (uint256) {

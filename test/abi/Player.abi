@@ -3,7 +3,7 @@
 ### 合约地址：
 
 ```
-0x4c6c3d72560ba4ed647cf63f77e41e4bddd84cd0
+0x8e75bf8a6b1332ff7abcd69b6954115c40397960
 ```
 
 ### ABI：
@@ -277,6 +277,23 @@
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "name": "_worksAddress",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpgrade",
+        "type": "event"
+    },
+    {
         "constant": false,
         "inputs": [
             {
@@ -364,6 +381,39 @@
         "constant": false,
         "inputs": [
             {
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "name": "_worksAddress",
+                "type": "address"
+            }
+        ],
+        "name": "upgrade",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "name": "_worksAddress",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
                 "name": "_unionID",
                 "type": "bytes32"
             },
@@ -408,21 +458,6 @@
         "payable": true,
         "stateMutability": "payable",
         "type": "fallback"
-    },
-    {
-        "inputs": [
-            {
-                "name": "_teamAddress",
-                "type": "address"
-            },
-            {
-                "name": "_worksAddress",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
     },
     {
         "constant": true,
@@ -614,6 +649,10 @@
         "inputs": [
             {
                 "name": "_unionID",
+                "type": "bytes32"
+            },
+            {
+                "name": "_worksID",
                 "type": "bytes32"
             }
         ],

@@ -3,13 +3,45 @@
 ### 合约地址：
 
 ```
-0x87857c7fdec50b66c649c06987107af8752989a7
+0x0811194583fed2ea5e6e2e91bd91c6233c54e646
 ```
 
 ### ABI：
 
 ```
 [
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "name": "_platformAddress",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "name": "_artistAddress",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "_worksAddress",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "_playerAddress",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpgrade",
+        "type": "event"
+    },
     {
         "constant": false,
         "inputs": [
@@ -67,6 +99,36 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "name": "_platformAddress",
+                "type": "address"
+            },
+            {
+                "name": "_artistAddress",
+                "type": "address"
+            },
+            {
+                "name": "_worksAddress",
+                "type": "address"
+            },
+            {
+                "name": "_playerAddress",
+                "type": "address"
+            }
+        ],
+        "name": "upgrade",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "constant": true,

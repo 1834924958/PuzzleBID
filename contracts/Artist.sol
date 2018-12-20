@@ -14,6 +14,7 @@ contract Artist {
     mapping(bytes32 => address payable) private artists; //艺术家列表 (artistID => address)
 
     constructor(address _teamAddress) public {
+        require(_teamAddress != address(0));
         team = TeamInterface(_teamAddress);
     }
 
@@ -23,6 +24,7 @@ contract Artist {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress);
     event OnAdd(bytes32 _artistID, address indexed _address);
     event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
@@ -30,6 +32,13 @@ contract Artist {
     modifier onlyAdmin() {
         require(team.isAdmin(msg.sender));
         _;
+    }
+
+    //更新升级
+    function upgrade(address _teamAddress) external onlyAdmin() {
+        require(_teamAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        emit OnUpgrade(address _teamAddress);
     }
 
     //根据艺术家ID获取钱包地址

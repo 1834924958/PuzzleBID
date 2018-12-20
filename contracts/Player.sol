@@ -18,10 +18,8 @@ contract Player {
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
     WorksInterface private works; //实例化作品碎片合约
     
-    //定义玩家结构Player，见library/Datasets.sol
-    //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
-    
     constructor(address _teamAddress, address _worksAddress) public {
+        require(_teamAddress != address(0) && _worksAddress != address(0));
         team = TeamInterface(_teamAddress);
         works = WorksInterface(_worksAddress);
     }
@@ -32,6 +30,7 @@ contract Player {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress, address indexed _worksAddress);
     event OnRegister(
         address indexed _address, 
         bytes32 _unionID, 
@@ -54,11 +53,8 @@ contract Player {
         uint256 _time
     );
 
-    //仅开发者、合约地址可操作
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
-        _;
-    }
+    //定义玩家结构Player，见library/Datasets.sol
+    //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
 
     mapping(bytes32 => Datasets.Player) private playersByUnionId; //玩家信息 (unionID => Datasets.Player)
     mapping(address => bytes32) private playersByAddress; //根据address查询玩家unionID (address => unionID)
@@ -68,6 +64,26 @@ contract Player {
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
     
     mapping(bytes32 => mapping(bytes32 => Datasets.MyWorks)) myworks; //我的藏品 (unionID => (worksID => Datasets.MyWorks))
+
+    //仅管理员可操作
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+
+    //仅开发者、合约地址可操作
+    modifier onlyDev() {
+        require(team.isDev(msg.sender));
+        _;
+    }
+
+    //更新升级
+    function upgrade(address _teamAddress, address _worksAddress) external onlyAdmin() {
+        require(_teamAddress != address(0) && _worksAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        works = WorksInterface(_worksAddress);
+        emit OnUpgrade(address _teamAddress, address _worksAddress);
+    }
 
     //是否存在这个address   address存在则被认为是老用户
     function hasAddress(address _address) external view returns (bool) {
@@ -270,6 +286,5 @@ contract Player {
         myworks[_unionID][_worksID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput, now);
         emit OnUpdateMyWorks(_unionID, _address, _worksID, _totalInput, _totalOutput, now);
     }
-
 
 }

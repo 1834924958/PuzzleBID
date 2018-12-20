@@ -67,5 +67,4 @@ contract Team {
         return admins[_sender].isDev;
     }
 
-
 }

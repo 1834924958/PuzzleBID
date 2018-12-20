@@ -4,7 +4,7 @@
 ### 合约地址：
 
 ```
-0x11e7d5bc0fbb208ebf5ffe706ffd7a3875757624
+0x71593a21c48bdd202ca75fa52fc16368c9a2d373
 ```
 
 ### ABI：
@@ -25,7 +25,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "OnUpdateSecondUnionId",
+        "name": "OnUpdateSecondUnionIds",
         "type": "event"
     },
     {
@@ -71,28 +71,6 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_unionID",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "_time",
-                "type": "uint256"
-            }
-        ],
-        "name": "OnFinish",
-        "type": "event"
     },
     {
         "constant": false,
@@ -145,21 +123,22 @@
         "type": "function"
     },
     {
-        "anonymous": false,
+        "constant": false,
         "inputs": [
             {
-                "indexed": false,
                 "name": "_worksID",
                 "type": "bytes32"
             },
             {
-                "indexed": false,
-                "name": "_debrisID",
-                "type": "uint8"
+                "name": "_unionID",
+                "type": "bytes32"
             }
         ],
-        "name": "OnUpdateBuyNum",
-        "type": "event"
+        "name": "finish",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "anonymous": false,
@@ -186,6 +165,23 @@
             }
         ],
         "name": "OnUpdateFirstBuyer",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "name": "_artistAddress",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpgrade",
         "type": "event"
     },
     {
@@ -225,11 +221,16 @@
             },
             {
                 "indexed": false,
-                "name": "_value",
+                "name": "_debrisNum",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "_initPrice",
                 "type": "uint256"
             }
         ],
-        "name": "OnUpdatePools",
+        "name": "OnInitDebris",
         "type": "event"
     },
     {
@@ -242,16 +243,11 @@
             },
             {
                 "indexed": false,
-                "name": "_debrisNum",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "name": "_initPrice",
+                "name": "_value",
                 "type": "uint256"
             }
         ],
-        "name": "OnInitDebris",
+        "name": "OnUpdatePools",
         "type": "event"
     },
     {
@@ -303,28 +299,49 @@
                 "indexed": false,
                 "name": "_unionID",
                 "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_time",
+                "type": "uint256"
             }
         ],
-        "name": "OnUpdateFirstUnionId",
+        "name": "OnFinish",
         "type": "event"
     },
     {
-        "constant": false,
+        "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
                 "name": "_worksID",
                 "type": "bytes32"
             },
             {
+                "indexed": false,
                 "name": "_unionID",
                 "type": "bytes32"
             }
         ],
-        "name": "finish",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
+        "name": "OnUpdateFirstUnionIds",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "_debrisID",
+                "type": "uint8"
+            }
+        ],
+        "name": "OnUpdateBuyNum",
+        "type": "event"
     },
     {
         "constant": false,
@@ -361,6 +378,11 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
     },
     {
         "constant": false,
@@ -426,7 +448,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "updateFirstUnionId",
+        "name": "updateFirstUnionIds",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
@@ -451,6 +473,42 @@
         "type": "function"
     },
     {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_worksID",
+                "type": "bytes32"
+            },
+            {
+                "name": "_unionID",
+                "type": "bytes32"
+            }
+        ],
+        "name": "updateSecondUnionIds",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_teamAddress",
+                "type": "address"
+            },
+            {
+                "name": "_artistAddress",
+                "type": "address"
+            }
+        ],
+        "name": "upgrade",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "name": "_teamAddress",
@@ -464,29 +522,6 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "constructor"
-    },
-    {
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "fallback"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_worksID",
-                "type": "bytes32"
-            },
-            {
-                "name": "_unionID",
-                "type": "bytes32"
-            }
-        ],
-        "name": "updateSecondUnionId",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
     },
     {
         "constant": true,
@@ -727,7 +762,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "getFirstUnionId",
+        "name": "getFirstUnionIds",
         "outputs": [
             {
                 "name": "",
@@ -984,7 +1019,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "getSecondUnionId",
+        "name": "getSecondUnionIds",
         "outputs": [
             {
                 "name": "",
@@ -1115,7 +1150,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "hasFirstUnionId",
+        "name": "hasFirstUnionIds",
         "outputs": [
             {
                 "name": "",
@@ -1138,7 +1173,7 @@
                 "type": "bytes32"
             }
         ],
-        "name": "hasSecondUnionId",
+        "name": "hasSecondUnionIds",
         "outputs": [
             {
                 "name": "",

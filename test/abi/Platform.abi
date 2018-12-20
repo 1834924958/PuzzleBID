@@ -3,7 +3,7 @@
 ### 合约地址：
 
 ```
-0x0da0e93d775298bf40b03a43f0ad6b3f1a48f70c
+0xd74009fdc31718aa2e8812b9aa55759501d69ccf
 ```
 
 ### ABI：
@@ -74,16 +74,18 @@
         "type": "function"
     },
     {
-        "anonymous": false,
+        "constant": false,
         "inputs": [
             {
-                "indexed": false,
-                "name": "_amount",
-                "type": "uint256"
+                "name": "_foundAddress",
+                "type": "address"
             }
         ],
-        "name": "OnUpdateAllTurnover",
-        "type": "event"
+        "name": "updateFoundAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "anonymous": false,
@@ -101,37 +103,6 @@
         ],
         "name": "OnUpdateTurnover",
         "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "name": "_sender",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "name": "_address",
-                "type": "address"
-            }
-        ],
-        "name": "OnUpdateFoundAddress",
-        "type": "event"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_foundAddress",
-                "type": "address"
-            }
-        ],
-        "name": "updateFoundAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
     },
     {
         "anonymous": false,
@@ -156,6 +127,35 @@
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "name": "_sender",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "name": "_address",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpdateFoundAddress",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "_amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "OnUpdateAllTurnover",
+        "type": "event"
+    },
+    {
         "constant": false,
         "inputs": [
             {
@@ -174,9 +174,30 @@
         "type": "function"
     },
     {
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "fallback"
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "name": "_teamAddress",
+                "type": "address"
+            }
+        ],
+        "name": "OnUpgrade",
+        "type": "event"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_teamAddress",
+                "type": "address"
+            }
+        ],
+        "name": "upgrade",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "inputs": [
@@ -192,6 +213,11 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
     },
     {
         "constant": true,

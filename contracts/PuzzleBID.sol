@@ -36,6 +36,13 @@ contract PuzzleBID {
         address _worksAddress,
         address _playerAddress
     ) public {
+        require(
+            _teamAddress != address(0) &&
+            _platformAddress != address(0) &&
+            _artistAddress != address(0) &&
+            _worksAddress != address(0) &&
+            _playerAddress != address(0)
+        );
         team = TeamInterface(_teamAddress);
         platform = PlatformInterface(_platformAddress);
         artist = ArtistInterface(_artistAddress);
@@ -48,6 +55,15 @@ contract PuzzleBID {
     function() external payable {
         revert();
     }
+
+    //事件
+    event OnUpgrade(
+        address indexed _teamAddress,
+        address indexed _platformAddress,
+        address indexed _artistAddress,
+        address _worksAddress,
+        address _playerAddress
+    );
 
     //玩家不能是合约地址
     modifier isHuman() {
@@ -79,7 +95,42 @@ contract PuzzleBID {
         } //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
         _;
-    }    
+    } 
+
+    //仅管理员可操作
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+
+    //更新升级
+    function upgrade(
+        address _teamAddress,
+        address _platformAddress,
+        address _artistAddress,
+        address _worksAddress,
+        address _playerAddress
+    ) external onlyAdmin() {
+        require(
+            _teamAddress != address(0) &&
+            _platformAddress != address(0) &&
+            _artistAddress != address(0) &&
+            _worksAddress != address(0) &&
+            _playerAddress != address(0)
+        );
+        team = TeamInterface(_teamAddress);
+        platform = PlatformInterface(_platformAddress);
+        artist = ArtistInterface(_artistAddress);
+        works = WorksInterface(_worksAddress);
+        player = PlayerInterface(_playerAddress);
+        emit OnUpgrade(
+            address _teamAddress,
+            address _platformAddress,
+            address _artistAddress,
+            address _worksAddress,
+            address _playerAddress
+        );
+    }   
 
     //开始游戏 游戏入口
     function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 

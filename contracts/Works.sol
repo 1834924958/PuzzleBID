@@ -18,9 +18,9 @@ contract Works {
 
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
     ArtistInterface private artist; //实例化艺术家合约
-    PlatformInterface private platform; //实例化平台合约
 
     constructor(address _teamAddress, address _artistAddress) public {
+        require(_teamAddress != address(0) && _artistAddress != address(0));
         team = TeamInterface(_teamAddress);
         artist = ArtistInterface(_artistAddress);
     }
@@ -31,6 +31,7 @@ contract Works {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress, address indexed _artistAddress);
     event OnAddWorks(
         bytes32 _worksID,
         bytes32 _artistID, 
@@ -100,6 +101,14 @@ contract Works {
     modifier onlyDev() {
         require(team.isDev(msg.sender));
         _;
+    }
+
+    //更新升级
+    function upgrade(address _teamAddress, address _artistAddress) external onlyAdmin() {
+        require(_teamAddress != address(0) && _artistAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        artist = ArtistInterface(_artistAddress);
+        emit OnUpgrade(address _teamAddress, address _artistAddress);
     }
 
     //添加一个作品游戏 仅管理员可操作
@@ -316,7 +325,7 @@ contract Works {
     } 
 
     //是否存在首发购买者名单中
-    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
+    function hasFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         if(0 == firstUnionID[_worksID].length) {
             return false;
         }
@@ -331,7 +340,7 @@ contract Works {
     }
 
     //是否存在二次购买者名单中
-    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
+    function hasSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         if(0 == secondUnionID[_worksID].length) {
             return false;
         }
@@ -346,12 +355,12 @@ contract Works {
     }  
 
     //获取作品的首发购买者名单
-    function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory) {
+    function getFirstUnionIds(bytes32 _worksID) external view returns (bytes32[] memory) {
         return firstUnionID[_worksID];
     }
 
     //获取作品的二次购买者名单
-    function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory) {
+    function getSecondUnionIds(bytes32 _worksID) external view returns (bytes32[] memory) {
         return secondUnionID[_worksID];
     }
 
@@ -495,7 +504,7 @@ contract Works {
     function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
         require(works[_worksID].endTime != 0); //需要游戏结束后才能统计
 
-        uint256[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
+        uint8[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
         uint256 finishAccount = pools[_worksID].mul(lastAllot[0]) / 100; //作品完成者
         uint256 firstAccount = pools[_worksID].mul(lastAllot[1]) / 100; //首发购买者
         uint256 allAccount = pools[_worksID].mul(lastAllot[2]) / 100; //二次购买者

@@ -80,5 +80,4 @@ library Datasets {
         uint256 rewardAmount; //同一作品同一玩家，奖励总计金额
     }
 
-
 }

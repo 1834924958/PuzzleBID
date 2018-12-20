@@ -149,8 +149,7 @@ library Datasets {
         uint256 lastTime; 
     }
     
-    struct Rule {
-       
+    struct Rule {       
         uint8 firstBuyLimit; 
         uint256 freezeGap; 
         uint256 protectGap; 
@@ -226,7 +225,6 @@ contract Team {
         return admins[_sender].isDev;
     }
 
-
 }
 
 
@@ -250,6 +248,7 @@ contract Artist {
     mapping(bytes32 => address payable) private artists; 
 
     constructor(address _teamAddress) public {
+        require(_teamAddress != address(0));
         team = TeamInterface(_teamAddress);
     }
 
@@ -257,12 +256,19 @@ contract Artist {
         revert();
     }
 
+    event OnUpgrade(address indexed _teamAddress);
     event OnAdd(bytes32 _artistID, address indexed _address);
     event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
     modifier onlyAdmin() {
         require(team.isAdmin(msg.sender));
         _;
+    }
+
+    function upgrade(address _teamAddress) external onlyAdmin() {
+        require(_teamAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        emit OnUpgrade(_teamAddress);
     }
 
     function getAddress(bytes32 _artistID) external view returns (address payable) {
@@ -286,7 +292,6 @@ contract Artist {
     }
 
 }
-
 
 
 interface WorksInterface {
@@ -322,7 +327,7 @@ interface WorksInterface {
     function getWorks(bytes32 _worksID) external view returns (uint8, uint256, uint256, uint256, bool);
 
     function getDebris(bytes32 _worksID, uint8 _debrisID) external view 
-        returns (uint256, uint256, uint256, address, address, bytes32, bytes32, uint256);
+        returns (uint256, address, address, bytes32, bytes32, uint256);
 
     function getRule(bytes32 _worksID) external view 
         returns (uint8, uint256, uint256, uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory);
@@ -343,13 +348,13 @@ interface WorksInterface {
     
     function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
-    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
+    function hasFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
-    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
+    function hasSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
-    function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
+    function getFirstUnionIds(bytes32 _worksID) external view returns (bytes32[] memory);
 
-    function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
+    function getSecondUnionIds(bytes32 _worksID) external view returns (bytes32[] memory);
 
     function getPrice(bytes32 _worksID) external view returns (uint256);
 
@@ -419,7 +424,6 @@ interface ArtistInterface {
 }
 
 
-
 contract Works {
 
     using SafeMath for *;
@@ -428,6 +432,7 @@ contract Works {
     ArtistInterface private artist; 
 
     constructor(address _teamAddress, address _artistAddress) public {
+        require(_teamAddress != address(0) && _artistAddress != address(0));
         team = TeamInterface(_teamAddress);
         artist = ArtistInterface(_artistAddress);
     }
@@ -436,6 +441,7 @@ contract Works {
         revert();
     }
 
+    event OnUpgrade(address indexed _teamAddress, address indexed _artistAddress);
     event OnAddWorks(
         bytes32 _worksID,
         bytes32 _artistID, 
@@ -497,6 +503,13 @@ contract Works {
     modifier onlyDev() {
         require(team.isDev(msg.sender));
         _;
+    }
+
+    function upgrade(address _teamAddress, address _artistAddress) external onlyAdmin() {
+        require(_teamAddress != address(0) && _artistAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        artist = ArtistInterface(_artistAddress);
+        emit OnUpgrade(_teamAddress, _artistAddress);
     }
 
     function addWorks(
@@ -693,39 +706,39 @@ contract Works {
         return finish;
     } 
 
-    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
+    function hasFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         if(0 == firstUnionID[_worksID].length) {
             return false;
         }
-        bool isHas = false;
+        bool has = false;
         for(uint256 i=0; i<firstUnionID[_worksID].length; i++) {
             if(firstUnionID[_worksID][i] == _unionID) {
-                isHas = true;
+                has = true;
                 break;
             }
         }
-        return isHas;
+        return has;
     }
 
-    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
+    function hasSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool) {
         if(0 == secondUnionID[_worksID].length) {
             return false;
         }
-        bool isHas = false;
+        bool has = false;
         for(uint256 i=0; i<secondUnionID[_worksID].length; i++) {
             if(secondUnionID[_worksID][i] == _unionID) {
-                isHas = true;
+                has = true;
                 break;
             }
         }
-        return isHas;
+        return has;
     }  
 
-    function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory) {
+    function getFirstUnionIds(bytes32 _worksID) external view returns (bytes32[] memory) {
         return firstUnionID[_worksID];
     }
 
-    function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory) {
+    function getSecondUnionIds(bytes32 _worksID) external view returns (bytes32[] memory) {
         return secondUnionID[_worksID];
     }
 
@@ -926,14 +939,14 @@ contract Works {
     }
 
     function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
-        if(this.hasFirstUnionId(_worksID, _unionID) == false) {
+        if(this.hasFirstUnionIds(_worksID, _unionID) == false) {
             firstUnionID[_worksID].push(_unionID);
             emit OnUpdateFirstUnionIds(_worksID, _unionID);
         }
     }
 
     function updateSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
-        if(this.hasSecondUnionId(_worksID, _unionID) == false) {
+        if(this.hasSecondUnionIds(_worksID, _unionID) == false) {
             secondUnionID[_worksID].push(_unionID);
             emit OnUpdateSecondUnionIds(_worksID, _unionID);
         }
@@ -979,7 +992,9 @@ interface PlatformInterface {
 contract Platform {
 
     using SafeMath for *;
-
+    uint256 allTurnover; 
+    mapping(bytes32 => uint256) turnover; 
+    
     address payable private foundAddress; 
     TeamInterface private team; 
 
@@ -996,24 +1011,29 @@ contract Platform {
         revert();
     }
 
+    event OnUpgrade(address indexed _teamAddress);
     event OnDeposit(bytes32 _worksID, address indexed _address, uint256 _amount); 
     event OnUpdateTurnover(bytes32 _worksID, uint256 _amount);
     event OnUpdateAllTurnover(uint256 _amount);
     event OnUpdateFoundAddress(address indexed _sender, address indexed _address);
     event OnTransferTo(address indexed _receiver, uint256 _amount);
 
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
     modifier onlyDev() {
         require(team.isDev(msg.sender));
         _;
     }
 
-    modifier onlyAdmin() {
-        require(team.isAdmin(msg.sender));
-        _;
+    function upgrade(address _teamAddress) external onlyAdmin() {
+        require(_teamAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        emit OnUpgrade(_teamAddress);
     }
 
-    uint256 allTurnover; 
-    mapping(bytes32 => uint256) turnover; 
+
 
     function getAllTurnover() external view returns (uint256) {
         return allTurnover;
@@ -1120,9 +1140,7 @@ interface PlayerInterface {
         uint256 _totalOutput
     ) external;
 
-
 }
-
 
 
 /**
@@ -1139,6 +1157,7 @@ contract Player {
     WorksInterface private works; 
     
     constructor(address _teamAddress, address _worksAddress) public {
+        require(_teamAddress != address(0) && _worksAddress != address(0));
         team = TeamInterface(_teamAddress);
         works = WorksInterface(_worksAddress);
     }
@@ -1147,6 +1166,7 @@ contract Player {
         revert();
     }
 
+    event OnUpgrade(address indexed _teamAddress, address indexed _worksAddress);
     event OnRegister(
         address indexed _address, 
         bytes32 _unionID, 
@@ -1169,11 +1189,6 @@ contract Player {
         uint256 _time
     );
 
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
-        _;
-    }
-
     mapping(bytes32 => Datasets.Player) private playersByUnionId; 
     mapping(address => bytes32) private playersByAddress; 
     address[] private playerAddressSets; 
@@ -1181,7 +1196,25 @@ contract Player {
 
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount;
 
-    mapping(bytes32 => mapping(bytes32 => Datasets.MyWorks)) myworks; 
+   mapping(bytes32 => mapping(bytes32 => Datasets.MyWorks)) myworks; 
+    
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+    
+    modifier onlyDev() {
+        require(team.isDev(msg.sender));
+        _;
+    }
+
+    function upgrade(address _teamAddress, address _worksAddress) external onlyAdmin() {
+        require(_teamAddress != address(0) && _worksAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        works = WorksInterface(_worksAddress);
+        emit OnUpgrade(_teamAddress, _worksAddress);
+    }
+
 
     function hasAddress(address _address) external view returns (bool) {
         bool has = false;
@@ -1363,6 +1396,7 @@ contract Player {
 
 }
 
+
 /**
  * @title PuzzleBID Game 
  * @dev http://www.puzzlebid.com/
@@ -1389,17 +1423,31 @@ contract PuzzleBID {
         address _worksAddress,
         address _playerAddress
     ) public {
+        require(
+            _teamAddress != address(0) &&
+            _platformAddress != address(0) &&
+            _artistAddress != address(0) &&
+            _worksAddress != address(0) &&
+            _playerAddress != address(0)
+        );
         team = TeamInterface(_teamAddress);
         platform = PlatformInterface(_platformAddress);
         artist = ArtistInterface(_artistAddress);
         works = WorksInterface(_worksAddress);
         player = PlayerInterface(_playerAddress);
-
     }  
 
     function() external payable {
         revert();
     }
+
+    event OnUpgrade(
+        address indexed _teamAddress,
+        address indexed _platformAddress,
+        address indexed _artistAddress,
+        address _worksAddress,
+        address _playerAddress
+    );
 
     modifier isHuman() {
         address _address = msg.sender;
@@ -1412,7 +1460,6 @@ contract PuzzleBID {
 
     modifier checkPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) {
         require(msg.value > 0);
-        require(msg.value <= 100000000000000000000000);
 
         require(works.hasWorks(_worksID)); 
         require(works.hasDebris(_worksID, _debrisID)); 
@@ -1426,7 +1473,34 @@ contract PuzzleBID {
         }      
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID));
         _;
-    }    
+    } 
+       
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+    
+    function upgrade(
+        address _teamAddress,
+        address _platformAddress,
+        address _artistAddress,
+        address _worksAddress,
+        address _playerAddress
+    ) external onlyAdmin() {
+        require(
+            _teamAddress != address(0) &&
+            _platformAddress != address(0) &&
+            _artistAddress != address(0) &&
+            _worksAddress != address(0) &&
+            _playerAddress != address(0)
+        );
+        team = TeamInterface(_teamAddress);
+        platform = PlatformInterface(_platformAddress);
+        artist = ArtistInterface(_artistAddress);
+        works = WorksInterface(_worksAddress);
+        player = PlayerInterface(_playerAddress);
+        emit OnUpgrade(_teamAddress, _platformAddress, _artistAddress, _worksAddress, _playerAddress);
+    }   
 
     function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
         isHuman()
@@ -1521,7 +1595,7 @@ contract PuzzleBID {
     
     function firstSend(bytes32 _worksID) private {
         uint8 i;
-        bytes32[] memory tmpFirstUnionId = works.getFirstUnionId(_worksID); 
+        bytes32[] memory tmpFirstUnionId = works.getFirstUnionIds(_worksID); 
         address tmpAddress; 
         uint256 tmpAmount;
         uint8 lastAllot = works.getAllot(_worksID, 2, 1);
@@ -1535,7 +1609,7 @@ contract PuzzleBID {
 
     function secondSend(bytes32 _worksID) private {
         uint8 i;
-        bytes32[] memory tmpSecondUnionId = works.getSecondUnionId(_worksID); 
+        bytes32[] memory tmpSecondUnionId = works.getSecondUnionIds(_worksID); 
         address tmpAddress; 
         uint256 tmpAmount;
         uint8 lastAllot = works.getAllot(_worksID, 2, 2);

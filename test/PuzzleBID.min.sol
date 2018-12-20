@@ -255,10 +255,14 @@ contract Team {
         return admins[_sender].isDev;
     }
 
-
 }
 
-
+/**
+ * @title PuzzleBID Game 管理员团队合约接口
+ * @dev http://www.puzzlebid.com/
+ * @author PuzzleBID Game Team 
+ * @dev Simon<vsiryxm@163.com>
+ */
 interface TeamInterface {
 
     //添加、更新管理员成员
@@ -290,6 +294,7 @@ contract Artist {
     mapping(bytes32 => address payable) private artists; //艺术家列表 (artistID => address)
 
     constructor(address _teamAddress) public {
+        require(_teamAddress != address(0));
         team = TeamInterface(_teamAddress);
     }
 
@@ -299,6 +304,7 @@ contract Artist {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress);
     event OnAdd(bytes32 _artistID, address indexed _address);
     event OnUpdateAddress(bytes32 _artistID, address indexed _address);
 
@@ -306,6 +312,13 @@ contract Artist {
     modifier onlyAdmin() {
         require(team.isAdmin(msg.sender));
         _;
+    }
+
+    //更新升级
+    function upgrade(address _teamAddress) external onlyAdmin() {
+        require(_teamAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        emit OnUpgrade(address _teamAddress);
     }
 
     //根据艺术家ID获取钱包地址
@@ -413,16 +426,16 @@ interface WorksInterface {
     function isFinish(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //是否存在首发购买者名单中
-    function hasFirstUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
+    function hasFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //是否存在二次购买者名单中
-    function hasSecondUnionId(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
+    function hasSecondUnionIds(bytes32 _worksID, bytes32 _unionID) external view returns (bool);
 
     //获取作品的首发购买者名单
-    function getFirstUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
+    function getFirstUnionIds(bytes32 _worksID) external view returns (bytes32[] memory);
 
     //获取作品的二次购买者名单
-    function getSecondUnionId(bytes32 _worksID) external view returns (bytes32[] memory);
+    function getSecondUnionIds(bytes32 _worksID) external view returns (bytes32[] memory);
 
     //获取作品的初始总价
     function getPrice(bytes32 _worksID) external view returns (uint256);
@@ -541,6 +554,7 @@ contract Works {
     ArtistInterface private artist; //实例化艺术家合约
 
     constructor(address _teamAddress, address _artistAddress) public {
+        require(_teamAddress != address(0) && _artistAddress != address(0));
         team = TeamInterface(_teamAddress);
         artist = ArtistInterface(_artistAddress);
     }
@@ -551,6 +565,7 @@ contract Works {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress, address indexed _artistAddress);
     event OnAddWorks(
         bytes32 _worksID,
         bytes32 _artistID, 
@@ -622,6 +637,14 @@ contract Works {
         _;
     }
 
+    //更新升级
+    function upgrade(address _teamAddress, address _artistAddress) external onlyAdmin() {
+        require(_teamAddress != address(0) && _artistAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        artist = ArtistInterface(_artistAddress);
+        emit OnUpgrade(address _teamAddress, address _artistAddress);
+    }
+
     //添加一个作品游戏 仅管理员可操作
     //前置操作：先添加艺术家
     function addWorks(
@@ -666,8 +689,8 @@ contract Works {
     }
 
     //初始化作品碎片 碎片编号从1开始
-    function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {    
-        uint256 initPrice = (_price / _debrisNum).mul(1 wei);
+    function initDebris(bytes32 _worksID, uint256 _price, uint8 _debrisNum) private {
+        uint256 initPrice = (_price / _debrisNum).mul(1 wei);        
         for(uint8 i=1; i<=_debrisNum; i++) {
             debris[_worksID][i].worksID = _worksID;
             debris[_worksID][i].initPrice = initPrice;
@@ -772,14 +795,14 @@ contract Works {
     //获取作品规则信息
     function getRule(bytes32 _worksID) external view 
         returns (uint256, uint256, uint256, uint8[3] memory, uint8[3] memory, uint8[3] memory) {
-        return (
-            rules[_worksID].increaseRatio,
-            rules[_worksID].discountGap,
-            rules[_worksID].discountRatio,
-            rules[_worksID].firstAllot,
-            rules[_worksID].againAllot,
-            rules[_worksID].lastAllot
-        );
+            return (
+                rules[_worksID].increaseRatio,
+                rules[_worksID].discountGap,
+                rules[_worksID].discountRatio,
+                rules[_worksID].firstAllot,
+                rules[_worksID].againAllot,
+                rules[_worksID].lastAllot
+            );
     }
 
     //是否存在作品 true为存在
@@ -840,14 +863,14 @@ contract Works {
         if(0 == firstUnionID[_worksID].length) {
             return false;
         }
-        bool isHas = false;
+        bool has = false;
         for(uint256 i=0; i<firstUnionID[_worksID].length; i++) {
             if(firstUnionID[_worksID][i] == _unionID) {
-                isHas = true;
+                has = true;
                 break;
             }
         }
-        return isHas;
+        return has;
     }
 
     //是否存在二次购买者名单中
@@ -855,14 +878,14 @@ contract Works {
         if(0 == secondUnionID[_worksID].length) {
             return false;
         }
-        bool isHas = false;
+        bool has = false;
         for(uint256 i=0; i<secondUnionID[_worksID].length; i++) {
             if(secondUnionID[_worksID][i] == _unionID) {
-                isHas = true;
+                has = true;
                 break;
             }
         }
-        return isHas;
+        return has;
     }  
 
     //获取作品的首发购买者名单
@@ -881,7 +904,7 @@ contract Works {
     }
 
     //获取碎片的实时价格 有可能为0
-    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {        
+    function getDebrisPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {        
         uint256 discountGap = rules[_worksID].discountGap;
         uint256 discountRatio = rules[_worksID].discountRatio;
         uint256 increaseRatio = rules[_worksID].increaseRatio;
@@ -943,47 +966,47 @@ contract Works {
     }
 
     //获取碎片的初始价格
-    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getInitPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         return debris[_worksID][_debrisID].initPrice;
     }
 
     //获取碎片的最后被交易的价格
-    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getLastPrice(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         return debris[_worksID][_debrisID].lastPrice;
     }
 
     //获取碎片的最后购买者address
-    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns(address) {
+    function getLastBuyer(bytes32 _worksID, uint8 _debrisID) external view returns (address) {
         return debris[_worksID][_debrisID].lastBuyer;
     }
 
     //获取碎片的最后购买者unionID
-    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns(bytes32) {
+    function getLastUnionId(bytes32 _worksID, uint8 _debrisID) external view returns (bytes32) {
         return debris[_worksID][_debrisID].lastUnionID;
     }
 
     //获取玩家账号冻结时间 单位s
-    function getFreezeGap(bytes32 _worksID) external view returns(uint256) {
+    function getFreezeGap(bytes32 _worksID) external view returns (uint256) {
         return rules[_worksID].freezeGap;
     }
 
     //获取玩家首发购买上限数
-    function getFirstBuyLimit(bytes32 _worksID) external view returns(uint256) {
+    function getFirstBuyLimit(bytes32 _worksID) external view returns (uint256) {
         return rules[_worksID].firstBuyLimit;
     }
 
     //获取作品对应的艺术家ID
-    function getArtistId(bytes32 _worksID) external view returns(bytes32) {
+    function getArtistId(bytes32 _worksID) external view returns (bytes32) {
         return works[_worksID].artistID;
     }
 
     //获取作品分割的碎片数
-    function getDebrisNum(bytes32 _worksID) external view returns(uint8) {
+    function getDebrisNum(bytes32 _worksID) external view returns (uint8) {
         return works[_worksID].debrisNum;
     }
 
     //获取首发购买分配百分比分子 返回数组
-    function getAllot(bytes32 _worksID, uint8 _flag) external view returns(uint8[3] memory) {
+    function getAllot(bytes32 _worksID, uint8 _flag) external view returns (uint8[3] memory) {
         require(_flag < 3);
         if(0 == _flag) {
             return rules[_worksID].firstAllot;
@@ -995,7 +1018,7 @@ contract Works {
     }
 
     //获取首发购买分配百分比分子 返回整型
-    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns(uint8) {
+    function getAllot(bytes32 _worksID, uint8 _flag, uint8 _element) external view returns (uint8) {
         require(_flag < 3 && _element < 3);
         if(0 == _flag) {
             return rules[_worksID].firstAllot[_element];
@@ -1012,7 +1035,7 @@ contract Works {
     }
 
     //获取作品奖池分配数据 供游戏结束后前端展示
-    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint8[3] memory) {
+    function getPoolsAllot(bytes32 _worksID) external view returns (uint256, uint256[3] memory, uint256[3] memory) {
         require(works[_worksID].endTime != 0); //需要游戏结束后才能统计
 
         uint8[3] memory lastAllot = this.getAllot(_worksID, 2); //奖池按顺序分别占比 80%、10%、10%
@@ -1025,7 +1048,7 @@ contract Works {
     }
 
     //获取作品碎片游戏开始倒计时 单位s
-    function getStartHourglass(bytes32 _worksID) external view returns(uint256) {
+    function getStartHourglass(bytes32 _worksID) external view returns (uint256) {
         if(works[_worksID].beginTime > 0 && works[_worksID].beginTime > now ) {
             return works[_worksID].beginTime.sub(now);
         }
@@ -1038,7 +1061,7 @@ contract Works {
     }
 
     //获取碎片保护期倒计时 单位s
-    function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getProtectHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         if(
             debris[_worksID][_debrisID].lastTime > 0 && 
             debris[_worksID][_debrisID].lastTime.add(rules[_worksID].protectGap) > now
@@ -1049,7 +1072,7 @@ contract Works {
     }
 
     //获取碎片降价倒计时 单位s 无限个倒计时段 过了第一个倒计时段 进入下一个倒计时段...
-    function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns(uint256) {
+    function getDiscountHourglass(bytes32 _worksID, uint8 _debrisID) external view returns (uint256) {
         if(debris[_worksID][_debrisID].lastTime == 0) {
             return 0;
         }
@@ -1102,7 +1125,7 @@ contract Works {
     function updateFirstUnionIds(bytes32 _worksID, bytes32 _unionID) external onlyDev() {
         if(this.hasFirstUnionId(_worksID, _unionID) == false) {
             firstUnionID[_worksID].push(_unionID);
-            emit OnUpdateFirstUnionId(_worksID, _unionID);
+            emit OnUpdateFirstUnionIds(_worksID, _unionID);
         }
     }
 
@@ -1164,8 +1187,10 @@ contract Platform {
 
     using SafeMath for *;
 
+    uint256 allTurnover; //平台总交易额
+    mapping(bytes32 => uint256) turnover; //作品的交易额 (worksID => amount)
     address payable private foundAddress; //基金会address
-    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
+    TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量    
 
     constructor(address payable _foundAddress, address _teamAddress) public {
         require(
@@ -1182,17 +1207,12 @@ contract Platform {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress);
     event OnDeposit(bytes32 _worksID, address indexed _address, uint256 _amount); //作品ID，操作的合约地址，存进来的ETH数量
     event OnUpdateTurnover(bytes32 _worksID, uint256 _amount);
     event OnUpdateAllTurnover(uint256 _amount);
     event OnUpdateFoundAddress(address indexed _sender, address indexed _address);
     event OnTransferTo(address indexed _receiver, uint256 _amount);
-
-    //仅开发者、合约地址可操作
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
-        _;
-    }
 
     //仅管理员可操作
     modifier onlyAdmin() {
@@ -1200,8 +1220,18 @@ contract Platform {
         _;
     }
 
-    uint256 allTurnover; //平台总交易额
-    mapping(bytes32 => uint256) turnover; //作品的交易额 (worksID => amount)
+    //仅开发者、合约地址可操作
+    modifier onlyDev() {
+        require(team.isDev(msg.sender));
+        _;
+    }  
+
+    //更新升级
+    function upgrade(address _teamAddress) external onlyAdmin() {
+        require(_teamAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        emit OnUpgrade(address _teamAddress);
+    }
 
     //获取平台总交易额
     function getAllTurnover() external view returns (uint256) {
@@ -1297,7 +1327,10 @@ interface PlayerInterface {
 
     //获取玩家账号冻结倒计时
     function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256);
-
+    
+    //获取我的累计投入、累计奖励、收集完成将获得金额
+    function getMyReport(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256);
+    
     //获取当前我的状态：最后交易时间，冻结时长，当前时间，当前首发购买数，首发最多购买数
     function getMyStatus(bytes32 _unionID, bytes32 _worksID) external view returns (uint256, uint256, uint256, uint256, uint256);
 
@@ -1337,7 +1370,6 @@ interface PlayerInterface {
         uint256 _totalOutput
     ) external;
 
-
 }
 
 
@@ -1354,10 +1386,8 @@ contract Player {
     TeamInterface private team; //实例化管理员团队合约，正式发布时可定义成常量
     WorksInterface private works; //实例化作品碎片合约
     
-    //定义玩家结构Player，见library/Datasets.sol
-    //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
-    
     constructor(address _teamAddress, address _worksAddress) public {
+        require(_teamAddress != address(0) && _worksAddress != address(0));
         team = TeamInterface(_teamAddress);
         works = WorksInterface(_worksAddress);
     }
@@ -1368,6 +1398,7 @@ contract Player {
     }
 
     //事件
+    event OnUpgrade(address indexed _teamAddress, address indexed _worksAddress);
     event OnRegister(
         address indexed _address, 
         bytes32 _unionID, 
@@ -1390,11 +1421,8 @@ contract Player {
         uint256 _time
     );
 
-    //仅开发者、合约地址可操作
-    modifier onlyDev() {
-        require(team.isDev(msg.sender));
-        _;
-    }
+    //定义玩家结构Player，见library/Datasets.sol
+    //定义玩家与藏品关系结构MyWorks，见library/Datasets.sol
 
     mapping(bytes32 => Datasets.Player) private playersByUnionId; //玩家信息 (unionID => Datasets.Player)
     mapping(address => bytes32) private playersByAddress; //根据address查询玩家unionID (address => unionID)
@@ -1402,8 +1430,28 @@ contract Player {
     bytes32[] private playersUnionIdSets; //检索辅助 玩家unionID集 查询unionID是否已存在
 
     mapping(bytes32 => mapping(bytes32 => Datasets.PlayerCount)) playerCount; //玩家购买统计 (unionID => (worksID => Datasets.PlayerCount))
-
+    
     mapping(bytes32 => mapping(bytes32 => Datasets.MyWorks)) myworks; //我的藏品 (unionID => (worksID => Datasets.MyWorks))
+
+    //仅管理员可操作
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+
+    //仅开发者、合约地址可操作
+    modifier onlyDev() {
+        require(team.isDev(msg.sender));
+        _;
+    }
+
+    //更新升级
+    function upgrade(address _teamAddress, address _worksAddress) external onlyAdmin() {
+        require(_teamAddress != address(0) && _worksAddress != address(0));
+        team = TeamInterface(_teamAddress);
+        works = WorksInterface(_worksAddress);
+        emit OnUpgrade(address _teamAddress, address _worksAddress);
+    }
 
     //是否存在这个address   address存在则被认为是老用户
     function hasAddress(address _address) external view returns (bool) {
@@ -1475,7 +1523,7 @@ contract Player {
     }
 
     //获取玩家账号冻结倒计时
-    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns(uint256) {
+    function getFreezeHourglass(bytes32 _unionID, bytes32 _worksID) external view returns (uint256) {
         uint256 freezeGap = works.getFreezeGap(_worksID);
         if(playerCount[_unionID][_worksID].lastTime.add(freezeGap) > now) {
             return playerCount[_unionID][_worksID].lastTime.add(freezeGap).sub(now);
@@ -1546,11 +1594,12 @@ contract Player {
         playersByAddress[_address] = _unionID;
 
         playerAddressSets.push(_address);
+        
         if(this.hasUnionId(_unionID) == false) {
             playersUnionIdSets.push(_unionID);
             playerCount[_unionID][_worksID] = Datasets.PlayerCount(0, 0, 0, 0, 0); //初始化玩家单元统计数据
         }
-
+        
         emit OnRegister(_address, _unionID, _referrer, now);
 
         return true;
@@ -1592,7 +1641,7 @@ contract Player {
     function updateRewardAmount(bytes32 _unionID, bytes32 _worksID, uint256 _amount) external onlyDev() {
         playerCount[_unionID][_worksID].rewardAmount = playerCount[_unionID][_worksID].rewardAmount.add(_amount);
         emit OnUpdateRewardAmount(_unionID, _worksID, _amount);
-    }    
+    }   
 
     //更新我的藏品列表 记录完成游戏时的address
     function updateMyWorks(
@@ -1605,7 +1654,6 @@ contract Player {
         myworks[_unionID][_worksID] = Datasets.MyWorks(_address, _worksID, _totalInput, _totalOutput, now);
         emit OnUpdateMyWorks(_unionID, _address, _worksID, _totalInput, _totalOutput, now);
     }
-
 
 }
 
@@ -1638,6 +1686,13 @@ contract PuzzleBID {
         address _worksAddress,
         address _playerAddress
     ) public {
+        require(
+            _teamAddress != address(0) &&
+            _platformAddress != address(0) &&
+            _artistAddress != address(0) &&
+            _worksAddress != address(0) &&
+            _playerAddress != address(0)
+        );
         team = TeamInterface(_teamAddress);
         platform = PlatformInterface(_platformAddress);
         artist = ArtistInterface(_artistAddress);
@@ -1651,6 +1706,15 @@ contract PuzzleBID {
         revert();
     }
 
+    //事件
+    event OnUpgrade(
+        address indexed _teamAddress,
+        address indexed _platformAddress,
+        address indexed _artistAddress,
+        address _worksAddress,
+        address _playerAddress
+    );
+
     //玩家不能是合约地址
     modifier isHuman() {
         address _address = msg.sender;
@@ -1663,9 +1727,8 @@ contract PuzzleBID {
 
     //游戏前检查
     modifier checkPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID) {
-        //检查支付，最小值大于0，最大100000ETH
+        //检查支付，最小值大于0
         require(msg.value > 0);
-        require(msg.value <= 100000000000000000000000);
 
         //检查该作品碎片能不能被买
         require(works.hasWorks(_worksID)); //检查该作品游戏是否存在
@@ -1681,7 +1744,42 @@ contract PuzzleBID {
         } //检查是否达到首发购买上限、该作品碎片是否为二手交易        
         require(msg.value >= works.getDebrisPrice(_worksID, _debrisID)); //检查支付的ETH够不够？
         _;
-    }    
+    } 
+
+    //仅管理员可操作
+    modifier onlyAdmin() {
+        require(team.isAdmin(msg.sender));
+        _;
+    }
+
+    //更新升级
+    function upgrade(
+        address _teamAddress,
+        address _platformAddress,
+        address _artistAddress,
+        address _worksAddress,
+        address _playerAddress
+    ) external onlyAdmin() {
+        require(
+            _teamAddress != address(0) &&
+            _platformAddress != address(0) &&
+            _artistAddress != address(0) &&
+            _worksAddress != address(0) &&
+            _playerAddress != address(0)
+        );
+        team = TeamInterface(_teamAddress);
+        platform = PlatformInterface(_platformAddress);
+        artist = ArtistInterface(_artistAddress);
+        works = WorksInterface(_worksAddress);
+        player = PlayerInterface(_playerAddress);
+        emit OnUpgrade(
+            address _teamAddress,
+            address _platformAddress,
+            address _artistAddress,
+            address _worksAddress,
+            address _playerAddress
+        );
+    }   
 
     //开始游戏 游戏入口
     function startPlay(bytes32 _worksID, uint8 _debrisID, bytes32 _unionID, bytes32 _referrer) 
@@ -1692,11 +1790,11 @@ contract PuzzleBID {
     {
         player.register(_unionID, msg.sender, _worksID, _referrer); //静默注册
 
-        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格  
+        uint256 lastPrice = works.getLastPrice(_worksID, _debrisID); //获取碎片的最后被交易的价格   
 
-        bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID  
+        bytes32 lastUnionID = works.getLastUnionId(_worksID, _debrisID); //获取碎片的最后玩家ID 
 
-        works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、最后被交易时间
+        works.updateDebris(_worksID, _debrisID, _unionID, msg.sender); //更新碎片：价格、归属、最后交易时间
 
         player.updateLastTime(_unionID, _worksID); //更新玩家在一个作品中的最后购买碎片时间
         
@@ -1716,7 +1814,7 @@ contract PuzzleBID {
         }
         //碎片如果被同一玩家收集完成，结束游戏
         if(works.isFinish(_worksID, _unionID)) {
-            works.finish(_worksID, _unionID); //更新作品游戏结束时间
+            works.finish(_worksID, _unionID); //更新作品游戏结束时间、游戏完成者
             finishGame(_worksID); //游戏收尾
             collectWorks(_worksID, _unionID); //我的藏品
         }
